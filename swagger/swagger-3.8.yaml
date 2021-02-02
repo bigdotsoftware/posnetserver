@@ -296,12 +296,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusResponse"
 
-  /dobowy:
+  /raporty/dobowy:
     get:
       tags:
       - "Reports"
       summary: "Generate a daily EOD report"
-      description: ""
+      description: "While executing this request Posnet printer is asking to confirm the date - request is waiting for user's action"
       parameters:
       - name: "fulldebug"
         in: "query"
@@ -315,13 +315,13 @@ paths:
           content:
             application/json:
               schema:
-                type: "object"
+                $ref: "#/components/schemas/ReportDobowyResponse"
               
   /command:
     post:
       tags:
       - "Commands"
-      summary: "Send a custom command to fiscal printer"
+      summary: "Send a custom command to fiscal printer. More at https://blog.bigdotsoftware.pl/posnet-server-pozostale-polecenia/"
       description: ""
       parameters:
       - name: "fulldebug"
@@ -341,7 +341,8 @@ paths:
           content:
             application/json:
               schema:
-                type: "object"  
+                allOf:
+                - $ref: '#/components/schemas/CustomCommandResponse'
 
 
 components:
@@ -695,7 +696,30 @@ components:
             allOf:
               - $ref: '#/components/schemas/ParagonResponse'
     
-    
+    FakturaAsyncStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              paragon:
+                type: "object"
+                allOf:
+                  - $ref: '#/components/schemas/FakturaRequest'
+              ts:
+                type: "number"
+                format: "int64"
+              inprogress:
+                type: "boolean"
+              stat:
+                type: "object"
+                allOf:
+                  - $ref: '#/components/schemas/FakturaCommonResponse'
+                  
     ParagonAsyncStatusResponse:
       type: "object"
       allOf:
@@ -720,6 +744,26 @@ components:
                 allOf:
                   - $ref: '#/components/schemas/ParagonCommonResponse'
 
+    FakturaCommonResponse:
+      type: "object"
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+        error:
+          type: "string"
+        results:
+          type: "array"
+          items:
+            type: "object"
+        bn:
+          type: "string"
+        hn:
+          type: "string"
+        took:
+          type: "number"
+          format: "int32"
+          
     ParagonCommonResponse:
       type: "object"
       properties:
@@ -756,7 +800,32 @@ components:
       properties:
         hits:
           type: "object"
-          
+    
+    CustomCommandResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+
+    ReportDobowyResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+        error:
+          type: "string"
+        results:
+          type: "array"
+          items:
+            type: "object"
+            
     FakturaResponse:
       type: "object"
       allOf:

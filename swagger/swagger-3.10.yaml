@@ -385,7 +385,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseVatSet"
-
+  
+  /maintenance:
+    put:
+      tags:
+      - "Management"
+      summary: "Set date of the next service inspection"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestMaintenanceSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseMaintenanceSet"
+                
   /raporty/dobowy:
     get:
       tags:
@@ -1024,6 +1050,22 @@ components:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
+    
+    RequestMaintenanceSet:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
+        te:
+          type: "string"
+          example: ""
+    
+    ResponseMaintenanceSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
     
     StatusRequestVatSet:
       type: "object"

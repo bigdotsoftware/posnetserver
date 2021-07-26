@@ -927,8 +927,7 @@ components:
                           allOf:
                             - $ref: '#/components/schemas/ParagonAsyncStatusResponse'
                           
-    
-    StatusResponseRtcGet:
+    StatusRtcGet:
       type: "object"
       properties:
         rtcget:
@@ -939,8 +938,14 @@ components:
               da:
                 type: "string"
                 example: "2021-07-26;17:20"
+                
+    StatusResponseRtcGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusRtcGet'
     
-    StatusResponseVatGet:
+    StatusVatGet:
       type: "object"
       properties:
         vatget:
@@ -1006,6 +1011,12 @@ components:
                 type: "string"
               vz:
                 type: "string"
+                
+    StatusResponseVatGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusVatGet'
     
     StatusResponse:
       type: "object"
@@ -1022,8 +1033,8 @@ components:
         results:
           type: "object"
           allOf:
-          - $ref: '#/components/schemas/StatusResponseRtcGet'
-          - $ref: '#/components/schemas/StatusResponseVatGet'
+          - $ref: '#/components/schemas/StatusRtcGet'
+          - $ref: '#/components/schemas/StatusVatGet'
           properties:
             hdrget:
               type: "array"

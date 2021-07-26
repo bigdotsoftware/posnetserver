@@ -345,7 +345,7 @@ paths:
     get:
       tags:
       - "Management"
-      summary: "Get VAT information"
+      summary: "Get VAT rates"
       description: ""
       parameters:
       - name: "fulldebug"

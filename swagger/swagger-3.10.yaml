@@ -360,6 +360,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseVatGet"
+                
+    put:
+      tags:
+      - "Management"
+      summary: "Set VAT rates"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/StatusRequestVatSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseVatSet"
 
   /raporty/dobowy:
     get:
@@ -1000,6 +1025,94 @@ components:
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
     
+    StatusRequestVatSet:
+      type: "object"
+      properties:
+        va:
+          type: "string"
+          example: "23,00"
+        vb:
+          type: "string"
+          example: "8,00"
+        vc:
+          type: "string"
+          example: "0,00"
+        vd:
+          type: "string"
+          example: ""
+        ve:
+          type: "string"
+          example: ""
+        vf:
+          type: "string"
+          example: ""
+        vg:
+          type: "string"
+          example: ""
+        vh:
+          type: "string"
+          example: ""
+        vi:
+          type: "string"
+          example: ""
+        vj:
+          type: "string"
+          example: ""
+        vk:
+          type: "string"
+          example: ""
+        vl:
+          type: "string"
+          example: ""
+        vm:
+          type: "string"
+          example: ""
+        vn:
+          type: "string"
+          example: ""
+        vo:
+          type: "string"
+          example: ""
+        vp:
+          type: "string"
+          example: ""
+        vq:
+          type: "string"
+          example: ""
+        vr:
+          type: "string"
+          example: ""
+        vs:
+          type: "string"
+          example: ""
+        vt:
+          type: "string"
+          example: ""
+        vu:
+          type: "string"
+          example: ""
+        vv:
+          type: "string"
+          example: ""
+        vw:
+          type: "string"
+          example: ""
+        vx:
+          type: "string"
+          example: ""
+        vy:
+          type: "string"
+          example: ""
+        vz:
+          type: "string"
+          example: ""
+    
+    StatusResponseVatSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
     StatusVatGet:
       type: "object"
       properties:

@@ -416,7 +416,7 @@ paths:
     get:
       tags:
       - "Reports"
-      summary: "Generate a daily EOD report"
+      summary: "Generate daily EOD report"
       description: "While executing this request Posnet printer is asking to confirm the date - request is waiting for user's action"
       parameters:
       - name: "fulldebug"
@@ -432,7 +432,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportDobowyResponse"
-              
+  
+  /raporty/miesieczny:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate monthly report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportMiesiecznyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportMiesiecznyResponse"
+
+  /raporty/zmianowy:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate shift report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportShiftrepRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportShiftrepResponse"
+
+
   /command:
     post:
       tags:
@@ -941,7 +992,17 @@ components:
           type: "array"
           items:
             type: "object"
-            
+    
+    ReportMiesiecznyResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    ReportShiftrepResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
     FakturaResponse:
       type: "object"
       allOf:
@@ -1050,6 +1111,31 @@ components:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
+    
+    ReportShiftrepRequest:
+      type: "object"
+      properties:
+        sh:
+          type: "string"
+          example: "shift #1"
+          description: "Name of the shift"
+        zr:
+          type: "boolean"
+          example: false
+          default: false
+          description: "true - shift reset"
+          
+    ReportMiesiecznyRequest:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
+        su:
+          type: "boolean"
+          example: false
+          default: false
+          description: "true - print summary only"
     
     RequestMaintenanceSet:
       type: "object"

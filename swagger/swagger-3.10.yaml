@@ -315,6 +315,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseRtcGet"
+                
+    put:
+      tags:
+      - "Management"
+      summary: "Set date and time"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/StatusRequestRtcSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseRtcSet"
 
   /vat:
     get:
@@ -926,31 +951,59 @@ components:
                           type: "object"
                           allOf:
                             - $ref: '#/components/schemas/ParagonAsyncStatusResponse'
-                          
+                
+
+    StatusCommon:
+      type: "object"
+      properties:
+        buildversion:
+          type: "string"
+          example: "3.10"
+        schemaversion:
+          type: "string"
+          example: "3.10"
+      
     StatusRtcGet:
       type: "object"
       properties:
         rtcget:
-          type: "array"
-          items:
             type: "object"
             properties:
               da:
                 type: "string"
                 example: "2021-07-26;17:20"
                 
+    StatusRequestRtcSet:
+      type: "object"
+      properties:
+        date:
+          type: "string"
+          example: "2021-07-26"
+        time:
+          type: "string"
+          example: "13:02"
+        summertime:
+          type: "boolean"
+          description: "enable/disable summer time"
+          default: true
+          
+    StatusResponseRtcSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
     StatusResponseRtcGet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
     
     StatusVatGet:
       type: "object"
       properties:
         vatget:
-          type: "array"
-          items:
             type: "object"
             properties:
               va:
@@ -971,51 +1024,73 @@ components:
                 description: "101 means 'zwolnione z podatku VAT'"
               vf:
                 type: "string"
+                example: ""
               vg:
                 type: "string"
+                example: ""
               vh:
                 type: "string"
+                example: ""
               vi:
                 type: "string"
+                example: ""
               vj:
                 type: "string"
+                example: ""
               vk:
                 type: "string"
+                example: ""
               vl:
                 type: "string"
+                example: ""
               vm:
                 type: "string"
+                example: ""
               vn:
                 type: "string"
+                example: ""
               vo:
                 type: "string"
+                example: ""
               vp:
                 type: "string"
+                example: ""
               vq:
                 type: "string"
+                example: ""
               vr:
                 type: "string"
+                example: ""
               vs:
                 type: "string"
+                example: ""
               vt:
                 type: "string"
+                example: ""
               vu:
                 type: "string"
+                example: ""
               vv:
                 type: "string"
+                example: ""
               vw:
                 type: "string"
+                example: ""
               vx:
                 type: "string"
+                example: ""
               vy:
                 type: "string"
+                example: ""
               vz:
                 type: "string"
+                example: ""
                 
     StatusResponseVatGet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusVatGet'
     
     StatusResponse:
@@ -1401,7 +1476,17 @@ components:
           description: "Check the 'message' field when 'ok' is 'false'"
         message:
           type: "string"
-
+          example: ""
+        code:
+          type: "number"
+          
+    ApiResponseTook:
+      type: "object"
+      properties:
+        took:
+          type: "number"
+          description: "Execution time in ms"
+          
 externalDocs:
   description: "Find out more about our website"
   url: "https://bigdotsoftware.pl/posnetserver-restful-service-dla-drukarek-posnet/"

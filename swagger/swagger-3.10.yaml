@@ -187,7 +187,7 @@ paths:
               allOf:
                 - $ref: '#/components/schemas/ParagonRequest'
                 - $ref: '#/components/schemas/ParagonRequestCallback'
-                - $ref: '#/components/schemas/ParagonRequestUserData'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
       responses:
         '200':
           description: "successful operation"
@@ -196,7 +196,7 @@ paths:
               schema:
                 allOf:
                 - $ref: "#/components/schemas/ParagonResponse"
-                - $ref: '#/components/schemas/ParagonRequestUserData'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
 
   /paragony:
     post:
@@ -237,7 +237,7 @@ paths:
           content:
             application/json:
               schema:
-                type: "object"
+                $ref: "#/components/schemas/FakturaAsyncStatusResponse"
   
   /faktura:
     post:
@@ -245,19 +245,31 @@ paths:
       - "Faktury"
       summary: "Print an invoice"
       description: "The same restpoint can be usedto print invoices on both regular and ONLINE Posnet devices, but the payload structure is different. Check every field description for more details or copy details from our website: https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury/ and https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury-drukarki-serii-online/"
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
       requestBody:
         content:
           'application/json':
             schema:
               allOf:
                 - $ref: '#/components/schemas/FakturaRequest'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
       responses:
         '200':
           description: "successful operation"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FakturaResponse"
+                allOf:
+                  - $ref: "#/components/schemas/FakturaResponse"
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
 
   /faktury:
     post:
@@ -823,7 +835,7 @@ components:
         type: "object"
         allOf:
           - $ref: '#/components/schemas/ParagonRequest'
-          - $ref: '#/components/schemas/ParagonRequestUserData'
+          - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
   
   
     PaymentObject: 
@@ -845,7 +857,7 @@ components:
           type: "boolean"
           example: false
   
-    ParagonRequestUserData:
+    ParagonFakturaRequestUserData:
       type: "object"
       properties:
         userdata:
@@ -941,17 +953,26 @@ components:
           items:
             type: "object"
             properties:
-              paragon:
+              faktura:
                 type: "object"
                 allOf:
                   - $ref: '#/components/schemas/FakturaRequest'
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
               ts:
                 type: "number"
                 format: "int64"
+                description: "printing begin timestamp"
+                example: 1627376834869
+              tsend:
+                type: "number"
+                format: "int64"
+                description: "printing end timestamp"
+                example: 1627376834969
               inprogress:
                 type: "boolean"
               stat:
                 type: "object"
+                description: "Invoice printout response"
                 allOf:
                   - $ref: '#/components/schemas/FakturaCommonResponse'
                   
@@ -971,7 +992,7 @@ components:
                 allOf:
                 - $ref: '#/components/schemas/ParagonRequest'
                 - $ref: '#/components/schemas/ParagonRequestCallback'
-                - $ref: '#/components/schemas/ParagonRequestUserData'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
               ts:
                 type: "number"
                 format: "int64"
@@ -989,7 +1010,7 @@ components:
                 description: "Fiscal printout response"
                 allOf:
                   - $ref: '#/components/schemas/ParagonResponse'
-                  - $ref: '#/components/schemas/ParagonRequestUserData'
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
 
     FakturaCommonResponse:
       type: "object"
@@ -997,18 +1018,22 @@ components:
         code:
           type: "number"
           format: "int32"
-        error:
+        #error:
+        #  type: "string"
+        #results:
+        #  type: "array"
+        #  items:
+        #    type: "object"
+        fn:
           type: "string"
-        results:
-          type: "array"
-          items:
-            type: "object"
-        bn:
-          type: "string"
+          example: "14"
+          description: "number of last printed invoice"
         hn:
           type: "string"
+          example: "2637"
         took:
           type: "number"
+          example: 380
           format: "int32"
           
     ParagonCommonResponse:
@@ -1048,11 +1073,16 @@ components:
     
     FakturyResponse:
       type: "object"
-      allOf:
-        - $ref: '#/components/schemas/ApiResponse'
       properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
         hits:
-          type: "object"
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/FakturaResponse'
     
     CustomCommandResponse:
       type: "object"
@@ -1103,9 +1133,15 @@ components:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/FakturaCommonResponse'
       properties:
-        hits:
-          type: "object"
+        transaction:
+          type: "string"
+          example: "bb3b77bf-e33b-4fbb-ad62-ede768ed5652"
+          description: "Unique transaction identifier when async=true"
+      #properties:
+      #  hits:
+      #    type: "object"
           
     AsyncQueueResponse:
       type: "object"

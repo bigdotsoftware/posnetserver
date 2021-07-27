@@ -963,6 +963,7 @@ components:
             type: "object"
             allOf:
               - $ref: '#/components/schemas/ParagonResponse'
+              - $ref: '#/components/schemas/ParagonCommonTimestampsResponse'
     
     FakturaAsyncStatusResponse:
       type: "object"
@@ -1080,12 +1081,27 @@ components:
           type: "number"
           example: 902
           format: "int32"
+    
+    ParagonCommonTimestampsResponse:
+      type: "object"
+      properties:
+        ts:
+          type: "number"
+          format: "int64"
+          description: "printing begin timestamp"
+          example: 1627376834869
+        tsend:
+          type: "number"
+          format: "int64"
+          description: "printing end timestamp"
+          example: 1627376834969
           
     ParagonResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ParagonCommonResponse'
+        - $ref: '#/components/schemas/ParagonCommonTimestampsResponse'
       properties:
         transaction:
           type: "string"

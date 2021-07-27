@@ -169,13 +169,13 @@ paths:
           type: "boolean"
           default: false
       - name: "resultsurl"
-        description: "Used only when async=true. When provided - execute URL when document is printed. Payload is ParagonAsyncStatusResponse"
+        description: "Used only when async=true. When provided - execute URL when document is printed. Payload is ParagonAsyncStatusResponse. Parameter 'resultsurl' can be passed in the payload body as well"
         in: "query"
         schema:
           type: "string"
       - name: "resultsurlmethod"
         in: "query"
-        description: "HTTP method to be used (GET, POST, PUT) to execute resultsurl"
+        description: "HTTP method to be used (GET, POST, PUT) to execute resultsurl. Parameter can be passed in the payload body as well"
         schema:
           type: "string"
           example: "POST"
@@ -186,13 +186,17 @@ paths:
             schema:
               allOf:
                 - $ref: '#/components/schemas/ParagonRequest'
+                - $ref: '#/components/schemas/ParagonRequestCallback'
+                - $ref: '#/components/schemas/ParagonRequestUserData'
       responses:
         '200':
           description: "successful operation"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ParagonResponse"
+                allOf:
+                - $ref: "#/components/schemas/ParagonResponse"
+                - $ref: '#/components/schemas/ParagonRequestUserData'
 
   /paragony:
     post:
@@ -819,6 +823,7 @@ components:
         type: "object"
         allOf:
           - $ref: '#/components/schemas/ParagonRequest'
+          - $ref: '#/components/schemas/ParagonRequestUserData'
   
   
     PaymentObject: 
@@ -840,6 +845,25 @@ components:
           type: "boolean"
           example: false
   
+    ParagonRequestUserData:
+      type: "object"
+      properties:
+        userdata:
+          type: "object"
+          
+    ParagonRequestCallback:
+      type: "object"
+      properties:
+        callback:
+          type: "object"
+          properties:
+            resultsurl:
+              type: "string"
+              example: "http://sampleurl/restapi"
+            resultsurlmethod:
+              type: "string"
+              example: "POST"
+        
     ParagonRequest:
       type: "object"
       properties:
@@ -896,9 +920,10 @@ components:
     
     ParagonyResponse:
       type: "object"
-      allOf:
-        - $ref: '#/components/schemas/ApiResponse'
       properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
         hits:
           type: "array"
           items:
@@ -942,17 +967,29 @@ components:
             properties:
               paragon:
                 type: "object"
+                description: "Fiscal printout request"
                 allOf:
-                  - $ref: '#/components/schemas/ParagonRequest'
+                - $ref: '#/components/schemas/ParagonRequest'
+                - $ref: '#/components/schemas/ParagonRequestCallback'
+                - $ref: '#/components/schemas/ParagonRequestUserData'
               ts:
                 type: "number"
                 format: "int64"
+                description: "printing begin timestamp"
+                example: 1627376834869
+              tsend:
+                type: "number"
+                format: "int64"
+                description: "printing end timestamp"
+                example: 1627376834969
               inprogress:
                 type: "boolean"
               stat:
                 type: "object"
+                description: "Fiscal printout response"
                 allOf:
-                  - $ref: '#/components/schemas/ParagonCommonResponse'
+                  - $ref: '#/components/schemas/ParagonResponse'
+                  - $ref: '#/components/schemas/ParagonRequestUserData'
 
     FakturaCommonResponse:
       type: "object"
@@ -980,18 +1017,22 @@ components:
         code:
           type: "number"
           format: "int32"
-        error:
-          type: "string"
-        results:
-          type: "array"
-          items:
-            type: "object"
+          example: 0
+        #results:
+        #  type: "array"
+        #  items:
+        #    type: "object"
         bn:
           type: "string"
+          example: "14"
+          description: "number of last printed fiscal printout"
         hn:
           type: "string"
+          example: "2612"
+          description: "number of last printed header"
         took:
           type: "number"
+          example: 902
           format: "int32"
           
     ParagonResponse:
@@ -1002,6 +1043,8 @@ components:
       properties:
         transaction:
           type: "string"
+          example: "bb3b77bf-e33b-4fbb-ad62-ede768ed5652"
+          description: "Unique transaction identifier when async=true"
     
     FakturyResponse:
       type: "object"

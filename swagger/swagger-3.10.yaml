@@ -482,7 +482,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportShiftrepResponse"
+                
+  /raporty/kasowy:
+    get:
+      tags:
+      - "Reports"
+      summary: "Cash state report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportCashstaterepResponse"
 
+  /raporty/custom:
+    post:
+      tags:
+      - "Reports"
+      summary: "Custom report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportCustomRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportCustomResponse"
 
   /command:
     post:
@@ -1003,6 +1046,16 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
     
+    ReportCustomResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    ReportCashstaterepResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
     FakturaResponse:
       type: "object"
       allOf:
@@ -1112,6 +1165,106 @@ components:
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
     
+    ReportCustomRequest:
+      type: "object"
+      properties:
+        formtype:
+          type: "string"
+          example: "bon_rabatowy"
+          description: "Type of report"
+          enum:
+            - "transakcje_odlozone"
+            - "funkcje_operatora"
+            - "raport_kasjera"
+            - "raport_srodkow_platnosci"
+            - "sprzedaz_zarejestrowana_w_kasie"
+            - "pokwitowanie"
+            - "potwierdzenie_wplaty"
+            - "bon_upominkowy"
+            - "nota_kredytowa"
+            - "nota_kredytowa_ex"
+            - "kupon_rabatowy"
+            - "platnosc_za_pobraniem"
+            - "przelew_bankowy"
+            - "potwierdzenie_sprzedazy_bonu_upominkowego"
+            - "rabat_dla_pracownika"
+            - "wymiana_srodkow_platnosci"
+            - "operacje_kasowe"
+            - "bledy_kasy"
+            - "cennik"
+            - "wydanie_bonu_upominkowego"
+            - "potwierdzenie_transakcji_karta_platnicza"
+            - "potwierdzenie_doladowania"
+            - "potwierdzenie_skupu_waluty"
+            - "bon_rabatowy"
+            - "raport_zmianowy"
+            - "rozliczenie_konta"
+            - "raport_kasy_kasjera"
+            - "wplata_wyplata"
+            - "stany_licznikow"
+            - "raport_tankowania"
+            - "potwierdzenie_zaplaty_karta"
+            - "waluta_w_sejfie"
+            - "raport_alarmu_paliwa"
+            - "bilet_do_myjni"
+            - "raport_stanu_paliw"
+            - "raport_dostaw_paliw"
+            - "raport_zmiany_bp_partnerclub"
+            - "potwierdzenie_podarunku"
+            - "potwierdzenie_wydania_podarunku"
+            - "zamowienie"
+            - "potwierdzenie_raport_bon"
+            - "pokwitowanie"
+            - "formatka_lotto"
+            - "super_formatka"
+            - "formatka_szeroka"
+        lines:
+          type: "array"
+          example:
+            - type: 0
+              params:
+                - "0"
+                - "123"
+                - "123"
+                - "123"
+            - type: 1
+              params:
+                - "#################################"
+            - type: 2
+            - type: 3
+              params:
+                - "TOWAR 1"
+                - "7777"
+            - type: 3
+              params:
+                - "TOWAR 2"
+                - "1111"
+            - type: 4
+              params:
+                - "8888"
+            - type: 5
+              params:
+                - "8888"
+            - type: 6
+              params:
+                - "8888"
+            - type: 7
+              params:
+                - "2020-06-01"
+          items:
+            type: "object"
+            properties:
+              type:
+                type: "number"
+              params:
+                type: "array"
+                items:
+                  type: "string"
+                  example: "Sample value"
+
+
+
+          
     ReportShiftrepRequest:
       type: "object"
       properties:

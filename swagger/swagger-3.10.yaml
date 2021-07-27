@@ -312,6 +312,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusResponse"
 
+  /counters:
+    get:
+      tags:
+      - "Management"
+      summary: "Read counters"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountersResponse"
+
   /datetime:
     get:
       tags:
@@ -1566,6 +1587,31 @@ components:
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusVatGet'
     
+    CountersResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        counters:
+          type: "object"
+          properties:
+            rd:
+              type: "string"
+            hn:
+              type: "string"
+            bn:
+              type: "string"
+            fn:
+              type: "string"
+            nu:
+              type: "string"
+            bc:
+              type: "string"
+            bt:
+              type: "string"
+            ft:
+              type: "string"
+        
     StatusResponse:
       type: "object"
       allOf:

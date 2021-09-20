@@ -1,0 +1,2128 @@
+openapi: "3.0.3"
+info:
+  description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
+  version: "3.10"
+  title: "Posnet Server"
+  contact:
+    email: "bigdotsoftware@bigdotsoftware.pl"
+    
+servers:
+  - url: http://{host}:{port}/
+    description: "HTTP"
+    variables:
+      host:
+        default: localhost
+      port:
+        enum:
+          - '3050'
+        default: '3050'
+
+  - url: https://{host}:{port}/
+    description: "HTTPS"
+    variables:
+      host:
+        default: localhost
+      port:
+        enum:
+          - '3051'
+        default: '3051'
+
+tags:
+- name: "License"
+  description: "Manage your license"
+  externalDocs:
+    description: "Find out more"
+    url: "https://blog.bigdotsoftware.pl/posnet-server-licencja/"
+- name: "General"
+  description: "General operations"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Paragony"
+  description: "Fiscal printouts"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Faktury"
+  description: "Invoices"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Management"
+  description: "Printer information"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Reports"
+  description: "Reports"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Forms"
+  description: "Forms"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Commands"
+  description: "Send custom commands"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+
+paths:
+  /licencja:
+    get:
+      tags:
+      - "License"
+      summary: "Check the license details"
+      description: "Shows details about used license, including expiration date. We strongly suggest to execute this method periodically in local monitoring system to verify license expiration date. Method can be used as a system heartbeat as well."
+      parameters:
+      - name: "json"
+        in: "query"
+        description: "Pass ?json=true/false to change the output format"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseResponse"
+            
+  /licencja/upgrade:
+    post:
+      tags:
+      - "License"
+      summary: "Obtain new license"
+      description: "Forces to download new license when available. Note that Posnet server renew licenses automatically 10 days before expiration date. Method can be used to renew license earlier."
+      responses:
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseUpgradeResponse"
+  /monitoring:
+    get:
+      tags:
+      - "General"
+      summary: "Monitoring"
+      description: ""
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitoringResponse"
+        
+  /async_queue:
+    get:
+      tags:
+      - "General"
+      summary: "Monitoring"
+      description: ""
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncQueueResponse"
+    
+  /paragon/{uuid}:
+    get:
+      tags:
+      - "Paragony"
+      summary: "Returns status of asynchronous printout"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParagonAsyncStatusResponse"
+  
+  /paragon:
+    post:
+      tags:
+      - "Paragony"
+      summary: "Print fiscal document"
+      description: ""
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "bulkmode"
+        description: "Enable 'bulk mode' in printer while printing. Setting to 'true' can reduce printing time on some printers."
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "resultsurl"
+        description: "Used only when async=true. When provided - execute URL when document is printed. Payload is ParagonAsyncStatusResponse. Parameter 'resultsurl' can be passed in the payload body as well"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "resultsurlmethod"
+        in: "query"
+        description: "HTTP method to be used (GET, POST, PUT) to execute resultsurl. Parameter can be passed in the payload body as well"
+        schema:
+          type: "string"
+          example: "POST"
+      
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ParagonRequest'
+                - $ref: '#/components/schemas/ParagonRequestCallback'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/ParagonResponse"
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+  /paragony:
+    post:
+      tags:
+      - "Paragony"
+      summary: "Print many fiscal documents at once"
+      description: ""
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ParagonyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParagonyResponse"
+
+  /faktura/{uuid}:
+    get:
+      tags:
+      - "Faktury"
+      summary: "Returns status of async printout"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakturaAsyncStatusResponse"
+  
+  /faktura:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print an invoice"
+      description: "The same restpoint can be usedto print invoices on both regular and ONLINE Posnet devices, but the payload structure is different. Check every field description for more details or copy details from our website: https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury/ and https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury-drukarki-serii-online/"
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturaRequest'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FakturaResponse"
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+  /faktury:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print many invoices at once"
+      description: ""
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakturyResponse"
+
+  /status:
+    get:
+      tags:
+      - "Management"
+      summary: "General fiscal printer status"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+
+  /counters:
+    get:
+      tags:
+      - "Management"
+      summary: "Read counters"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountersResponse"
+
+  /datetime:
+    get:
+      tags:
+      - "Management"
+      summary: "Get date and time information"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseRtcGet"
+                
+    put:
+      tags:
+      - "Management"
+      summary: "Set date and time"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/StatusRequestRtcSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseRtcSet"
+
+  /vat:
+    get:
+      tags:
+      - "Management"
+      summary: "Get VAT rates"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseVatGet"
+                
+    put:
+      tags:
+      - "Management"
+      summary: "Set VAT rates"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/StatusRequestVatSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseVatSet"
+  
+  /maintenance:
+    put:
+      tags:
+      - "Management"
+      summary: "Set date of the next service inspection"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestMaintenanceSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseMaintenanceSet"
+                
+  /raporty/dobowy:
+    get:
+      tags:
+      - "Reports"
+      summary: "Generate daily EOD report"
+      description: "While executing this request Posnet printer is asking to confirm the date - request is waiting for user's action"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDobowyResponse"
+  
+  /raporty/miesieczny:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate monthly report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportMiesiecznyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportMiesiecznyResponse"
+
+  /raporty/zmianowy:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate shift report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportShiftrepRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportShiftrepResponse"
+                
+  /raporty/kasowy:
+    get:
+      tags:
+      - "Reports"
+      summary: "Cash state report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportCashstaterepResponse"
+
+  /raporty/custom:
+    post:
+      tags:
+      - "Reports"
+      summary: "Custom report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportCustomRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportCustomResponse"
+
+  /forms/order:
+    post:
+      tags:
+      - "Forms"
+      summary: "Recipe with order number"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsOrderRecipeRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsOrderRecipeResponse"
+  /command:
+    post:
+      tags:
+      - "Commands"
+      summary: "Send a custom command to fiscal printer. More at https://blog.bigdotsoftware.pl/posnet-server-pozostale-polecenia/"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CustomCommandRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomCommandResponse'
+
+
+components:
+  schemas:
+    CustomCommand:
+      type: "object"
+      properties:
+        cmd:
+          type: "string"
+        params:
+          type: "string"
+      
+    CustomCommandRequest:
+      type: "array"
+      items:
+        allOf:
+          - $ref: '#/components/schemas/CustomCommand'
+          
+    ParagonFakturaLine:
+      type: "object"
+      properties:
+        na:
+          type: "string"
+          description: "Name of of the good"
+          example: "Product 1"
+        il:
+          description: "minimum value is 1"
+          type: "number"
+          format: "float"
+          example: 1.0
+        vt: 
+          description: "value from range 0..102"
+          type: "number"
+          format: "int32"
+          example: 0
+        vtp: 
+          description: "VAT in string format, like 23,00, 8,00 ..."
+          type: "string"
+          example: "23,00"
+        vtn: 
+          description: "VAT in literar format A...Z"
+          type: "string"
+          example: "A"
+        pr:
+          type: "number"
+          format: "int32"
+          example: 2350
+  
+  
+    ParagonFakturaSummary: 
+      type: "object"
+      properties:
+        to:
+          type: "number"
+          format: "int32"
+          example: 2350
+        fp:
+          type: "number"
+          format: "int32"
+          example: 2350
+          
+    FakturaHeader:
+      type: "object"
+      properties:
+        nb:
+          description: "max length is 40"
+          type: "string"
+        ni:
+          description: "max length is 20"
+          type: "string"
+        na: 
+          type: "array"
+          description: "Max 6 elements"
+          items:
+            type: "string"
+            description: "max length is 56"
+            example: "Nazwa firmy"
+        pd:
+          description: "max length is 38"
+          type: "string"
+        pt:
+          description: "max length is 38"
+          type: "string"
+        sc:
+          description: "max length is 56"
+          type: "string"
+        ss:
+          description: "max length is 56"
+          type: "string"
+        cc:
+          type: "number"
+          default: 0
+        ps:
+          type: "boolean"
+          default: false
+        fo:
+          type: "number"
+          default: 0
+        co: 
+          type: "boolean"
+          default: false
+        cm:
+          type: "boolean"
+          default: false
+          
+    FakturaHeaderOnline:
+      type: "object"
+      properties:
+        nm:
+          description: "max length is 23. Only ONLINE devices"
+          type: "string"
+          example: "Nazwa Faktury"
+        cc:
+          description: "Only ONLINE devices"
+          type: "number"
+          format: "int32"
+          default: 0
+        co:
+          description: "Only ONLINE devices"
+          type: "boolean"
+          default: false
+        ln:
+          description: "Only ONLINE devices"
+          type: "number"
+          format: "int32"
+          default: 0
+          example: 40
+        fn:
+          description: "Only ONLINE devices"
+          type: "number"
+          format: "int32"
+          default: 0
+          example: 40
+    
+        na: 
+          type: "array"
+          description: "(trfvbuyer) Max 6 elements. Only ONLINE devices"
+          items:
+            type: "string"
+            description: "max length is 256"
+            example: "Nazwa firmy"
+        ni:
+          description: "(trfvbuyer) max length is 20. Only ONLINE devices"
+          example: "584-222-98-89"
+          type: "string"
+        ad:
+          type: "array"
+          description: "(trfvbuyer) Max 6 elements. Only ONLINE devices"
+          items:
+            type: "string"
+            description: "max length is 256"
+            example: "ul. Miejska 56, 88-888 Miasto"
+            
+        ad_sc:
+          description: "(trfvbuyer). Only ONLINE devices"
+          type: "number"
+          format: "int32"
+        ad_at:
+          description: "(trfvbuyer). Only ONLINE devices"
+          type: "number"
+          format: "int32"
+          default: 0
+    
+        nb:
+          description: "(trfvnumber) max length is 40. Only ONLINE devices"
+          type: "string"
+          example: "56/2020"
+        nb_sc:
+          description: "(trfvnumber). Only ONLINE devices"
+          type: "number"
+          format: "int32"
+        nb_at:
+          description: "(trfvnumber). Only ONLINE devices"
+          type: "number"
+          format: "int32"
+          default: 0
+          
+    FakturaRequest:
+      type: "object"
+      properties:
+        lines:
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          type: "array"
+          items:
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+        extralines1:
+          type: "array"
+          description: "Max 2 elements. Structure for both type of devices ONLINE and not-ONLINE"
+          items:
+            type: "string"
+            description: "Max strign length is 56 characters"
+            example: "Line 1"
+        extralines2:
+          type: "array"
+          description: "Max 3 elements. Structure for both type of devices ONLINE and not-ONLINE"
+          items:
+            type: "string"
+            description: "Max strign length is 56 characters"
+            example: "Line 2"
+        payments: 
+          type: "array"
+          description: "Only ONLINE devices"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/PaymentObject'
+        header:
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE, but not all fields can be used. See fields destription for mor details."
+          allOf:
+            - $ref: '#/components/schemas/FakturaHeaderOnline'
+            - $ref: '#/components/schemas/FakturaHeader'
+          
+        headerex:
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          properties:
+            nr:
+              description: "max length is 20"
+              type: "string"
+              example: "WX 12345"
+            zs:
+              description: "max length is 56"
+              type: "string"
+              example: "45/25/2000358"
+            oz:
+              description: "max length is 56"
+              type: "string"
+              example: "Jan Kowalski"
+            zk:
+              description: "max length is 56"
+              type: "string"
+              example: "789/75CGX"
+            nk:
+              description: "max length is 41"
+              type: "string"
+              example: "DX12"
+            wd:
+              description: "max length is 56"
+              type: "string"
+              example: "Warunki dostawy"
+            sd:
+              description: "max length is 56"
+              type: "string"
+              example: "Sposób dostawy"
+  
+        summary: 
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+    
+    FakturyRequest:
+      type: "array"
+      items:
+        type: "object"
+        allOf:
+          - $ref: '#/components/schemas/FakturaRequest'
+  
+    ParagonyRequest:
+      type: "array"
+      items:
+        type: "object"
+        allOf:
+          - $ref: '#/components/schemas/ParagonRequest'
+          - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+  
+  
+    PaymentObject: 
+      type: "object"
+      properties:
+        ty: 
+          type: "number"
+          format: "int32"
+          example: 8
+        wa: 
+          type: "number"
+          format: "int32"
+          example: 2350
+        na: 
+          description: "max length is 25"
+          type: "string"
+          example: "Visa ... ... 0456"
+        re: 
+          type: "boolean"
+          example: false
+  
+    ParagonFakturaRequestUserData:
+      type: "object"
+      properties:
+        userdata:
+          type: "object"
+          
+    ParagonRequestCallback:
+      type: "object"
+      properties:
+        callback:
+          type: "object"
+          properties:
+            resultsurl:
+              type: "string"
+              example: "http://sampleurl/restapi"
+            resultsurlmethod:
+              type: "string"
+              example: "POST"
+        
+    ParagonRequest:
+      type: "object"
+      properties:
+        lines:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+              
+        extralines:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              id:
+                type: "number"
+                format: "int32"
+                example: 39
+              na:
+                type: "string"
+                example: "FV 12345/2018"
+              sw:
+                type: "boolean"
+                example: false
+              sh:
+                type: "boolean"
+                example: false
+        taxidinfo: 
+          type: "object"
+          properties:
+            ni: 
+              description: "max length is 20"
+              type: "string"
+              example: "584-222-98-89"
+            dw:
+              type: "boolean"
+              example: true
+            ds: 
+              description: "max length is 56"
+              type: "string"
+              example: "NIP NABYWCY"
+        payments: 
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/PaymentObject'
+            
+        summary: 
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+    
+    ParagonyResponse:
+      type: "object"
+      properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/ParagonResponse'
+              - $ref: '#/components/schemas/ParagonCommonTimestampsResponse'
+    
+    FakturaAsyncStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              faktura:
+                type: "object"
+                allOf:
+                  - $ref: '#/components/schemas/FakturaRequest'
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+              ts:
+                type: "number"
+                format: "int64"
+                description: "printing begin timestamp"
+                example: 1627376834869
+              tsend:
+                type: "number"
+                format: "int64"
+                description: "printing end timestamp"
+                example: 1627376834969
+              inprogress:
+                type: "boolean"
+              stat:
+                type: "object"
+                description: "Invoice printout response"
+                allOf:
+                  - $ref: '#/components/schemas/FakturaCommonResponse'
+                  
+    ParagonAsyncStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              paragon:
+                type: "object"
+                description: "Fiscal printout request"
+                allOf:
+                - $ref: '#/components/schemas/ParagonRequest'
+                - $ref: '#/components/schemas/ParagonRequestCallback'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+              ts:
+                type: "number"
+                format: "int64"
+                description: "printing begin timestamp"
+                example: 1627376834869
+              tsend:
+                type: "number"
+                format: "int64"
+                description: "printing end timestamp"
+                example: 1627376834969
+              inprogress:
+                type: "boolean"
+              stat:
+                type: "object"
+                description: "Fiscal printout response"
+                allOf:
+                  - $ref: '#/components/schemas/ParagonResponse'
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+    FakturaCommonResponse:
+      type: "object"
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+        #error:
+        #  type: "string"
+        #results:
+        #  type: "array"
+        #  items:
+        #    type: "object"
+        fn:
+          type: "string"
+          example: "14"
+          description: "number of last printed invoice"
+        hn:
+          type: "string"
+          example: "2637"
+        took:
+          type: "number"
+          example: 380
+          format: "int32"
+          
+    ParagonCommonResponse:
+      type: "object"
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+          example: 0
+        #results:
+        #  type: "array"
+        #  items:
+        #    type: "object"
+        bn:
+          type: "string"
+          example: "14"
+          description: "number of last printed fiscal printout"
+        hn:
+          type: "string"
+          example: "2612"
+          description: "number of last printed header"
+        took:
+          type: "number"
+          example: 902
+          format: "int32"
+    
+    ParagonCommonTimestampsResponse:
+      type: "object"
+      properties:
+        ts:
+          type: "number"
+          format: "int64"
+          description: "printing begin timestamp"
+          example: 1627376834869
+        tsend:
+          type: "number"
+          format: "int64"
+          description: "printing end timestamp"
+          example: 1627376834969
+          
+    ParagonResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ParagonCommonResponse'
+        - $ref: '#/components/schemas/ParagonCommonTimestampsResponse'
+      properties:
+        transaction:
+          type: "string"
+          example: "bb3b77bf-e33b-4fbb-ad62-ede768ed5652"
+          description: "Unique transaction identifier when async=true"
+    
+    FakturyResponse:
+      type: "object"
+      properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/FakturaResponse'
+    
+    CustomCommandResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+
+    ReportDobowyResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+        error:
+          type: "string"
+        results:
+          type: "array"
+          items:
+            type: "object"
+    
+    ReportMiesiecznyResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    ReportShiftrepResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    ReportCustomResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    FormsOrderRecipeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    ReportCashstaterepResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    FakturaResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/FakturaCommonResponse'
+      properties:
+        transaction:
+          type: "string"
+          example: "bb3b77bf-e33b-4fbb-ad62-ede768ed5652"
+          description: "Unique transaction identifier when async=true"
+      #properties:
+      #  hits:
+      #    type: "object"
+          
+    AsyncQueueResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "object"
+          properties:
+            faktury:
+              type: "object"
+              properties:
+                inprogress:
+                  type: "number"
+                  format: "int32"
+                size:
+                  type: "number"
+                  format: "int32"
+                items:
+                  type: "array"
+                  items:
+                    type: "object"
+                    properties:
+                      key:
+                        type: "string"
+                      value:
+                        type: "array"
+                        items:
+                          type: "object"
+                          allOf:
+                            - $ref: '#/components/schemas/FakturaAsyncStatusResponse'
+            paragony:
+              type: "object"
+              properties:
+                inprogress:
+                  type: "number"
+                  format: "int32"
+                size:
+                  type: "number"
+                  format: "int32"
+                items:
+                  type: "array"
+                  items:
+                    type: "object"
+                    properties:
+                      key:
+                        type: "string"
+                      value:
+                        type: "array"
+                        items:
+                          type: "object"
+                          allOf:
+                            - $ref: '#/components/schemas/ParagonAsyncStatusResponse'
+                
+
+    StatusCommon:
+      type: "object"
+      properties:
+        buildversion:
+          type: "string"
+          example: "3.10"
+        schemaversion:
+          type: "string"
+          example: "3.10"
+      
+    StatusRtcGet:
+      type: "object"
+      properties:
+        rtcget:
+            type: "object"
+            properties:
+              da:
+                type: "string"
+                example: "2021-07-26;17:20"
+                
+    StatusRequestRtcSet:
+      type: "object"
+      properties:
+        date:
+          type: "string"
+          example: "2021-07-26"
+        time:
+          type: "string"
+          example: "13:02"
+        summertime:
+          type: "boolean"
+          description: "enable/disable summer time"
+          default: true
+          
+    StatusResponseRtcSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
+    StatusResponseRtcGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCommon'
+        - $ref: '#/components/schemas/StatusRtcGet'
+    
+    FormsOrderRecipeRequest:
+      type: "object"
+      properties:
+        font:
+          type: "object"
+          properties:
+            name:
+              type: "string"
+              example: "Standard"
+              enum:
+                - "3D Diagonal"
+                - "Alpha"
+                - "Acrobatic"
+                - "Avatar"
+                - "Big Money-ne"
+                - "Big Money-nw"
+                - "Big Money-se"
+                - "Big Money-sw"
+                - "Big"
+                - "Blocks"
+                - "Bulbhead"
+                - "Cards"
+                - "Chiseled"
+                - "Crawford2"
+                - "Crazy"
+                - "Dancing Font"
+                - "Doh"
+                - "Doom"
+                - "Efti Wall"
+                - "Epic"
+                - "Fire Font-k"
+                - "Fire Font-s"
+                - "Flower Power"
+                - "Fun Face"
+                - "Fun Faces"
+                - "Ghost"
+                - "Graceful"
+                - "Graffiti"
+                - "Impossible"
+                - "Isometric1"
+                - "Isometric2"
+                - "Isometric3"
+                - "Isometric4"
+                - "JS Bracket Letters"
+                - "Lil Devil"
+                - "Merlin1"
+                - "Modular"
+                - "Ogre"
+                - "Patorjk's Cheese"
+                - "Patorjk-HeX"
+                - "Rectangles"
+                - "Slant"
+                - "Slant Relief"
+                - "Small"
+                - "Small Slant"
+                - "Small Isometric1"
+                - "Soft"
+                - "Standard"
+                - "Star Wars"
+                - "Sub-Zero"
+                - "Swamp Land"
+                - "Sweet"
+                - "Train"
+                - "Twisted"
+                - "Wet Letter"
+                - "Varsity"
+      
+    ReportCustomRequest:
+      type: "object"
+      properties:
+        formtype:
+          type: "string"
+          example: "bon_rabatowy"
+          description: "Type of report"
+          enum:
+            - "transakcje_odlozone"
+            - "funkcje_operatora"
+            - "raport_kasjera"
+            - "raport_srodkow_platnosci"
+            - "sprzedaz_zarejestrowana_w_kasie"
+            - "pokwitowanie"
+            - "potwierdzenie_wplaty"
+            - "bon_upominkowy"
+            - "nota_kredytowa"
+            - "nota_kredytowa_ex"
+            - "kupon_rabatowy"
+            - "platnosc_za_pobraniem"
+            - "przelew_bankowy"
+            - "potwierdzenie_sprzedazy_bonu_upominkowego"
+            - "rabat_dla_pracownika"
+            - "wymiana_srodkow_platnosci"
+            - "operacje_kasowe"
+            - "bledy_kasy"
+            - "cennik"
+            - "wydanie_bonu_upominkowego"
+            - "potwierdzenie_transakcji_karta_platnicza"
+            - "potwierdzenie_doladowania"
+            - "potwierdzenie_skupu_waluty"
+            - "bon_rabatowy"
+            - "raport_zmianowy"
+            - "rozliczenie_konta"
+            - "raport_kasy_kasjera"
+            - "wplata_wyplata"
+            - "stany_licznikow"
+            - "raport_tankowania"
+            - "potwierdzenie_zaplaty_karta"
+            - "waluta_w_sejfie"
+            - "raport_alarmu_paliwa"
+            - "bilet_do_myjni"
+            - "raport_stanu_paliw"
+            - "raport_dostaw_paliw"
+            - "raport_zmiany_bp_partnerclub"
+            - "potwierdzenie_podarunku"
+            - "potwierdzenie_wydania_podarunku"
+            - "zamowienie"
+            - "potwierdzenie_raport_bon"
+            - "pokwitowanie"
+            - "formatka_lotto"
+            - "super_formatka"
+            - "formatka_szeroka"
+        lines:
+          type: "array"
+          example:
+            - type: 0
+              params:
+                - "0"
+                - "123"
+                - "123"
+                - "123"
+            - type: 1
+              params:
+                - "#################################"
+            - type: 2
+            - type: 3
+              params:
+                - "TOWAR 1"
+                - "7777"
+            - type: 3
+              params:
+                - "TOWAR 2"
+                - "1111"
+            - type: 4
+              params:
+                - "8888"
+            - type: 5
+              params:
+                - "8888"
+            - type: 6
+              params:
+                - "8888"
+            - type: 7
+              params:
+                - "2020-06-01"
+          items:
+            type: "object"
+            properties:
+              type:
+                type: "number"
+              params:
+                type: "array"
+                items:
+                  type: "string"
+                  example: "Sample value"
+
+
+
+          
+    ReportShiftrepRequest:
+      type: "object"
+      properties:
+        sh:
+          type: "string"
+          example: "shift #1"
+          description: "Name of the shift"
+        zr:
+          type: "boolean"
+          example: false
+          default: false
+          description: "true - shift reset"
+          
+    ReportMiesiecznyRequest:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
+        su:
+          type: "boolean"
+          example: false
+          default: false
+          description: "true - print summary only"
+    
+    RequestMaintenanceSet:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
+        te:
+          type: "string"
+          example: ""
+    
+    ResponseMaintenanceSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    StatusRequestVatSet:
+      type: "object"
+      properties:
+        va:
+          type: "string"
+          example: "23,00"
+        vb:
+          type: "string"
+          example: "8,00"
+        vc:
+          type: "string"
+          example: "0,00"
+        vd:
+          type: "string"
+          example: ""
+        ve:
+          type: "string"
+          example: ""
+        vf:
+          type: "string"
+          example: ""
+        vg:
+          type: "string"
+          example: ""
+        vh:
+          type: "string"
+          example: ""
+        vi:
+          type: "string"
+          example: ""
+        vj:
+          type: "string"
+          example: ""
+        vk:
+          type: "string"
+          example: ""
+        vl:
+          type: "string"
+          example: ""
+        vm:
+          type: "string"
+          example: ""
+        vn:
+          type: "string"
+          example: ""
+        vo:
+          type: "string"
+          example: ""
+        vp:
+          type: "string"
+          example: ""
+        vq:
+          type: "string"
+          example: ""
+        vr:
+          type: "string"
+          example: ""
+        vs:
+          type: "string"
+          example: ""
+        vt:
+          type: "string"
+          example: ""
+        vu:
+          type: "string"
+          example: ""
+        vv:
+          type: "string"
+          example: ""
+        vw:
+          type: "string"
+          example: ""
+        vx:
+          type: "string"
+          example: ""
+        vy:
+          type: "string"
+          example: ""
+        vz:
+          type: "string"
+          example: ""
+    
+    StatusResponseVatSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
+    StatusVatGet:
+      type: "object"
+      properties:
+        vatget:
+            type: "object"
+            properties:
+              va:
+                type: "string"
+                example: "23,00"
+              vb:
+                type: "string"
+                example: "8,00"
+              vc:
+                type: "string"
+                example: "0,00"
+              vd:
+                type: "string"
+                example: "3,00"
+              ve:
+                type: "string"
+                example: "101,00"
+                description: "101 means 'zwolnione z podatku VAT'"
+              vf:
+                type: "string"
+                example: ""
+              vg:
+                type: "string"
+                example: ""
+              vh:
+                type: "string"
+                example: ""
+              vi:
+                type: "string"
+                example: ""
+              vj:
+                type: "string"
+                example: ""
+              vk:
+                type: "string"
+                example: ""
+              vl:
+                type: "string"
+                example: ""
+              vm:
+                type: "string"
+                example: ""
+              vn:
+                type: "string"
+                example: ""
+              vo:
+                type: "string"
+                example: ""
+              vp:
+                type: "string"
+                example: ""
+              vq:
+                type: "string"
+                example: ""
+              vr:
+                type: "string"
+                example: ""
+              vs:
+                type: "string"
+                example: ""
+              vt:
+                type: "string"
+                example: ""
+              vu:
+                type: "string"
+                example: ""
+              vv:
+                type: "string"
+                example: ""
+              vw:
+                type: "string"
+                example: ""
+              vx:
+                type: "string"
+                example: ""
+              vy:
+                type: "string"
+                example: ""
+              vz:
+                type: "string"
+                example: ""
+                
+    StatusResponseVatGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCommon'
+        - $ref: '#/components/schemas/StatusVatGet'
+    
+    CountersResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        counters:
+          type: "object"
+          properties:
+            rd:
+              type: "string"
+            hn:
+              type: "string"
+            bn:
+              type: "string"
+            fn:
+              type: "string"
+            nu:
+              type: "string"
+            bc:
+              type: "string"
+            bt:
+              type: "string"
+            ft:
+              type: "string"
+        
+    StatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        buildversion:
+          type: "string"
+        error:
+          type: "string"
+        code:
+          type: "number"
+          format: "int32"
+        results:
+          type: "object"
+          allOf:
+          - $ref: '#/components/schemas/StatusRtcGet'
+          - $ref: '#/components/schemas/StatusVatGet'
+          properties:
+            hdrget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  tx:
+                    type: "string"
+                    
+            ftrinfoget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  tx:
+                    type: "string"
+                    
+            pccfgget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  cp:
+                    type: "string"
+                  id:
+                    type: "string"
+                  no:
+                    type: "string"
+                  pr:
+                    type: "string"
+        
+            tcpipcfgget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  dh:
+                    type: "string"
+                  ge:
+                    type: "string"
+                  id:
+                    type: "string"
+                  ip:
+                    type: "string"
+                  ma:
+                    type: "string"
+                  no:
+                    type: "string"
+            sdev:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  cp:
+                    type: "string"
+                  ds:
+                    type: "string"
+                  pe:
+                    type: "string"
+                  qe:
+                    type: "string"
+            sprn:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  pr:
+                    type: "string"
+            scnt:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  bn:
+                    type: "string"
+                  fn:
+                    type: "string"
+                  hn:
+                    type: "string"
+                  nu:
+                    type: "string"
+                  rd:
+                    type: "string"
+            stot:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  cc:
+                    type: "string"
+                  cn:
+                    type: "string"
+                  ct:
+                    type: "string"
+                  fa:
+                    type: "string"
+                  fb:
+                    type: "string"
+                  fc:
+                    type: "string"
+                  fd:
+                    type: "string"
+                  fe:
+                    type: "string"
+                  ff:
+                    type: "string"
+                  fg:
+                    type: "string"
+                  fh:
+                    type: "string"
+                  fi:
+                    type: "string"
+                  fj:
+                    type: "string"
+                  fk:
+                    type: "string"
+                  fl:
+                    type: "string"
+                  fm:
+                    type: "string"
+                  fn:
+                    type: "string"
+                  fo:
+                    type: "string"
+                  fp:
+                    type: "string"
+                  fq:
+                    type: "string"
+                  fr:
+                    type: "string"
+                  fs:
+                    type: "string"
+                  ft:
+                    type: "string"
+                  fu:
+                    type: "string"
+                  fv:
+                    type: "string"
+                  fw:
+                    type: "string"
+                  fx:
+                    type: "string"
+                  fy:
+                    type: "string"
+                  fz:
+                    type: "string"
+                    
+                  no:
+                    type: "string"
+                  pa:
+                    type: "string"
+                  pb:
+                    type: "string"
+                  pc:
+                    type: "string"
+                  pd:
+                    type: "string"
+                  pe:
+                    type: "string"
+                  pf:
+                    type: "string"
+                  pg:
+                    type: "string"
+                  ph:
+                    type: "string"
+                  pi:
+                    type: "string"
+                  pj:
+                    type: "string"
+                  pk:
+                    type: "string"
+                  pl:
+                    type: "string"
+                  pm:
+                    type: "string"
+                  pn:
+                    type: "string"
+                  po:
+                    type: "string"
+                  pp:
+                    type: "string"
+                  pq:
+                    type: "string"
+                  pr:
+                    type: "string"
+                  ps:
+                    type: "string"
+                  pt:
+                    type: "string"
+                  pu:
+                    type: "string"
+                  pv:
+                    type: "string"
+                  pw:
+                    type: "string"
+                  px:
+                    type: "string"
+                  py:
+                    type: "string"
+                  pz:
+                    type: "string"
+                  va:
+                    type: "string"
+                  vb:
+                    type: "string"
+                  vc:
+                    type: "string"
+                  vd:
+                    type: "string"
+                  ve:
+                    type: "string"
+                  vf:
+                    type: "string"
+                  vg:
+                    type: "string"
+                  vh:
+                    type: "string"
+                  vi:
+                    type: "string"
+                  vj:
+                    type: "string"
+                  vk:
+                    type: "string"
+                  vl:
+                    type: "string"
+                  vm:
+                    type: "string"
+                  vn:
+                    type: "string"
+                  vo:
+                    type: "string"
+                  vp:
+                    type: "string"
+                  vq:
+                    type: "string"
+                  vr:
+                    type: "string"
+                  vs:
+                    type: "string"
+                  vt:
+                    type: "string"
+                  vu:
+                    type: "string"
+                  vv:
+                    type: "string"
+                  vw:
+                    type: "string"
+                  vx:
+                    type: "string"
+                  vy:
+                    type: "string"
+                  vz:
+                    type: "string"
+    
+      
+    MonitoringResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "object"
+          properties:
+            totals:
+              type: "object"
+              properties:
+                paragon:
+                  type: "number"
+                  format: "int32"
+                paragony:
+                  type: "number"
+                  format: "int32"
+                faktura:
+                  type: "number"
+                  format: "int32"
+                faktury:
+                  type: "number"
+                  format: "int32"
+                command:
+                  type: "number"
+                  format: "int32"
+            started:
+              type: "object"
+              properties:
+                start:
+                  type: "number"
+                  format: "int64"
+                uptime:
+                  type: "number"
+                  format: "int64"
+            memory:
+              type: "object"
+              properties:
+                rssMB:
+                  type: "string"
+                rss:
+                  type: "number"
+                  format: "int64"
+                heapTotalMB:
+                  type: "string"
+                heapTotal:
+                  type: "number"
+                  format: "int64"
+                heapUsedMB:
+                  type: "string"
+                heapUsed:
+                  type: "number"
+                  format: "int64"
+                externalMB:
+                  type: "string"
+                external:
+                  type: "number"
+                  format: "int64"
+          
+    LicenseCommonResponse:
+      type: "object"
+      required:
+        - expired
+        - text
+      properties:
+        text: 
+          type: "string"
+        validTo:
+          type: "string"
+        licenseTo:
+          type: "string"
+        expired:
+          type: "boolean"
+            
+    LicenseResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          oneOf: 
+          - type: "object"
+            description: "when ?json=true"
+            allOf:
+            - $ref: '#/components/schemas/LicenseCommonResponse'
+          - type: "string"
+            description: "when ?json=false"
+          
+    LicenseUpgradeResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          allOf:
+          - $ref: '#/components/schemas/LicenseCommonResponse'
+          properties:
+            requested:
+              type: "boolean"
+            requestedtext: 
+              type: "string"
+        
+    ApiResponse:
+      type: "object"
+      required:
+        - "ok"
+      properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
+        message:
+          type: "string"
+          example: ""
+        code:
+          type: "number"
+          
+    ApiResponseTook:
+      type: "object"
+      properties:
+        took:
+          type: "number"
+          description: "Execution time in ms"
+          
+externalDocs:
+  description: "Find out more about our website"
+  url: "https://bigdotsoftware.pl/posnetserver-restful-service-dla-drukarek-posnet/"

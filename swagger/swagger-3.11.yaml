@@ -1379,10 +1379,13 @@ components:
     FormsAztectCodeRequest:
       type: "object"
       properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
         width:
           type: "number"
-          default: 20
-          example: 20
+          default: 10
+          example: 10
         correctionlevel:
           type: "number"
           description: "0-10%, 1-23%, 2-36%, 3-50%"
@@ -1398,14 +1401,115 @@ components:
         message:
           type: "string"
           example: "Hello"
+        extralines:
+          type: "array"
+          items:
+            type: "string"
+            example: "Nr rachunku: 5698759"
     
+    FormHeader:
+      type: "string"
+      example: "DOKUMENT_NIEFISKALNY"
+      default: "DOKUMENT_NIEFISKALNY"
+      description: "Uwaga, nagłówek (PUSTY) nie jest wspierany na wszystkich urządzeniach"
+      enum:
+        - "TRANSAKCJE_ODLOZONE"
+        - "POTWIERDZENIE_DOKONANIA_TRANSAKCJI"
+        - "RAPORT_FUNKCJI_OPERATORA"
+        - "RAPORT_KASJERA_X"
+        - "RAPORT_KASJERA_Z"
+        - "RAPORT_KASY_X"
+        - "RAPORT_KASY_Z"
+        - "OFFLINE_KASJERA"
+        - "ONLINE_KASJERA"
+        - "RAPORT_SRODKOW_PLATNOSCI"
+        - "SPRZEDAZ_ZAREJESTROWANA_W_KASIE"
+        - "POKWITOWANIE"
+        - "POTWIERDZENIE_WPLATY"
+        - "BON_UPOMINKOWY"
+        - "NOTA_KREDYTOWA_1"
+        - "NOTA_KREDYTOWA_2"
+        - "KUPON_RABATOWY"
+        - "PLATNOSC_ZA_POBRANIEM"
+        - "PRZELEW_BANKOWY"
+        - "POTWIERDZENIE_SPRZEDAZY_BONU_UPOMINKOWEGO"
+        - "RABAT_DLA_PRACOWNIKA"
+        - "WYMIANA_SRODKOW_PLATNOSCI"
+        - "OPERACJE_KASOWE"
+        - "BLEDY_KASY"
+        - "CENNIK"
+        - "ZMIANY_CEN"
+        - "STATYSTYKA_SPRZEDAZY"
+        - "POTWIERDZENIE_DOKONANIA_TRANSAKCJI"
+        - "WYDANIE_BONU_UPOMINKOWEGO"
+        - "POTWIERDZENIE_ZAPLATY_KARTA"
+        - "POTWIERDZENIE_ZAPLATY_RACHUNKU"
+        - "POKWITOWANIE"
+        - "POKWITOWANIE_TRANSAKCJI_UZNANIA"
+        - "POTWIERDZENIE_UNIEWAZNIENIA"
+        - "POTWIERDZENIE_ODMOWY_AUTORYZACJI"
+        - "POTWIERDZENIE_PREAUTORYZACJI"
+        - "POTWIERDZENIE_ODMOWY"
+        - "TRANSACTION_CONFIRMATION"
+        - "CANCELLATION_CONFIRMATION"
+        - "PREAUTHORIZATION_CONFIRMATION"
+        - "DECLINATION_CONFIRMATION"
+        - "POTWIERDZENIE_DOLADOWANIA_NUMERU_GSM"
+        - "POTWIERDZENIE_POPRAWNOSCI_NUMERU"
+        - "POTWIERDZENIE_REALIZACJI_DOLADOWANIA"
+        - "KUPON_ELEKTRONICZNY"
+        - "POTWIERDZENIE_SKUPU_WALUTY"
+        - "BON_RABATOWY"
+        - "LISTA_TOWAROW"
+        - "RAPORT_ZMIANOWY"
+        - "ROZLICZENIE_KONTA"
+        - "SALDO_KARTY_UPOMINKOWEJ"
+        - "KARTA_UPOMINKOWA"
+        - "POTWIERDZENIE_PLATNOSCI_KARTA"
+        - "WYMIANA_SRODKOW_PLATNOSCI"
+        - "SALDO_KARTY_ICARD"
+        - "POTWIERDZENIE_TRANSAKCJI_ICARD"
+        - "RAPORT_KASJERA"
+        - "RAPORT_SKROCONY"
+        - "POKWITOWANIE_WPLATY"
+        - "POKWITOWANIE_WYPLATY"
+        - "STANY_LICZNIKOW"
+        - "RAPORT_TANKOWANIA"
+        - "KARTA_KREDYTOWA"
+        - "WALUTA_W_SEJFIE"
+        - "RAPORT_ALARMU_PALIWA"
+        - "BILET_DO_MYJNI"
+        - "STAN_ZBIORNIKOW_RAPORT"
+        - "RAPORT_DOSTAWY_PALIW"
+        - "BP_PARTNERCLUB"
+        - "KLUB_LIFESTYLE"
+        - "BP_PARTNERCLUB"
+        - "KLUB_LIFESTYLE"
+        - "BP_PARTNERCLUB"
+        - "KLUB_LIFESTYLE"
+        - "ZAMOWIENIE"
+        - "POTWIERDZENIE"
+        - "RAPORT"
+        - "BON"
+        - "BILET"
+        - "DOLADOWANIE_ENERGETYCZNE"
+        - "LICZENIE_KASY"
+        - "WYPLATA_KASJERA"
+        - "WPLATA_KASJERA"
+        - "ROZLICZENIE_KASJERA"
+        - "DOKUMENT_NIEFISKALNY"
+        - "(PUSTY)"
+        
     FormsQrCodeRequest:
       type: "object"
       properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
         width:
           type: "number"
-          default: 20
-          example: 20
+          default: 10
+          example: 10
         correctionlevel:
           type: "number"
           description: "0-(L 7%), 1-(M 15%), 2-(Q 25%), 3-(H 30%)"
@@ -1421,6 +1525,11 @@ components:
         message:
           type: "string"
           example: "313233343536373839"
+        extralines:
+          type: "array"
+          items:
+            type: "string"
+            example: "Nr rachunku: 5698759"
           
     FormsOrderRecipeRequest:
       type: "object"

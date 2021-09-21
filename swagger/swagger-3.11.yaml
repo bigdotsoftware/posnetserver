@@ -569,7 +569,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReportCustomResponse"
 
-  /forms/order:
+  /forms/orderconfirmation:
     post:
       tags:
       - "Forms"
@@ -593,6 +593,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FormsOrderRecipeResponse"
+                
+                
+  /forms/azteccode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D Aztec code"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsAztectCodeRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsAztectCodeResponse"
+    
+  /forms/qrcode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D QrCode"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsQrCodeRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsQrCodeResponse"      
   /command:
     post:
       tags:
@@ -1194,6 +1245,16 @@ components:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
+    
+    FormsAztectCodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    FormsQrCodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
         
     ReportCashstaterepResponse:
       type: "object"
@@ -1315,6 +1376,52 @@ components:
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
     
+    FormsAztectCodeRequest:
+      type: "object"
+      properties:
+        width:
+          type: "number"
+          default: 20
+          example: 20
+        correctionlevel:
+          type: "number"
+          description: "0-10%, 1-23%, 2-36%, 3-50%"
+          default: 2
+          example: 2
+        inputtype:
+          type: "string"
+          default: "ascii"
+          example: "ascii"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "Hello"
+    
+    FormsQrCodeRequest:
+      type: "object"
+      properties:
+        width:
+          type: "number"
+          default: 20
+          example: 20
+        correctionlevel:
+          type: "number"
+          description: "0-(L 7%), 1-(M 15%), 2-(Q 25%), 3-(H 30%)"
+          default: 2
+          example: 2
+        inputtype:
+          type: "string"
+          default: "hex"
+          example: "hex"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "313233343536373839"
+          
     FormsOrderRecipeRequest:
       type: "object"
       properties:

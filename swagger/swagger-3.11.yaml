@@ -619,7 +619,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FormsAztectCodeResponse"
-    
+  
+  /forms/dmcode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D Data Matrix code"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsDmCodeRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsDmCodeResponse"
+                
   /forms/qrcode:
     post:
       tags:
@@ -644,6 +669,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FormsQrCodeResponse"      
+                
+  /forms/pdf417code:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D Pdf417 code"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsPdf417CodeRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsPdf417CodeResponse"      
+                
   /command:
     post:
       tags:
@@ -1251,7 +1302,17 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
     
+    FormsDmCodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
     FormsQrCodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    FormsPdf417CodeResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
@@ -1376,6 +1437,32 @@ components:
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
     
+    FormsDmCodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        width:
+          type: "number"
+          default: 10
+          example: 10
+        inputtype:
+          type: "string"
+          default: "ascii"
+          example: "ascii"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "Hello"
+        extralines:
+          type: "array"
+          items:
+            type: "string"
+            example: "Nr rachunku: 5698759"
+            
     FormsAztectCodeRequest:
       type: "object"
       properties:
@@ -1530,7 +1617,50 @@ components:
           items:
             type: "string"
             example: "Nr rachunku: 5698759"
-          
+    
+    FormsPdf417CodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        width:
+          type: "number"
+          default: 10
+          example: 10
+        proportion:
+          type: "number"
+          default: 3
+          example: 3
+        correctionlevel:
+          type: "number"
+          description: "0-(2 words), 1-(4 words), 2-(8 words), 3-(16 words), 4-(32 words), 5-(64 words), 6-(128 words), 7-(256 words), 8-(512 words)"
+          default: 3
+          example: 3
+        columns:
+          type: "number"
+          default: 1
+          example: 1
+        vertical:
+          type: "boolean"
+          default: false
+          example: false
+        inputtype:
+          type: "string"
+          default: "hex"
+          example: "hex"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "313233343536373839"
+        extralines:
+          type: "array"
+          items:
+            type: "string"
+            example: "Nr rachunku: 5698759"
+    
     FormsOrderRecipeRequest:
       type: "object"
       properties:

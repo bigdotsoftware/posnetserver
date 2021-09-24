@@ -1002,7 +1002,12 @@ components:
           description: "Structure for both type of devices ONLINE and not-ONLINE"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaSummary'
-    
+  
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+            
     FakturyRequest:
       type: "array"
       items:

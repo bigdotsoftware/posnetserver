@@ -594,6 +594,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/FormsOrderRecipeResponse"
                 
+  /forms/barcode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 1D barcode"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsBarcodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsBarcodeResponse"  
                 
   /forms/azteccode:
     post:
@@ -611,7 +636,8 @@ paths:
           'application/json':
             schema:
               allOf:
-                - $ref: '#/components/schemas/FormsAztectCodeRequest'
+                - $ref: '#/components/schemas/FormsAztecCodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
       responses:
         '200':
           description: "successful operation"
@@ -637,6 +663,7 @@ paths:
             schema:
               allOf:
                 - $ref: '#/components/schemas/FormsDmCodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
       responses:
         '200':
           description: "successful operation"
@@ -662,6 +689,7 @@ paths:
             schema:
               allOf:
                 - $ref: '#/components/schemas/FormsQrCodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
       responses:
         '200':
           description: "successful operation"
@@ -687,6 +715,7 @@ paths:
             schema:
               allOf:
                 - $ref: '#/components/schemas/FormsPdf417CodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
       responses:
         '200':
           description: "successful operation"
@@ -1081,7 +1110,58 @@ components:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaSummary'
-    
+        
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+            
+
+    ParagonFakturaFooter:
+      type: "object"
+      properties:
+        action:
+          type: "string"
+          example: "cut_move"
+          default: "cut_move"
+          enum:
+          - "cut_move"
+          - "cut"
+          - "move"
+        barcode:
+          type: "object"
+          properties:
+            type:
+              type: "string"
+              example: "barcode"
+              default: "none"
+              enum:
+                - "none"
+                - "barcode"
+                - "azteccode"
+                - "dmcode"
+                - "qrcode"
+                - "pdf417code"
+            barcode:
+              allOf:
+                - $ref: '#/components/schemas/FormsBarcodeRequest'
+            azteccode:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsAztecCodeRequest'
+            dmcode:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsDmCodeRequest'
+            qrcode:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsQrCodeRequest'
+            pdf417code:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsPdf417CodeRequest'
+
     ParagonyResponse:
       type: "object"
       properties:
@@ -1302,6 +1382,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
     
+    FormsBarcodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
     FormsDmCodeResponse:
       type: "object"
       allOf:
@@ -1457,13 +1542,27 @@ components:
         message:
           type: "string"
           example: "Hello"
+    
+    BarcodeExtraLines:
+      type: "object"
+      properties:
         extralines:
           type: "array"
           items:
             type: "string"
             example: "Nr rachunku: 5698759"
             
-    FormsAztectCodeRequest:
+    FormsBarcodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        message:
+          type: "string"
+          example: "Hello"
+            
+    FormsAztecCodeRequest:
       type: "object"
       properties:
         header:
@@ -1488,11 +1587,6 @@ components:
         message:
           type: "string"
           example: "Hello"
-        extralines:
-          type: "array"
-          items:
-            type: "string"
-            example: "Nr rachunku: 5698759"
     
     FormHeader:
       type: "string"
@@ -1612,11 +1706,6 @@ components:
         message:
           type: "string"
           example: "313233343536373839"
-        extralines:
-          type: "array"
-          items:
-            type: "string"
-            example: "Nr rachunku: 5698759"
     
     FormsPdf417CodeRequest:
       type: "object"
@@ -1626,8 +1715,8 @@ components:
           - $ref: '#/components/schemas/FormHeader'
         width:
           type: "number"
-          default: 10
-          example: 10
+          default: 2
+          example: 2
         proportion:
           type: "number"
           default: 3
@@ -1655,11 +1744,7 @@ components:
         message:
           type: "string"
           example: "313233343536373839"
-        extralines:
-          type: "array"
-          items:
-            type: "string"
-            example: "Nr rachunku: 5698759"
+
     
     FormsOrderRecipeRequest:
       type: "object"

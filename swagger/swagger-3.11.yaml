@@ -938,18 +938,35 @@ components:
               - $ref: '#/components/schemas/ParagonFakturaLine'
         extralines1:
           type: "array"
-          description: "Max 2 elements. Structure for both type of devices ONLINE and not-ONLINE"
+          description: "Max 2 elements. Structure for not-ONLINE devices only"
           items:
             type: "string"
             description: "Max strign length is 56 characters"
             example: "Line 1"
         extralines2:
           type: "array"
-          description: "Max 3 elements. Structure for both type of devices ONLINE and not-ONLINE"
+          description: "Max 3 elements. Structure for not-ONLINE devices only"
           items:
             type: "string"
             description: "Max strign length is 56 characters"
             example: "Line 2"
+        extralines3:
+          type: "array"
+          description: "Many elements. Structure for both type of devices ONLINE and not-ONLINE (not models support it)"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Line 3"
+              section:
+                type: "string"
+                default: "bottom"
+                example: "bottom"
+                enum:
+                  - "top"
+                  - "middle"
+                  - "bottom"
         payments: 
           type: "array"
           description: "Only ONLINE devices"

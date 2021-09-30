@@ -1131,8 +1131,9 @@ components:
           default: "cut_move"
           enum:
           - "cut_move"
-          - "cut"
           - "move"
+          - "no_cut_move"
+          - "no_cut_move_no_header"
         barcode:
           type: "object"
           properties:
@@ -1298,6 +1299,20 @@ components:
           example: 902
           format: "int32"
     
+    FakturaCommonTimestampsResponse:
+      type: "object"
+      properties:
+        ts:
+          type: "number"
+          format: "int64"
+          description: "printing begin timestamp"
+          example: 1627376834869
+        tsend:
+          type: "number"
+          format: "int64"
+          description: "printing end timestamp"
+          example: 1627376834969
+          
     ParagonCommonTimestampsResponse:
       type: "object"
       properties:
@@ -1417,6 +1432,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/FakturaCommonResponse'
+        - $ref: '#/components/schemas/FakturaCommonTimestampsResponse'
       properties:
         transaction:
           type: "string"

@@ -202,7 +202,13 @@ paths:
                 allOf:
                 - $ref: "#/components/schemas/ParagonResponse"
                 - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
-
+        '500':
+          description: "unrecoverable error"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/ApiResponse"
   /paragony:
     post:
       tags:

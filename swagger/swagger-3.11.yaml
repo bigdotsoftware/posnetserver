@@ -255,7 +255,7 @@ paths:
       tags:
       - "Faktury"
       summary: "Print an invoice"
-      description: "The same restpoint can be usedto print invoices on both regular and ONLINE Posnet devices, but the payload structure is different. Check every field description for more details or copy details from our website: https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury/ and https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury-drukarki-serii-online/"
+      description: "The same restpoint can be used to print invoices on both: ONLINE and not ONLINE Posnet devices, but the payload structure is different. Check every field description for more details or copy details from our website: https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury/ and https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury-drukarki-serii-online/ . Dedicated restpoints /faktura_online and /faktura_not_online can be used alternatively."
       
       parameters:
       - name: "async"
@@ -271,6 +271,70 @@ paths:
             schema:
               allOf:
                 - $ref: '#/components/schemas/FakturaRequest'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FakturaResponse"
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+  /faktura_online:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print an invoice on ONLINE printer"
+      description: "Restpoint dedicated to print invoices on ONLINE Posnet devices only. Generic restpoint /faktura can be used alternatively."
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturaRequestOnline'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FakturaResponse"
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+  /faktura_not_online:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print an invoice on regular (NOT ONLINE) printer"
+      description: "Restpoint dedicated to print invoices on not ONLINE Posnet devices only. Generic restpoint /faktura can be used alternatively."
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturaRequestNotOnline'
                 - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
       responses:
         '200':
@@ -821,10 +885,12 @@ components:
       type: "object"
       properties:
         nb:
-          description: "max length is 40"
+          description: "Comapny name. Max length is 40"
+          example: "My Company Inc."
           type: "string"
         ni:
-          description: "max length is 20"
+          description: "Tax ID. Max length is 20"
+          example: "584-234-56-34"
           type: "string"
         na: 
           type: "array"
@@ -832,59 +898,77 @@ components:
           items:
             type: "string"
             description: "max length is 56"
-            example: "Nazwa firmy"
+          example: 
+           - "Anna Nowak"
+           - "Mazowiecka 50"
+           - "04-586 Warszawa"
         pd:
-          description: "max length is 38"
+          description: "Payment date. Max length is 38"
+          example: "2022-02-15"
           type: "string"
         pt:
-          description: "max length is 38"
+          description: "Payment Form. Max length is 38"
+          example: "Credit Card"
           type: "string"
         sc:
-          description: "max length is 56"
+          description: "Client name. Printed when ps=true. Max length is 56"
+          example: "Anna Nowak"
           type: "string"
         ss:
-          description: "max length is 56"
+          description: "Cashier name. Max length is 56"
+          example: "Jak Kowalski"
           type: "string"
         cc:
+          description: "Number of extra copies"
           type: "number"
+          example: 0
           default: 0
         ps:
           type: "boolean"
+          example: false
           default: false
         fo:
           type: "number"
+          description: "Invoice format. Set to '1' when using wide paper"
+          example: 0
           default: 0
         co: 
+          description: "Print ORGYGINAŁ/KOPIA"
           type: "boolean"
+          example: false
           default: false
         cm:
+          description: "Print copy"
           type: "boolean"
+          example: false
           default: false
           
     FakturaHeaderOnline:
       type: "object"
       properties:
         nm:
-          description: "max length is 23. Only ONLINE devices"
+          description: "Invoice name. max length is 23"
           type: "string"
           example: "Nazwa Faktury"
         cc:
-          description: "Only ONLINE devices"
+          description: "Number of copies"
           type: "number"
           format: "int32"
+          example: 0
           default: 0
         co:
-          description: "Only ONLINE devices"
+          description: "Print ORGYGINAŁ/KOPIA"
           type: "boolean"
+          example: false
           default: false
         ln:
-          description: "Only ONLINE devices"
+          description: "Not fiscal lines count"
           type: "number"
           format: "int32"
           default: 0
           example: 40
         fn:
-          description: "Only ONLINE devices"
+          description: "Fiscal lines count"
           type: "number"
           format: "int32"
           default: 0
@@ -892,43 +976,43 @@ components:
     
         na: 
           type: "array"
-          description: "(trfvbuyer) Max 6 elements. Only ONLINE devices"
+          description: "Buyer name. Max 6 elements."
           items:
             type: "string"
             description: "max length is 256"
             example: "Nazwa firmy"
         ni:
-          description: "(trfvbuyer) max length is 20. Only ONLINE devices"
+          description: "Buyer tax ID. Max length is 20."
           example: "584-222-98-89"
           type: "string"
         ad:
           type: "array"
-          description: "(trfvbuyer) Max 6 elements. Only ONLINE devices"
+          description: "Buyer address. Max 6 elements."
           items:
             type: "string"
             description: "max length is 256"
             example: "ul. Miejska 56, 88-888 Miasto"
             
         ad_sc:
-          description: "(trfvbuyer). Only ONLINE devices"
+          description: "Section 0=>(top), 1=>(middle), 2=>(bottom)"
           type: "number"
           format: "int32"
         ad_at:
-          description: "(trfvbuyer). Only ONLINE devices"
+          description: "Extra attributes, 1=>wide, 2=>high, 4=>underline, 8=>italic, 16=>bold, 32=>negation, 64=>center"
           type: "number"
           format: "int32"
           default: 0
     
         nb:
-          description: "(trfvnumber) max length is 40. Only ONLINE devices"
+          description: "Invoice number. Max length is 40"
           type: "string"
           example: "56/2020"
         nb_sc:
-          description: "(trfvnumber). Only ONLINE devices"
+          description: "Section 0=>(top), 1=>(middle), 2=>(bottom)"
           type: "number"
           format: "int32"
         nb_at:
-          description: "(trfvnumber). Only ONLINE devices"
+          description: "Extra attributes, 1=>wide, 2=>high, 4=>underline, 8=>italic, 16=>bold, 32=>negation, 64=>center"
           type: "number"
           format: "int32"
           default: 0
@@ -1031,6 +1115,176 @@ components:
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
             
+
+    FakturaRequestNotOnline:
+      type: "object"
+      properties:
+        lines:
+          description: "Structure for not-ONLINE devices only."
+          type: "array"
+          items:
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+        extralines1:
+          type: "array"
+          description: "Max 2 elements. Structure for not-ONLINE devices only"
+          items:
+            type: "string"
+            description: "Max string length is 56 characters"
+            example: "Line 1"
+        extralines2:
+          type: "array"
+          description: "Max 3 elements. Structure for not-ONLINE devices only"
+          items:
+            type: "string"
+            description: "Max string length is 56 characters"
+            example: "Line 2"
+        extralines3:
+          type: "array"
+          description: "Many elements. Structure for both type of devices ONLINE and not-ONLINE (not models support it)"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Line 3"
+              section:
+                type: "string"
+                default: "bottom"
+                example: "bottom"
+                enum:
+                  - "top"
+                  - "middle"
+                  - "bottom"
+        header:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/FakturaHeader'
+          
+        headerex:
+          type: "object"
+          properties:
+            nr:
+              description: "max length is 20"
+              type: "string"
+              example: "WX 12345"
+            zs:
+              description: "max length is 56"
+              type: "string"
+              example: "45/25/2000358"
+            oz:
+              description: "max length is 56"
+              type: "string"
+              example: "Jan Kowalski"
+            zk:
+              description: "max length is 56"
+              type: "string"
+              example: "789/75CGX"
+            nk:
+              description: "max length is 41"
+              type: "string"
+              example: "DX12"
+            wd:
+              description: "max length is 56"
+              type: "string"
+              example: "Warunki dostawy"
+            sd:
+              description: "max length is 56"
+              type: "string"
+              example: "Sposób dostawy"
+  
+        summary: 
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+  
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+            
+    FakturaRequestOnline:
+      type: "object"
+      properties:
+        lines:
+          description: "Structure for ONLINE devices only"
+          type: "array"
+          items:
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+        extralines3:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Line 3"
+              section:
+                type: "string"
+                default: "bottom"
+                example: "bottom"
+                enum:
+                  - "top"
+                  - "middle"
+                  - "bottom"
+        payments: 
+          type: "array"
+          description: "Only ONLINE devices"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/PaymentObject'
+        header:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/FakturaHeaderOnline'
+          
+        headerex:
+          type: "object"
+          properties:
+            nr:
+              description: "max length is 20"
+              type: "string"
+              example: "WX 12345"
+            zs:
+              description: "max length is 56"
+              type: "string"
+              example: "45/25/2000358"
+            oz:
+              description: "max length is 56"
+              type: "string"
+              example: "Jan Kowalski"
+            zk:
+              description: "max length is 56"
+              type: "string"
+              example: "789/75CGX"
+            nk:
+              description: "max length is 41"
+              type: "string"
+              example: "DX12"
+            wd:
+              description: "max length is 56"
+              type: "string"
+              example: "Warunki dostawy"
+            sd:
+              description: "max length is 56"
+              type: "string"
+              example: "Sposób dostawy"
+  
+        summary: 
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+  
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+    
+    
     FakturyRequest:
       type: "array"
       items:

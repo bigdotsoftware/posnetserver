@@ -1157,6 +1157,15 @@ components:
           - "move"
           - "no_cut_move"
           - "no_cut_move_no_header"
+        cashier:
+          type: "string"
+          example: "Jan Kowalski"
+        cashregisternumber:
+          type: "string"
+          example: "12345678"
+        systemnumber:
+          type: "string"
+          example: "PA 567/2021"
         barcode:
           type: "object"
           properties:

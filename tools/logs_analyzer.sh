@@ -1,6 +1,6 @@
 #!/bin/bash
-
-set -e 
+set -e
+#shopt -s expand_aliases
 
 if ! [ -x "$(command -v jq)" ]; then
    echo 'Error: jq is not installed.' >&2
@@ -47,27 +47,27 @@ for filename in $LOGS_DIR/*.log; do
    
    # check if first line is a JSON, otherwise, skip this file
    if jq -e . >/dev/null 2>&1 <<<"$firstline"; then
-      
-      WAITING_FAKTURA_END=0
-      WAITING_PARAGON_END=0
-      
-      
+
       shopt -s lastpipe      
-      grep -e 'Drukowanie faktury start' -e 'Drukowanie faktury OK' \
+      #-a to force --text mode (avoid extra text: Binary file <filename>.log matches)
+      grep -a \
+           -e 'Drukowanie faktury start' -e 'Drukowanie faktury OK' -e 'POST /faktura' \
            -e 'Drukowanie faktur start' -e 'Drukowanie faktur OK' \
-           -e 'Drukowanie paragonu start' -e 'Drukowanie paragonu OK' \
+           -e 'Drukowanie paragonu start' -e 'Drukowanie paragonu OK' -e 'POST /paragon' \
            -e 'Drukowanie paragonow start' -e 'Drukowanie paragonow OK' \
-           -e 'Wysylanie polecenia start' -e 'Wysylanie polecenia OK' \
+           -e 'Wysylanie polecenia start' -e 'Wysylanie polecenia OK' -e '  -> sending' \
            -e 'error' -e 'took' \
            $filename | while IFS= read -r line
       do
          #echo "-------------- $line"
          #start=`date +%s.%N`
-         message=`echo $line | jq -r 'select(.message|type=="string") | .message'`
+         message=`echo "$line" | jq -r 'select(.message|type=="string") | .message'`
          #echo " ---- message = '$message'"
-         if [[ $message == "Drukowanie"* || $message == "Wysylanie"* ]]; then
+         if [[ $message == "Drukowanie"* || $message == "Wysylanie"* || $message == "POST"* || $message == "  -> sending"* ]]; then
             if [[ $message == "Drukowanie paragonu start" ]]; then
                ((STAT_PARAGON_BEGIN+=1))
+               STAT_PA_DETAILS+=("$line")
+            elif [[ $message == "POST /paragon"* ]]; then
                STAT_PA_DETAILS+=("$line")
             elif [[ $message == "Drukowanie paragonu OK"* ]]; then
                STAT_PARAGON_OK=$((STAT_PARAGON_OK+1))
@@ -75,6 +75,8 @@ for filename in $LOGS_DIR/*.log; do
                
             elif [[ $message == "Drukowanie faktury start" ]]; then
                ((STAT_FAKTURA_BEGIN+=1))
+               STAT_FV_DETAILS+=("$line")
+            elif [[ $message == "POST /faktura"* ]]; then
                STAT_FV_DETAILS+=("$line")
             elif [[ $message == "Drukowanie faktury OK"* ]]; then
                STAT_FAKTURA_OK=$((STAT_FAKTURA_OK+1))
@@ -96,6 +98,8 @@ for filename in $LOGS_DIR/*.log; do
                
             elif [[ $message == "Wysylanie polecenia start" ]]; then
                ((STAT_CMDS_BEGIN+=1))
+               STAT_CMDS_DETAILS+=("$line")
+            elif [[ $message == "  -> sending"* ]]; then
                STAT_CMDS_DETAILS+=("$line")
             elif [[ $message == "Wysylanie polecenia OK"* ]]; then
                if [[ $message == *"\"ok\":true"* ]]; then
@@ -166,3 +170,4 @@ echo "-------------------------------------------"
 #echo '{"message":"Drukowanie paragonu start","level":"info","timestamp":"2021-05-12T10:09:03.602Z"}' | jq '(.message|type=="string") and (.message == "Drukowanie paragonu start")'
 #echo '{"message":"Drukowanie paragonu start","level":"info","timestamp":"2021-05-12T10:09:03.602Z"}' | jq '(.message|type=="string") and (.message | startswith("Drukowanie"))'
 #echo '{"message":"Wysylanie polecenia OK:","level":"info","timestamp":"2021-11-15T09:17:10.962Z"}' | jq 'select(.message|type=="string") | .message'
+#echo '{"message":"","level":"info","timestamp":"2021-09-06T22:00:13.531Z"}' | jq -e . >/dev/null 2>&1

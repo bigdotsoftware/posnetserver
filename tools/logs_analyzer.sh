@@ -24,15 +24,21 @@ STAT_FAKTURY_OK=0
 
 STAT_PARAGON_BEGIN=0
 STAT_PARAGON_OK=0
+STAT_PARAGON_TOTAL=0
 STAT_PARAGONY_BEGIN=0
 STAT_PARAGONY_OK=0
+STAT_PARAGONY_TOTAL=0
 
 STAT_CMDS_BEGIN=0
 STAT_CMDS_OK=0
 
 
 STAT_PA_DETAILS=()
+STAT_PA_TOTALS=()
+
 STAT_FV_DETAILS=()
+STAT_FV_TOTALS=()
+
 STAT_CMDS_DETAILS=()
 STAT_ERROR_DETAILS=()
 
@@ -69,10 +75,14 @@ for filename in $LOGS_DIR/*.log; do
                STAT_PA_DETAILS+=("$line")
             elif [[ $message == "POST /paragon"* ]]; then
                STAT_PA_DETAILS+=("$line")
+               total=`echo $line | sed 's/.*\"summary\([^ ]*\).*/\1/' | sed 's/.*\"to\\\":\([^}]*\).*/\1/'`
+               timestamp=`echo $line | jq -r '.timestamp'`
+               STAT_PA_TOTALS+=("= $total @ $timestamp")
+               ((STAT_PARAGON_TOTAL+=$total))
             elif [[ $message == "Drukowanie paragonu OK"* ]]; then
                STAT_PARAGON_OK=$((STAT_PARAGON_OK+1))
                STAT_PA_DETAILS+=("$line")
-               
+               STAT_PA_TOTALS+=("=> OK")
             elif [[ $message == "Drukowanie faktury start" ]]; then
                ((STAT_FAKTURA_BEGIN+=1))
                STAT_FV_DETAILS+=("$line")
@@ -137,24 +147,36 @@ echo "paragony: $STAT_PARAGONY_BEGIN (success: $STAT_PARAGONY_OK)"
 echo "faktura: $STAT_FAKTURA_BEGIN (success: $STAT_FAKTURA_OK)"
 echo "faktury: $STAT_FAKTURY_BEGIN (success: $STAT_FAKTURY_OK)"
 echo "commands: $STAT_CMDS_BEGIN (success: $STAT_CMDS_OK)"
+echo ""
+echo "-------------------------------------------"
+echo "            PARAGON TOTALS                 "
+echo "-------------------------------------------"
+for value in "${STAT_PA_TOTALS[@]}"; do
+     echo $value
+done
+echo "TOTAL: $STAT_PARAGON_TOTAL"
+echo ""
 echo "-------------------------------------------"
 echo "                 PARAGON                   "
 echo "-------------------------------------------"
 for value in "${STAT_PA_DETAILS[@]}"; do
      echo $value
 done
+echo ""
 echo "-------------------------------------------"
 echo "                 FAKTURA                   "
 echo "-------------------------------------------"
 for value in "${STAT_FV_DETAILS[@]}"; do
      echo $value
 done
+echo ""
 echo "-------------------------------------------"
 echo "                 COMMANDS                   "
 echo "-------------------------------------------"
 for value in "${STAT_CMDS_DETAILS[@]}"; do
      echo $value
 done
+echo ""
 echo "-------------------------------------------"
 echo "                 ERRORS                    "
 echo "-------------------------------------------"

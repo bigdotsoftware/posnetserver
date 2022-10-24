@@ -525,7 +525,7 @@ paths:
                 $ref: "#/components/schemas/ResponseMaintenanceSet"
   
   /eparagon/status:
-    post:
+    put:
       tags:
       - "Management"
       summary: "Enable/Disable eDocument service state"
@@ -569,7 +569,7 @@ paths:
                 $ref: "#/components/schemas/ResponseEparagonStatusGet"
   
   /eparagon/config:
-    post:
+    put:
       tags:
       - "Management"
       summary: "Set eDocument configuration"
@@ -731,7 +731,7 @@ paths:
     get:
       tags:
       - "Reports"
-      summary: "E-Paragon status by ID"
+      summary: "eParagon status by ID"
       parameters:
       - name: "fulldebug"
         in: "query"
@@ -1697,6 +1697,10 @@ components:
               type: "string"
               description: "Alternative server address. If not provided, then default one is used"
               example: "adeparag.mf.gov.pl"
+            idz:
+              type: "string"
+              description: "eDocument IDZ identifier"
+              example: "11"
         discounts:
           type: "array"
           description: Added in schema 3.12
@@ -2754,6 +2758,20 @@ components:
     RequestEparagonConfigSet:
       type: "object"
       properties:
+        ad:
+          type: "string"
+          example: "adeparag.mf.gov.pl"
+        ct:
+          type: "string"
+          example: "posnet"
+          default: "posnet"
+          enum:
+            - "none"
+            - "posnet"
+            - "fingerprint"
+        tp:
+          type: "string"
+          example: ""
         gi:
           type: "boolean"
           example: true
@@ -2763,6 +2781,20 @@ components:
         td:
           type: "boolean"
           example: true
+        hd:
+          type: "boolean"
+          example: true
+        gb:
+          type: "boolean"
+          example: true
+        ts:
+          type: "number"
+          default: 15
+          example: 15
+        tt:
+          type: "number"
+          default: 30
+          example: 30
     
     ResponseEparagonConfigSet:
       type: "object"

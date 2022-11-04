@@ -617,7 +617,7 @@ paths:
       tags:
       - "Reports"
       summary: "Generate daily EOD report"
-      description: "While executing this request Posnet printer is asking to confirm the date - request is waiting for user's action"
+      description: "While executing this request Posnet printer is asking to confirm the date - request is waiting for cashier's action"
       parameters:
       - name: "fulldebug"
         in: "query"
@@ -625,6 +625,30 @@ paths:
           type: "boolean"
           default: false
           
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDobowyResponse"
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate daily EOD report"
+      description: "In this request cashier's action is not required. Request is supported only by ONLINE printers"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportDobowyRequest'
       responses:
         '200':
           description: "successful operation"
@@ -2707,6 +2731,13 @@ components:
           example: false
           default: false
           description: "true - shift reset"
+    
+    ReportDobowyRequest:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
           
     ReportMiesiecznyRequest:
       type: "object"

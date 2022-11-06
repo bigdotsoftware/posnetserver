@@ -68,7 +68,12 @@ tags:
   externalDocs:
     description: "Find out more"
     url: "https://bigdotsoftware.pl/short_link/posnet"
-
+- name: "Plugins"
+  description: "Manage enabled plugins"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+    
 paths:
   /licencja:
     get:
@@ -956,7 +961,68 @@ paths:
                 allOf:
                 - $ref: '#/components/schemas/CustomCommandResponse'
 
-
+  /plugins/azure-service-bus/consume/pause:
+    post:
+      tags:
+      - "Plugins"
+      summary: "Pause consumption"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginResponse'
+  
+  /plugins/azure-service-bus/consume/resume:
+    post:
+      tags:
+      - "Plugins"
+      summary: "Resume consumption"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginResponse'
+  /plugins/azure-service-bus/consume/status:
+    get:
+      tags:
+      - "Plugins"
+      summary: "Consumption status"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginAzureServiceBusConsumeStatusResponse'
+                
 components:
   schemas:
     CustomCommand:
@@ -1998,6 +2064,23 @@ components:
           items:
             type: "object"
 
+    PluginResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    PluginAzureServiceBusConsumeStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/PluginResponse'
+      properties:
+        status:
+          type: "string"
+          example: "consuming"
+          enum:
+            - "consuming"
+            - "stopped"
+          
     ReportDobowyResponse:
       type: "object"
       allOf:

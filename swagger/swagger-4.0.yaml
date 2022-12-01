@@ -114,7 +114,7 @@ paths:
       tags:
       - "General"
       summary: "Monitoring"
-      description: ""
+      description: "Return counters (number of printed recipes and invoices) and memory usage. This is the same information as logged in log files when logger.extras.logmetrics=true"
       responses:
         '200':
           description: "successful operation"
@@ -128,7 +128,7 @@ paths:
       tags:
       - "General"
       summary: "Monitoring"
-      description: ""
+      description: "Return informaiton about invoices and recipes printed with async=true parameter. Cache keeps history up to 5 minutes"
       responses:
         '200':
           description: "successful operation"
@@ -136,7 +136,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AsyncQueueResponse"
-    
+  
+  /dlq/list:
+    get:
+      tags:
+      - "General"
+      summary: "Return requests from DLQ"
+      description: "Return list of rejected requests. DLQ must be enabled in the configuration file: dlq.enabled=true"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DlqListResponse"
+  
+  /dlq/process/{id}:
+    post:
+      tags:
+      - "General"
+      summary: "Reprocess request from DLQ"
+      description: "Reprocess request from DLQ"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DlqProcessResponse"
+  
+  /dlq/processall:
+    post:
+      tags:
+      - "General"
+      summary: "Reprocess all requests from DLQ"
+      description: "Reprocess all requests from DLQ"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DlqProcessAllResponse"
+                
   /paragon/{uuid}:
     get:
       tags:
@@ -2218,8 +2260,81 @@ components:
                           type: "object"
                           allOf:
                             - $ref: '#/components/schemas/ParagonAsyncStatusResponse'
-                
-
+    
+    DlqItem:
+      type: "object"
+      properties:
+        type:
+          type: "string"
+          description: "paragon or faktura"
+          example: "paragon"
+        dlqtime:
+          type: "number"
+          example: 1669885839960
+          description: "timestamp [ms] when document was added to DLQ"
+        rerties:
+          type: "number"
+          example: 0
+          description: "Number of retires"
+        id:
+          type: "number"
+          example: 0
+          description: "identifier of DLQ item. Use it together with /dlq/process/{id}"
+        payload:
+          type: "object"
+          
+    DlqListResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        list:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/DlqItem'
+        directory:
+          type: "string"
+          example: "dlq"
+        
+    DlqProcessResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        dlqitem:
+          type: "object"
+          allOf:
+              - $ref: '#/components/schemas/DlqItem'
+        response:
+          type: "object"
+          description: "ParagonResponse or FakturaResponse"
+        directory:
+          type: "string"
+          example: "dlq"
+    
+    DlqProcessAllResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        dlqitems:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              dlqitem:
+                type: "object"
+                allOf:
+                    - $ref: '#/components/schemas/DlqItem'
+              response:
+                type: "object"
+                description: "ParagonResponse or FakturaResponse"
+        directory:
+          type: "string"
+          example: "dlq"
+          
     StatusCommon:
       type: "object"
       properties:

@@ -459,7 +459,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponse"
-
+  /devicestatus:
+    get:
+      tags:
+      - "Management"
+      summary: "Simple Device status only"
+      description: "Information is the same as when configuration has posnet.ping.enabled=true and posnet.ping.type=status "
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleDeviceStatusResponse"
+                
   /counters:
     get:
       tags:
@@ -3289,7 +3309,35 @@ components:
               type: "string"
             ft:
               type: "string"
-        
+    
+    SimpleDeviceStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        device:
+          type: "object"
+          properties:
+            ok:
+              type: "boolean"
+            chargerconnected:
+              type: "boolean"
+            status:
+              type: "string"
+            paperending:
+              type: "boolean"
+            queueempty:
+              type: "boolean"
+        mechanism:
+          type: "object"
+          properties:
+            ok:
+              type: "boolean"
+            status:
+              type: "string"
+            callservice:
+              type: "boolean"
+          
     StatusResponse:
       type: "object"
       allOf:

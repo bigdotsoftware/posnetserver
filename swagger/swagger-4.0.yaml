@@ -3320,10 +3320,12 @@ components:
           properties:
             ok:
               type: "boolean"
+              description: "true - received data from the printer"
             chargerconnected:
               type: "boolean"
             status:
               type: "string"
+              description: "ok - ready to use, otherwise not"
             paperending:
               type: "boolean"
             queueempty:
@@ -3333,10 +3335,13 @@ components:
           properties:
             ok:
               type: "boolean"
+              description: "true - received data from the printer"
             status:
               type: "string"
+              description: "ok - ready to use, otherwise not"
             callservice:
               type: "boolean"
+              description: "Should the service be called? Otherwise it's casher action"
           
     StatusResponse:
       type: "object"

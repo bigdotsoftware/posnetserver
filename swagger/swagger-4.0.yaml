@@ -157,6 +157,13 @@ paths:
       - "General"
       summary: "Reprocess request from DLQ"
       description: "Reprocess request from DLQ"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       responses:
         '200':
           description: "successful operation"
@@ -164,20 +171,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DlqProcessResponse"
-  
-  /dlq/processall:
-    post:
+    delete:
       tags:
       - "General"
-      summary: "Reprocess all requests from DLQ"
-      description: "Reprocess all requests from DLQ"
+      summary: "Removes request from DLQ"
+      description: "Removes request from DLQ"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
       responses:
         '200':
           description: "successful operation"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DlqProcessAllResponse"
+                $ref: "#/components/schemas/DlqProcessDeleteResponse"
+  
+  #/dlq/processall:
+  #  post:
+  #    tags:
+  #    - "General"
+  #    summary: "Reprocess all requests from DLQ"
+  #    description: "Reprocess all requests from DLQ"
+  #    responses:
+  #     '200':
+  #        description: "successful operation"
+  #        content:
+  #          application/json:
+  #            schema:
+  #              $ref: "#/components/schemas/DlqProcessAllResponse"
                 
   /paragon/{uuid}:
     get:
@@ -2272,13 +2298,21 @@ components:
           type: "number"
           example: 1669885839960
           description: "timestamp [ms] when document was added to DLQ"
-        rerties:
+        retries:
           type: "number"
           example: 0
           description: "Number of retires"
-        id:
+        lastretry:
           type: "number"
           example: 0
+          description: "timestamp [ms] of last retry attempt"
+        lastreason:
+          type: "string"
+          example: ""
+          description: "Last reason why request landed in DLQ"
+        id:
+          type: "string"
+          example: "1669885839960_7f89862e-1ab0-4d17-a45e-4b66f49e9f30"
           description: "identifier of DLQ item. Use it together with /dlq/process/{id}"
         payload:
           type: "object"
@@ -2314,6 +2348,19 @@ components:
           type: "string"
           example: "dlq"
     
+    DlqProcessDeleteResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        dlqitem:
+          type: "object"
+          allOf:
+              - $ref: '#/components/schemas/DlqItem'
+        directory:
+          type: "string"
+          example: "dlq"
+          
     DlqProcessAllResponse:
       type: "object"
       allOf:

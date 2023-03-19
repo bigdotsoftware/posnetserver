@@ -748,7 +748,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseEparagonScheduleGet"
-                
+  
+  /edocument/remove:
+    delete:
+      tags:
+      - "Management"
+      summary: "Delete eDocument (eParagon/eFaktura) record by ID from printer cache"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "id"
+        in: "query"
+        schema:
+          type: "number"
+        description: "Id returned in /paragon responsem (eparagon.id)"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentRemoveResponse"
+  
+  /edocument/removeall:
+    delete:
+      tags:
+      - "Management"
+      summary: "Delete all eDocument (eParagon/eFaktura) records from printer cache"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentRemoveAllResponse"
+  
+  
+  
   /raporty/dobowy:
     get:
       tags:
@@ -888,11 +933,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReportCustomResponse"
 
-  /raporty/eparagon/status:
+  /raporty/edocument/status:
     get:
       tags:
       - "Reports"
-      summary: "eParagon status and information by ID"
+      summary: "eDocument (eParagon/eFaktura) status and information by ID. Error is returend when wrong or not existing ID is provided"
       parameters:
       - name: "fulldebug"
         in: "query"
@@ -911,6 +956,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEparagonStatusResponse"
+                
+  /raporty/edocument/summary:
+    get:
+      tags:
+      - "Reports"
+      summary: "eDocument (eParagon/eFaktura) summary"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEparagonSummaryResponse"
+
+  /raporty/edocument/free:
+    get:
+      tags:
+      - "Reports"
+      summary: "eDocument (eParagon/eFaktura) number of free records"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEparagonFreeRecordsResponse"
                 
   /forms/orderconfirmation:
     post:
@@ -2291,6 +2374,7 @@ components:
             st:
               type: "string"
               description: "eDocument (eParagon) state"
+              example: "sent"
               enum:
                 - "new"
                 - "sent"
@@ -2306,7 +2390,49 @@ components:
               description: "true if printed"
               example: true
             
-        
+    ReportEparagonSummaryResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        summary:
+          type: "object"
+          properties:
+            fr:
+              type: "number"
+              description: "Number of free eDocument records"
+              example: 489
+            ne:
+              type: "number"
+              description: "Number of records with state: new"
+              example: 1
+            ok:
+              type: "number"
+              description: "Number of records with state: ok"
+              example: 12
+            fi:
+              type: "number"
+              description: "Number of records with state: failed"
+              example: 3
+            ft:
+              type: "number"
+              description: "Number of records with state: fatal"
+              example: 0
+            re:
+              type: "number"
+              description: "Number of records with state: reserved"
+              example: 0
+    
+    ReportEparagonFreeRecordsResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        fr:
+          type: "number"
+          description: "Number of free eDocument records"
+          example: 489
+              
     FormsOrderRecipeResponse:
       type: "object"
       allOf:
@@ -3264,6 +3390,18 @@ components:
           example: 604800
           description: "Maximum lifetime of the eDocument with errored sending state. Min 5s, max 2592000s (30 days)"
     
+    EdocumentRemoveResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    EdocumentRemoveAllResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
     ResponseEparagonScheduleGet:
       type: "object"
       allOf:

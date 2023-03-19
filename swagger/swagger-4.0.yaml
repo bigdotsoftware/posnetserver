@@ -816,7 +816,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EdocumentConnectionTestResponse"
-                
+  
+  /edocument/override:
+    get:
+      tags:
+      - "Management"
+      summary: "Return records override mode in printer's cache"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentOverrideModeResponseGet"     
+    put:
+      tags:
+      - "Management"
+      summary: "Set records override mode"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/EdocumentOverrideModeSetRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentOverrideModeResponseSet"    
   
   /raporty/dobowy:
     get:
@@ -1018,6 +1059,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEparagonFreeRecordsResponse"
+                
+  /raporty/edocument/context:
+    get:
+      tags:
+      - "Reports"
+      summary: "eDocument (eParagon/eFaktura) number of free records"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEparagonContextResponse"         
                 
   /forms/orderconfirmation:
     post:
@@ -2456,7 +2516,12 @@ components:
           type: "number"
           description: "Number of free eDocument records"
           example: 489
-              
+    
+    ReportEparagonContextResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
     FormsOrderRecipeResponse:
       type: "object"
       allOf:
@@ -3242,6 +3307,12 @@ components:
           type: "string"
           example: "https://eparagon.cloud"
 
+    EdocumentOverrideModeSetRequest:
+      type: "object"
+      properties:
+        ov:
+          type: "boolean"
+          example: false
           
     ReportShiftrepRequest:
       type: "object"
@@ -3453,7 +3524,22 @@ components:
               description: "Application code, 0 - OK, otherwise error"
               example: 4251
     
-    
+    EdocumentOverrideModeResponseGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        ov:
+          type: "boolean"
+          example: false
+          
+    EdocumentOverrideModeResponseSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+
     ResponseEparagonScheduleGet:
       type: "object"
       allOf:

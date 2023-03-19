@@ -704,6 +704,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseEparagonConfigGet"
+  
+  /eparagon/schedule:
+    put:
+      tags:
+      - "Management"
+      summary: "Set eDocument retry schedule"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestEparagonScheduleSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonScheduleSet"
+    get:
+      tags:
+      - "Management"
+      summary: "Get eDocument retry schedule"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonScheduleGet"
                 
   /raporty/dobowy:
     get:
@@ -1874,7 +1918,7 @@ components:
             service:
               type: "string"
               description: "Alternative server address. If not provided, then default one is used"
-              example: "adeparag.mf.gov.pl"
+              example: "https://eparagon.cloud"
             idz:
               type: "string"
               description: "eDocument IDZ identifier"
@@ -3056,7 +3100,7 @@ components:
       properties:
         ad:
           type: "string"
-          example: "adeparag.mf.gov.pl"
+          example: "https://eparagon.cloud"
         ct:
           type: "string"
           example: "posnet"
@@ -3103,7 +3147,76 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-        
+    
+    
+    RequestEparagonScheduleSet:
+      type: "object"
+      properties:
+        sa:
+          type: "number"
+          default: 20
+          example: 20
+          description: "1st retry in seconds. Min 5s, max 300s"
+        sb:
+          type: "number"
+          default: 25
+          example: 25
+          description: "2nd retry in seconds. Min 5s, max 300s"
+        sc:
+          type: "number"
+          default: 30
+          example: 30
+          description: "3rd retry in seconds. Min 5s, max 300s"
+        sd:
+          type: "number"
+          default: 0
+          example: 0
+          description: "4th retry in seconds. Min 5s, max 300s"
+        se:
+          type: "number"
+          default: 0
+          example: 0
+          description: "5th retry in seconds. Min 5s, max 300s"
+        op:
+          type: "number"
+          default: 3600
+          example: 3600
+          description: "Overall time of sending the eDocument until the maximum lifetime of the eDocument (parameter tl) is exceeded. Min 600s, max 86400s"
+        tl:
+          type: "number"
+          default: 604800
+          example: 604800
+          description: "Maximum lifetime of the eDocument with errored sending state. Min 5s, max 2592000s (30 days)"
+    
+    ResponseEparagonScheduleGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        buildversion:
+          type: "string"
+          example: "4.0"
+        schemaversion:
+          type: "string"
+          example: "4.0"
+        message:
+          type: "string"
+          example: ""
+        code:
+          type: "number"
+          format: "int32"
+        schedule:
+          type: "array"
+          items:
+            type: "object"
+    
+    ResponseEparagonScheduleSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
     StatusRequestVatSet:
       type: "object"
       properties:

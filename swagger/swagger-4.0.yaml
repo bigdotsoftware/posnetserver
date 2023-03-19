@@ -792,7 +792,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/EdocumentRemoveAllResponse"
   
-  
+  /edocument/connectiontest:
+    post:
+      tags:
+      - "Management"
+      summary: "Test connection with eDocument service"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/EdocumentConnectionTestRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentConnectionTestResponse"
+                
   
   /raporty/dobowy:
     get:
@@ -3211,6 +3235,12 @@ components:
                   example: "Sample value"
 
 
+    EdocumentConnectionTestRequest:
+      type: "object"
+      properties:
+        ad:
+          type: "string"
+          example: "https://eparagon.cloud"
 
           
     ReportShiftrepRequest:
@@ -3401,7 +3431,29 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-        
+    
+    EdocumentConnectionTestResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        result:
+          properties:
+            ht:
+              type: "number"
+              description: "HTTP response code. 0 - connection failure. Should be 200 (200OK)"
+              example: 200
+            cu:
+              type: "number"
+              description: "CURL code, 0 - OK, otherwise error"
+              example: 0
+            ap:
+              type: "number"
+              description: "Application code, 0 - OK, otherwise error"
+              example: 4251
+    
+    
     ResponseEparagonScheduleGet:
       type: "object"
       allOf:

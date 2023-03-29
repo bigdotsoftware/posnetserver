@@ -1582,7 +1582,15 @@ components:
         unit:
           description: "Custom unit. Added in schema 4.x"
           type: "string"
+          example: "kg"
+        code:
+          description: "Code name. Field available for invoices only. Added in schema 4.x"
+          type: "string"
           example: ""
+        pkwiu:
+          description: "PKWiU identifier. Field available for invoices only. Added in schema 4.x"
+          type: "string"
+          example: "kg"
         discounts:
           type: "array"
           description: "Added in schema 3.12"

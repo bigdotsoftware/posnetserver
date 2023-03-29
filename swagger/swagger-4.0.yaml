@@ -1501,6 +1501,27 @@ components:
           format: "int32"
           example: 1250
         
+    DiscountBasic:
+      type: "object"
+      properties:
+        rd:
+          description: "true - discount, false - surcharge"
+          type: "boolean"
+          example: true
+        rw:
+          description: "promotion discount, i.e. 10,50"
+          type: "number"
+          format: "int32"
+          example: 1050
+        rp:
+          description: "promotion discount in percent, i.e. 15%"
+          type: "number"
+          format: "int32"
+          example: 1500
+        na:
+          description: "discount name"
+          example: "Summer Promo"
+          type: "string"
           
     Discount:
       type: "object"
@@ -1514,6 +1535,7 @@ components:
             - subtotal
             - line
             - vat
+            - basic
         discount:
           oneOf:
           - $ref: '#/components/schemas/DiscountPromo'
@@ -1521,6 +1543,7 @@ components:
           - $ref: '#/components/schemas/DiscountSubTotal'
           - $ref: '#/components/schemas/DiscountLine'
           - $ref: '#/components/schemas/DiscountVat'
+          - $ref: '#/components/schemas/DiscountBasic'
           
       
     ParagonFakturaLine:
@@ -1552,9 +1575,17 @@ components:
           type: "number"
           format: "int32"
           example: 2350
+        desc:
+          description: "Additional description. Added in schema 4.x"
+          type: "string"
+          example: ""
+        unit:
+          description: "Custom unit. Added in schema 4.x"
+          type: "string"
+          example: ""
         discounts:
           type: "array"
-          description: Added in schema 3.12
+          description: "Added in schema 3.12"
           items:
             type: "object"
             allOf:
@@ -1572,6 +1603,10 @@ components:
           type: "number"
           format: "int32"
           example: 2350
+        re:
+          type: "number"
+          format: "int32"
+          example: 280
           
     FakturaHeader:
       type: "object"
@@ -2073,6 +2108,11 @@ components:
               description: "max length is 56"
               type: "string"
               example: "NIP NABYWCY"
+        headerimage:
+          type: "number"
+          format: "int32"
+          example: 1
+          description: "Index of the image stored in the printer's memory. Use '0' to don't print header image at all. Default is '-1' means use printer's settings. Note that using headerimage in one request has a global effect - it overrides printer settings. One recipe printed with headerimage=1 causes that other recipes use headerimage=1 too, even if headerimage is not set for them."
         payments: 
           type: "array"
           items:
@@ -2130,6 +2170,11 @@ components:
         systemnumber:
           type: "string"
           example: "PA 567/2021"
+        footerimage:
+          type: "number"
+          format: "int32"
+          example: 1
+          description: "Index of the image stored in the printer's memory. Use '0' to don't print footer image at all. Default is '-1' means use printer's settings. Note that using footerimage in one request has a global effect - it overrides printer settings. One recipe printed with footerimage=1 causes that other recipes use footerimage=1 too, even if footerimage is not set for them."
         barcode:
           type: "object"
           properties:

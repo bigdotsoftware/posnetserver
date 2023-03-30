@@ -1761,6 +1761,18 @@ components:
           items:
             allOf:
               - $ref: '#/components/schemas/ParagonFakturaLine'
+        efaktura:
+          description: Added in schema 4.0
+          type: "object"
+          properties:
+            service:
+              type: "string"
+              description: "Alternative server address. If not provided, then default one is used"
+              example: "https://eparagon.cloud"
+            idz:
+              type: "string"
+              description: "eDocument IDZ identifier"
+              example: "11|jan.kowalski@email.com"
         extralines1:
           type: "array"
           description: "Max 2 elements. Structure for not-ONLINE devices only"
@@ -1943,11 +1955,23 @@ components:
       type: "object"
       properties:
         lines:
-          description: "Structure for ONLINE devices only"
+          description: "Structure for ONLINE devices only. When using discounts, remember that most printers accept only 'basic' type and no more than 1 discount per line."
           type: "array"
           items:
             allOf:
               - $ref: '#/components/schemas/ParagonFakturaLine'
+        efaktura:
+          description: "Added in schema 4.0"
+          type: "object"
+          properties:
+            service:
+              type: "string"
+              description: "Alternative server address. If not provided, then default one is used"
+              example: "https://eparagon.cloud"
+            idz:
+              type: "string"
+              description: "eDocument IDZ identifier"
+              example: "11|jan.kowalski@email.com"
         extralines3:
           type: "array"
           items:
@@ -2138,7 +2162,7 @@ components:
             idz:
               type: "string"
               description: "eDocument IDZ identifier"
-              example: "11"
+              example: "11|jan.kowalski@email.com"
         discounts:
           type: "array"
           description: Added in schema 3.12
@@ -2319,6 +2343,12 @@ components:
         hn:
           type: "string"
           example: "2637"
+        efaktura:
+          type: "object"
+          properties:
+            id:
+              type: "number"
+              description: "eDocument identifier. Added in schema 4.0"
         took:
           type: "number"
           example: 380

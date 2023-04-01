@@ -1768,7 +1768,7 @@ components:
             service:
               type: "string"
               description: "Alternative server address. If not provided, then default one is used"
-              example: "https://eparagon.cloud"
+              example: "https://eparagon.cloud:4051"
             idz:
               type: "string"
               description: "eDocument IDZ identifier"
@@ -1967,7 +1967,7 @@ components:
             service:
               type: "string"
               description: "Alternative server address. If not provided, then default one is used"
-              example: "https://eparagon.cloud"
+              example: "https://eparagon.cloud:4051"
             idz:
               type: "string"
               description: "eDocument IDZ identifier"
@@ -2158,7 +2158,7 @@ components:
             service:
               type: "string"
               description: "Alternative server address. If not provided, then default one is used"
-              example: "https://eparagon.cloud"
+              example: "https://eparagon.cloud:4051"
             idz:
               type: "string"
               description: "eDocument IDZ identifier"

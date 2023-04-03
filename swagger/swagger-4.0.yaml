@@ -1762,7 +1762,7 @@ components:
             allOf:
               - $ref: '#/components/schemas/ParagonFakturaLine'
         efaktura:
-          description: Added in schema 4.0
+          description: "Added in schema 4.0"
           type: "object"
           properties:
             service:
@@ -1772,7 +1772,15 @@ components:
             idz:
               type: "string"
               description: "eDocument IDZ identifier"
-              example: "11|jan.kowalski@email.com"
+              example: "11"
+            email:
+              type: "string"
+              description: "Email address to send eFaktura"
+              example: "jan.kowalski-1@email.com"
+            phone:
+              type: "string"
+              description: "Phone number to send SMS/MMS with eFaktura"
+              example: "500500500"
         extralines1:
           type: "array"
           description: "Max 2 elements. Structure for not-ONLINE devices only"
@@ -1971,7 +1979,15 @@ components:
             idz:
               type: "string"
               description: "eDocument IDZ identifier"
-              example: "11|jan.kowalski@email.com"
+              example: "11"
+            email:
+              type: "string"
+              description: "Email address to send eFaktura"
+              example: "jan.kowalski-1@email.com"
+            phone:
+              type: "string"
+              description: "Phone number to send SMS/MMS with eFaktura"
+              example: "500500500"
         extralines3:
           type: "array"
           items:
@@ -2152,7 +2168,7 @@ components:
             allOf:
               - $ref: '#/components/schemas/PaymentObject'
         eparagon:
-          description: Added in schema 4.0
+          description: "Added in schema 4.0"
           type: "object"
           properties:
             service:
@@ -2162,10 +2178,18 @@ components:
             idz:
               type: "string"
               description: "eDocument IDZ identifier"
-              example: "11|jan.kowalski@email.com"
+              example: "11"
+            email:
+              type: "string"
+              description: "Email address to send eParagon"
+              example: "jan.kowalski-1@email.com"
+            phone:
+              type: "string"
+              description: "Phone number to send SMS/MMS with eParagon"
+              example: "500500500"
         discounts:
           type: "array"
-          description: Added in schema 3.12
+          description: "Added in schema 3.12"
           items:
             type: "object"
             allOf:

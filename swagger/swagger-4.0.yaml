@@ -1246,6 +1246,11 @@ paths:
         schema:
           type: "boolean"
           default: false
+      - name: "breakOnFirstError"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: true
       requestBody:
         content:
           'application/json':

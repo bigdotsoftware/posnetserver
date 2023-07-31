@@ -239,6 +239,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheRangesResponse"
+  
+  /cache/build:
+    post:
+      tags:
+      - "General"
+      summary: "Build local cache of fiscal memory"
+      description: "Build local cache of fiscal memory"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CacheBuildRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheBuildResponse"
                 
   #/dlq/processall:
   #  post:
@@ -3016,6 +3036,39 @@ components:
           type: "string"
           example: "3.10"
       
+      
+    CacheBuildRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          example: "2023-07-11T00:00:00+02:00"
+        dateTo:
+          type: "string"
+          example: "2023-07-11T00:00:00+02:00"
+        prefix:
+          type: "string"
+          example: ""
+        cacheType:
+          type: "string"
+          example: "full"
+          enum:
+            - lazy
+            - sections
+            - full
+            
+    CacheBuildResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        task:
+          type: "string"
+          example: "06af0279-eaeb-4916-9680-8756d76a9e98"
+    
+    
     StatusRtcGet:
       type: "object"
       properties:

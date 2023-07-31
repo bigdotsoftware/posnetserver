@@ -226,6 +226,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/DlqProcessDeleteResponse"
   
+  /cache/ranges:
+    get:
+      tags:
+      - "General"
+      summary: "Return cache ranges"
+      description: "Return cache ranges"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheRangesResponse"
+                
   #/dlq/processall:
   #  post:
   #    tags:
@@ -2967,6 +2981,30 @@ components:
         directory:
           type: "string"
           example: "dlq"
+          
+    CacheRangesResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        cache:
+          type: "object"
+          properties:
+            dateFrom:
+              type: "string"
+              example: "1689119846"
+              description: "lower bound date"
+            dateTo:
+              type: "string"
+              example: "1690802789"
+              description: "upper bound date"
+            type:
+              type: "string"
+              example: "full"
+              enum:
+              - lazy
+              - sections
+              - full
           
     StatusCommon:
       type: "object"

@@ -1139,6 +1139,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"       
+  
+  /raporty/sellhistory:
+    post:
+      tags:
+      - "Reports"
+      summary: "Return sell history within provided time range"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportEventsSellHistoryRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
                 
   /raporty/custom:
     post:
@@ -3770,6 +3795,34 @@ components:
           example: false
           default: false
           description: "Event details can be split per sections. Using this switch you can modify response format for easier integration. When mergeSections=true then all event sections are combined into single JSON document, otwherwise they are returned as an array of smaller JSON documents."
+        useCache:
+          type: "boolean"
+          example: false
+          default: false
+          description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
+          
+          
+    ReportEventsSellHistoryRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          format: date-time
+          example: "2023-06-20T12:00:00.000Z"
+          description: "Search for events from this date"
+        dateTo:
+          type: "string"
+          format: date-time
+          example: "2023-12-01T00:00:00.000Z"
+          description: "earch for events to this date"
+        prefix:
+          type: "string"
+          example: ""
+        saveResults:
+          type: "string"
+          example: "/tmp/sellhistory.json"
         useCache:
           type: "boolean"
           example: false

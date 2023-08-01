@@ -293,6 +293,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheUpdateResponse"
+  
+  /cache/dump:
+    post:
+      tags:
+      - "General"
+      summary: "Shows cache details"
+      description: "Shows cache details"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheDumpResponse"
                 
   #/dlq/processall:
   #  post:
@@ -3107,6 +3121,11 @@ components:
             - sections
             - full
             
+    CacheDumpResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
     CacheBuildResponse:
       type: "object"
       allOf:

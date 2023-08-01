@@ -240,6 +240,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/CacheRangesResponse"
   
+  /cache/clean:
+    delete:
+      tags:
+      - "General"
+      summary: "Clears the cache"
+      description: "Clears the cache"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheClearResponse"
+                
   /cache/build:
     post:
       tags:
@@ -259,6 +273,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheBuildResponse"
+  
+  /cache/update:
+    post:
+      tags:
+      - "General"
+      summary: "Update local cache of fiscal memory"
+      description: "Update local cache of fiscal memory"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CacheUpdateRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheUpdateResponse"
                 
   #/dlq/processall:
   #  post:
@@ -3002,6 +3036,11 @@ components:
           type: "string"
           example: "dlq"
           
+    CacheClearResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
     CacheRangesResponse:
       type: "object"
       allOf:
@@ -3022,7 +3061,6 @@ components:
               type: "string"
               example: "full"
               enum:
-              - lazy
               - sections
               - full
           
@@ -3036,7 +3074,18 @@ components:
           type: "string"
           example: "3.10"
       
-      
+    CacheUpdateRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          example: "2023-07-11T00:00:00+02:00"
+        dateTo:
+          type: "string"
+          example: "2023-07-31T23:59:59+02:00"
+            
     CacheBuildRequest:
       type: "object"
       allOf:
@@ -3047,7 +3096,7 @@ components:
           example: "2023-07-11T00:00:00+02:00"
         dateTo:
           type: "string"
-          example: "2023-07-11T00:00:00+02:00"
+          example: "2023-07-31T23:59:59+02:00"
         prefix:
           type: "string"
           example: ""
@@ -3055,7 +3104,6 @@ components:
           type: "string"
           example: "full"
           enum:
-            - lazy
             - sections
             - full
             
@@ -3068,6 +3116,14 @@ components:
           type: "string"
           example: "06af0279-eaeb-4916-9680-8756d76a9e98"
     
+    CacheUpdateResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        task:
+          type: "string"
+          example: "06af0279-eaeb-4916-9680-8756d76a9e98"
     
     StatusRtcGet:
       type: "object"

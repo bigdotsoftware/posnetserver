@@ -1165,6 +1165,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
                 
+                
+  /raporty/fiscalmemory:
+    post:
+      tags:
+      - "Reports"
+      summary: "Method to scan fiscal memory structure, optionally decode and save on disk"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportFiscalMemoryRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
+                
   /raporty/custom:
     post:
       tags:
@@ -3829,6 +3855,31 @@ components:
           default: false
           description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
           
+    ReportFiscalMemoryRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          format: date-time
+          example: "2023-06-20T12:00:00.000Z"
+          description: "Search for events from this date"
+        dateTo:
+          type: "string"
+          format: date-time
+          example: "2023-12-01T00:00:00.000Z"
+          description: "earch for events to this date"
+        prefix:
+          type: "string"
+          example: ""
+        saveResults:
+          type: "string"
+          example: "/tmp/sellhistory.json"
+        dumpContent:
+          type: "string"
+          example: "/tmp/"
+    
     ReportShiftrepRequest:
       type: "object"
       properties:

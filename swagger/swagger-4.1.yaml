@@ -129,6 +129,16 @@ paths:
       - "General"
       summary: "List of long running tasks"
       description: "Return list of long running tasks. Some operations like fetching sell history or events from device may take time. This method can be used to monitor progress of historical as well actively running tasks"
+      parameters:
+      - name: "inprogress"
+        in: "query"
+        schema:
+          type: "string"
+          default: "all"
+          enum:
+            - "all"
+            - "true"
+            - "false"
       responses:
         '200':
           description: "successful operation"
@@ -1119,7 +1129,7 @@ paths:
     post:
       tags:
       - "Reports"
-      summary: "Cash state report"
+      summary: "Request to list device events"
       parameters:
       - name: "fulldebug"
         in: "query"

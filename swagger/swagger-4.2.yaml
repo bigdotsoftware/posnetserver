@@ -4415,6 +4415,19 @@ components:
           properties:
             id:
               type: "string"
+              description: "Identification number"
+              example: "ABCD1234"
+            nm:
+              type: "string"
+              description: "Device type"
+              example: "POSNET THERMAL HD ONLINE"
+            vr:
+              type: "string"
+              description: "Firmware version"
+              example: "22.01"
+            nu:
+              type: "string"
+              description: "Unique number"
               example: "ABCD1234"
               
     StatusResponse:

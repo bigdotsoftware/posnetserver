@@ -26,92 +26,88 @@ SET JQ=jq-windows-amd64.exe
 echo  YESTERDAY: %YESTERDAY%
 echo  TODAY: %TODAY%
 
-REM get device ID (request compatible with version >= 4.4; when using older version, comment below request and set DEVICEID manually in this script)
+REM --- get device ID (request compatible with version >= 4.4; when using older version, comment below request and set DEVICEID manually in this script)
 REM curl -s -XGET "%POSNETSERVERHOST%/deviceid?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%/result.json
+REM for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%/result.json') do set ok=%%i
+REM echo  ok: %ok%
+REM 
+REM if "%ok%"=="true" (
+REM     for /f %%i in ('%JQ% -r ".device.id" %OUTPUT_DIRECTORY%/result.json') do set DEVICEID=%%i
+REM     echo  DEVICEID: %DEVICEID%
+REM ) else (
+REM     echo "Error: Cannot read unique device ID. Your device is not connected or is not an ONLINE device"
+REM     GOTO :EOF
+REM )
+
+REM --- check if cache exists
+curl -s -XGET "%POSNETSERVERHOST%/cache/ranges?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%/result.json
 for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%/result.json') do set ok=%%i
 echo  ok: %ok%
 
 if "%ok%"=="true" (
-    for /f %%i in ('%JQ% -r ".device.id" %OUTPUT_DIRECTORY%/result.json') do set DEVICEID=%%i
-	echo  DEVICEID: %DEVICEID%
+    REM --- check if existing cache type match to requested type
+	for /f %%i in ('%JQ% -r ".cache.type" %OUTPUT_DIRECTORY%/result.json') do set cache_type=%%i
+	REM for /f %%i in ('%JQ% -r ".cache.dateFrom" %OUTPUT_DIRECTORY%/result.json') do set cache_dateFrom=%%i
+	for /f %%i in ('%JQ% -r ".cache.dateFrom|strflocaltime(\"%Y-%m-%d\")" %OUTPUT_DIRECTORY%/result.json') do set iso_dateFrom=%%i
+
+    if "%cache_type%"=="%CACHE_TYPE%" (
+        REM --- cache exists, expand it
+        echo "Expanding cache from %iso_dateFrom%"
+        curl -s -XPOST "%POSNETSERVERHOST%/cache/update?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "
+        {
+            \"dateFrom\":\"%iso_dateFrom%T00:00:00+02:00\",
+            \"dateTo\":\"%TODAY%T23:59:59+02:00\"
+        }" > %OUTPUT_DIRECTORY%/result.json
+        for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%/result.json') do set ok=%%i
+        echo  /cache/update ok: %ok%
+    ) else (
+        echo "Error: Cannot extend cache, cache types are different"
+        GOTO :EOF
+    )
 ) else (
-    echo "Error: Cannot read unique device ID. Your device is not connected or is not an ONLINE device"
+    REM --- cache doesn't exist, build it
+    REM --- build cache from yesterday till today
+    echo "Building cache from %YESTERDAY%"
+    curl -s -XPOST "%POSNETSERVERHOST%/cache/build?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "
+    {
+       \"dateFrom\":\"%YESTERDAY%T00:00:00+02:00\",
+       \"dateTo\":\"%TODAY%T23:59:59+02:00\",
+       \"cacheType\" : \"%CACHE_TYPE%\"
+    }" > %OUTPUT_DIRECTORY%/result.json
+    for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%/result.json') do set ok=%%i
+    echo  /cache/build ok: %ok%
+)
+
+REM --- when build/update succeeded, wait for task to be finished
+if "%ok%"=="true" (
+    for /f %%i in ('%JQ% -r ".task" %OUTPUT_DIRECTORY%/result.json') do set task=%%i
+    SET processing=true
+    :still_processing
+        timeout /t 1 /nobreak >nul
+        echo "Checking task %task%"
+        curl -s -XGET "%POSNETSERVERHOST%/tasks/get/%task%?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%/result.json
+        for /f %%i in ('%JQ% -r ".hits.task.inprogress" %OUTPUT_DIRECTORY%/result.json') do set processing=%%i
+        more %OUTPUT_DIRECTORY%/result.json
+        if "%processing%"=="true" goto :still_processing
+
+) else (
+
+    echo "Error: Cannot build/update existing cache"
     GOTO :EOF
 )
 
 
+REM --- use existing cache to list all daily reports
+mkdir -p %OUTPUT_DIRECTORY%/%PRETTY_HOSTNAME%/posnet/
 
-GOTO :EOF
-
-# --- check if cache exists
-result=`curl -s -XGET "$POSNETSERVERHOST/cache/ranges?fulldebug=$FULLDEBUG" -H "Content-type: application/json"`
-ok=`echo $result|jq -r '.ok'`
-
-if [ "$ok" == "true" ]; then
-    # --- check if existing cache type match to requested type
-    cache_type=`echo $result|jq -r '.cache.type'`
-    cache_dateFrom=`echo $result|jq -r '.cache.dateFrom'`
-    iso_dateFrom=`date -d @$cache_dateFrom '+%Y-%m-%d'`
-    if [ "$cache_type" == "$CACHE_TYPE" ]; then
-        # --- cache exists, expand it
-        echo "Expanding cache from $iso_dateFrom"
-        result=`curl -s -XPOST "$POSNETSERVERHOST/cache/update?fulldebug=$FULLDEBUG" -H "Content-type: application/json" -d "
-        {
-            \"dateFrom\":\"${iso_dateFrom}T00:00:00+02:00\",
-            \"dateTo\":\"${TODAY}T23:59:59+02:00\"
-        }"`
-        ok=`echo $result|jq -r '.ok'`
-        
-        echo $result
-    else
-        echo "Error: Cannot extend cache, cache types are different"
-        exit 1
-    fi
-else
-    # --- cache doesn't exist, build it
-    # --- build cache from yesterday till today
-    echo "Building cache from $YESTERDAY"
-    result=`curl -s -XPOST "$POSNETSERVERHOST/cache/build?fulldebug=$FULLDEBUG" -H "Content-type: application/json" -d "
-    {
-       \"dateFrom\":\"${YESTERDAY}T00:00:00+02:00\",
-       \"dateTo\":\"${TODAY}T23:59:59+02:00\",
-       \"cacheType\" : \"$CACHE_TYPE\"
-    }"`
-    ok=`echo $result|jq -r '.ok'`
-    echo $result
-fi
-
-# --- when build/update succeeded, wait for task to be finished
-if [ "$ok" == "true" ]; then
-
-    task=`echo $result|jq -r '.task'`
-    processing="true"
-    while [ "$processing" == "true" ]; do
-        sleep 1
-        echo "Checking task $task"
-        result=`curl -s -XGET "$POSNETSERVERHOST/tasks/get/$task?fulldebug=$FULLDEBUG" -H "Content-type: application/json"`
-        processing=`echo $result|jq -r '.hits.task.inprogress'`
-        echo $result
-    done
-
-else
-
-    echo "Error: Cannot build/update existing cache"
-    echo $result
-    exit 1
-fi
-
-# --- use existing cache to list all daily reports
-mkdir -p $OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/ 2>/dev/null
-
-curl -s -XPOST "$POSNETSERVERHOST/raporty/events/dobowy?fulldebug=$FULLDEBUG" -H "Content-type: application/json" -d "
+curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "
 {
-  \"dateFrom\": \"${REPORT_FROM}T00:00:00+02:00\",
+  \"dateFrom\": \"%REPORT_FROM%T00:00:00+02:00\",
   \"mergeSections\": true,
   \"useCache\": true
-}" > $OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/$DEVICEID.json
+}" > %OUTPUT_DIRECTORY%/%PRETTY_HOSTNAME%/posnet/%DEVICEID%.json
 
-echo "DONE, results: $OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/$DEVICEID.json"
+echo "DONE, results: %OUTPUT_DIRECTORY%/%PRETTY_HOSTNAME%/posnet/%DEVICEID%.json"
 
 GOTO :EOF
 

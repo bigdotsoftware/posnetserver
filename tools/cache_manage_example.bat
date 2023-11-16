@@ -19,6 +19,7 @@ SET REPORT_FROM=2020-01-01
 SET FULLDEBUG=true
 SET CACHE_TYPE=full
 SET OUTPUT_DIRECTORY=C:\tmp
+SET REPORT_DIRECTORY=C:\tmp
 SET PRETTY_HOSTNAME=%COMPUTERNAME%
 SET DEVICEID=
 SET JQ=jq-windows-amd64.exe
@@ -115,7 +116,7 @@ if "%ok%"=="true" (
 echo ""
 echo ""
 REM --- use existing cache to list all daily reports
-mkdir %OUTPUT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\
+mkdir %REPORT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\
 
 curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%T00:00:00+02:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
 for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\\result.json') do set ok=%%i
@@ -138,8 +139,9 @@ if "%ok%"=="true" (
         more %OUTPUT_DIRECTORY%\\result.json
         if "%processing%"=="true" goto :still_processing_final
 
-    copy %OUTPUT_DIRECTORY%\\result.json %OUTPUT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\%DEVICEID%.json
-    echo "DONE, results: %OUTPUT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\%DEVICEID%.json"
+    copy %OUTPUT_DIRECTORY%\\result.json %REPORT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\%DEVICEID%.json
+    echo "DONE, results: %REPORT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\%DEVICEID%.json"
+
 ) else (
     echo "Error: Cannot request /raporty/events/dobowy"
     GOTO :EOF

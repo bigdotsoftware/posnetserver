@@ -14,14 +14,19 @@ REM --- configuration
 SET POSNETSERVERHOST=http://192.168.0.31:3050
 call :getYesterdayDate yesterday
 SET YESTERDAY=%yesterday%
+REM assume format Fri 11/17/2023
 SET TODAY=%DATE:~10,4%-%DATE:~4,2%-%DATE:~7,2%
+IF "%TODAY:~0,1%"=="-" (
+    REM then format can be YYYY-MM-DD
+    SET TODAY=%DATE:~0,4%-%DATE:~5,2%-%DATE:~8,2%
+)
 SET REPORT_FROM=2020-01-01
 SET FULLDEBUG=true
 SET CACHE_TYPE=full
 SET OUTPUT_DIRECTORY=C:\tmp
 SET REPORT_DIRECTORY=C:\tmp
 SET PRETTY_HOSTNAME=%COMPUTERNAME%
-SET DEVICEID=
+SET DEVICEID=aa
 SET JQ=jq-windows-amd64.exe
 
 echo  YESTERDAY: %YESTERDAY%
@@ -56,24 +61,52 @@ echo  /cache/ranges ok: %ok%
 more %OUTPUT_DIRECTORY%\\result.json
 
 if "%ok%"=="true" (
+    REM initialize variables
+    SET dateFrom=
+    SET dateTo=
+    SET cache_type=
+
+
     REM --- check if existing cache type match to requested type
-	for /f %%i in ('%JQ% -r ".cache.type" %OUTPUT_DIRECTORY%\result.json') do set cache_type=%%i
+    for /f %%i in ('%JQ% -r ".cache.type" %OUTPUT_DIRECTORY%\result.json') do SET cache_type=%%i
     echo  cache_type: %cache_type%
     
-	for /f %%i in ('%JQ% -r ".cache.dateFrom | tonumber | strflocaltime(""%%Y-%%m-%%d"")" %OUTPUT_DIRECTORY%\result.json') do set iso_dateFrom=%%i
-    echo  iso_dateFrom: %iso_dateFrom%
+    for /f %%i in ('%JQ% -r ".cache.dateFrom" %OUTPUT_DIRECTORY%\result.json') do SET dateFrom=%%i
+    for /f %%i in ('%JQ% -r ".cache.dateTo" %OUTPUT_DIRECTORY%\result.json') do SET dateTo=%%i
+    echo  dateFrom: %dateFrom%
+    echo  dateTo: %dateTo%
+    
 
-    if "%cache_type%"=="%CACHE_TYPE%" (
-        REM --- cache exists, expand it
-        echo "Expanding cache from %iso_dateFrom%"
-        curl -s -XPOST "%POSNETSERVERHOST%/cache/update?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%iso_dateFrom%T00:00:00+02:00"", ""dateTo"":""%TODAY%T23:59:59+02:00""}" > %OUTPUT_DIRECTORY%\\result.json
-        for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\result.json') do set ok=%%i
-        echo  /cache/update ok: %ok%
+    if "%dateFrom%"=="0" (
+        REM --- cache doesn't exist, build it
+        REM --- build cache from yesterday till today
+        echo "Building cache from %YESTERDAY%"
+        curl -s -XPOST "%POSNETSERVERHOST%/cache/build?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%YESTERDAY%T00:00:00+02:00"",""dateTo"":""%TODAY%T23:59:59+02:00"",""cacheType"" : ""%CACHE_TYPE%""}" > %OUTPUT_DIRECTORY%\\result.json
+        for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\\result.json') do set ok=%%i
+        echo  /cache/build ok: %ok%
         more %OUTPUT_DIRECTORY%\\result.json
     ) else (
-        echo "Error: Cannot extend cache, cache types are different %CACHE_TYPE% != %cache_type%"
-        more %OUTPUT_DIRECTORY%\\result.json
-        GOTO :EOF
+        echo  Converting %dateFrom% to ISO format ....
+        for /f %%i in ('%JQ% -r ".cache.dateFrom | tonumber | strflocaltime(""%%Y-%%m-%%d"")" %OUTPUT_DIRECTORY%\result.json') do set iso_dateFrom=%%i
+        echo  iso_dateFrom: %iso_dateFrom%
+
+        IF "%iso_dateFrom%"=="" (
+            echo "Error: cannot read ISO_DATE from /cache/ranges"
+            GOTO :EOF
+        )
+
+        if "%cache_type%"=="%CACHE_TYPE%" (
+            REM --- cache exists, expand it
+            echo "Expanding cache from %iso_dateFrom%"
+            curl -s -XPOST "%POSNETSERVERHOST%/cache/update?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%iso_dateFrom%T00:00:00+02:00"", ""dateTo"":""%TODAY%T23:59:59+02:00""}" > %OUTPUT_DIRECTORY%\\result.json
+            for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\result.json') do set ok=%%i
+            echo  /cache/update ok: %ok%
+            more %OUTPUT_DIRECTORY%\\result.json
+        ) else (
+            echo "Error: Cannot extend cache, cache types are different %CACHE_TYPE% != %cache_type%"
+            more %OUTPUT_DIRECTORY%\\result.json
+            GOTO :EOF
+        )
     )
 ) else (
     REM --- cache doesn't exist, build it

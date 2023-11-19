@@ -1,6 +1,6 @@
 @echo off
-setlocal enableextensions
-SETLOCAL EnableDelayedExpansion
+REM setlocal enableextensions
+REM SETLOCAL EnableDelayedExpansion
 
 REM ---------------------------------------------------------------------------
 REM | Environment preparation
@@ -29,8 +29,8 @@ SET PRETTY_HOSTNAME=%COMPUTERNAME%
 SET DEVICEID=aa
 SET JQ=jq-windows-amd64.exe
 
-echo  YESTERDAY: %YESTERDAY%
-echo  TODAY: %TODAY%
+echo   YESTERDAY: %YESTERDAY%
+echo   TODAY: %TODAY%
 
 REM ###################### Block to get DEVICEID from PosnetServer ###########################
 REM --- get device ID (request compatible with version >= 4.4; when using older version, comment below request and set DEVICEID manually in this script)
@@ -54,108 +54,127 @@ IF "%DEVICEID%"=="" (
 
 echo ""
 echo ""
+REM ---------------------------------------------------------------------------------
 REM --- check if cache exists
+REM ---------------------------------------------------------------------------------
 curl -s -XGET "%POSNETSERVERHOST%/cache/ranges?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
-for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\result.json') do set ok=%%i
-echo  /cache/ranges ok: %ok%
 more %OUTPUT_DIRECTORY%\\result.json
 
-if "%ok%"=="true" (
-    REM initialize variables
-    SET dateFrom=
-    SET dateTo=
-    SET cache_type=
+call :getJSONValue ok ".ok"
+echo   /cache/ranges ok: %ok%
 
-
-    REM --- check if existing cache type match to requested type
-    for /f %%i in ('%JQ% -r ".cache.type" %OUTPUT_DIRECTORY%\result.json') do SET cache_type=%%i
-    echo  cache_type: %cache_type%
-    
-    for /f %%i in ('%JQ% -r ".cache.dateFrom" %OUTPUT_DIRECTORY%\result.json') do SET dateFrom=%%i
-    for /f %%i in ('%JQ% -r ".cache.dateTo" %OUTPUT_DIRECTORY%\result.json') do SET dateTo=%%i
-    echo  dateFrom: %dateFrom%
-    echo  dateTo: %dateTo%
-    
-
-    if "%dateFrom%"=="0" (
-        REM --- cache doesn't exist, build it
-        REM --- build cache from yesterday till today
-        echo "Building cache from %YESTERDAY%"
-        curl -s -XPOST "%POSNETSERVERHOST%/cache/build?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%YESTERDAY%T00:00:00+02:00"",""dateTo"":""%TODAY%T23:59:59+02:00"",""cacheType"" : ""%CACHE_TYPE%""}" > %OUTPUT_DIRECTORY%\\result.json
-        for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\\result.json') do set ok=%%i
-        echo  /cache/build ok: %ok%
-        more %OUTPUT_DIRECTORY%\\result.json
-    ) else (
-        echo  Converting %dateFrom% to ISO format ....
-        for /f %%i in ('%JQ% -r ".cache.dateFrom | tonumber | strflocaltime(""%%Y-%%m-%%d"")" %OUTPUT_DIRECTORY%\result.json') do set iso_dateFrom=%%i
-        echo  iso_dateFrom: %iso_dateFrom%
-
-        IF "%iso_dateFrom%"=="" (
-            echo "Error: cannot read ISO_DATE from /cache/ranges"
-            GOTO :EOF
-        )
-
-        if "%cache_type%"=="%CACHE_TYPE%" (
-            REM --- cache exists, expand it
-            echo "Expanding cache from %iso_dateFrom%"
-            curl -s -XPOST "%POSNETSERVERHOST%/cache/update?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%iso_dateFrom%T00:00:00+02:00"", ""dateTo"":""%TODAY%T23:59:59+02:00""}" > %OUTPUT_DIRECTORY%\\result.json
-            for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\result.json') do set ok=%%i
-            echo  /cache/update ok: %ok%
-            more %OUTPUT_DIRECTORY%\\result.json
-        ) else (
-            echo "Error: Cannot extend cache, cache types are different %CACHE_TYPE% != %cache_type%"
-            more %OUTPUT_DIRECTORY%\\result.json
-            GOTO :EOF
-        )
-    )
-) else (
-    REM --- cache doesn't exist, build it
-    REM --- build cache from yesterday till today
-    echo "Building cache from %YESTERDAY%"
-    curl -s -XPOST "%POSNETSERVERHOST%/cache/build?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%YESTERDAY%T00:00:00+02:00"",""dateTo"":""%TODAY%T23:59:59+02:00"",""cacheType"" : ""%CACHE_TYPE%""}" > %OUTPUT_DIRECTORY%\\result.json
-    for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\\result.json') do set ok=%%i
-    echo  /cache/build ok: %ok%
-    more %OUTPUT_DIRECTORY%\\result.json
-)
-
-echo ""
-echo ""
-REM --- when build/update succeeded, wait for task to be finished
-if "%ok%"=="true" (
-    for /f %%i in ('%JQ% -r ".task" %OUTPUT_DIRECTORY%\result.json') do set task=%%i
-
-    IF "%task%"=="" (
-        echo "Error, cannot read task ID"
-        more %OUTPUT_DIRECTORY%\\result.json
-        GOTO :EOF
-    )
-
-    SET processing=true
-    :still_processing
-        timeout /t 1 /nobreak >nul
-        echo "Checking task %task%"
-        curl -s -XGET "%POSNETSERVERHOST%/tasks/get/%task%?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
-        for /f %%i in ('%JQ% -r ".hits.task.inprogress" %OUTPUT_DIRECTORY%\result.json') do set processing=%%i
-        more %OUTPUT_DIRECTORY%\\result.json
-        if "%processing%"=="true" goto :still_processing
-
-) else (
-
-    echo "Error: Cannot build/update existing cache"
+IF NOT "%ok%"=="true" (
+    echo   ERROR: Cannot read cache ranges
     GOTO :EOF
 )
 
+call :getJSONValue cachetype ".cache.type"
+echo   cachetype: %cachetype%
 
-echo ""
-echo ""
-REM --- use existing cache to list all daily reports
-mkdir %REPORT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\
+call :getJSONValue dateFrom ".cache.dateFrom"
+echo   dateFrom: %dateFrom%
 
-curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%T00:00:00+02:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
-for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\\result.json') do set ok=%%i
-echo  /raporty/events/dobowy ok: %ok%
-if "%ok%"=="true" (
-    for /f %%i in ('%JQ% -r ".task" %OUTPUT_DIRECTORY%\result.json') do set task=%%i
+call :getJSONValue dateTo ".cache.dateTo"
+echo   dateTo: %dateTo%
+
+
+REM if dateFrom is 0 then we must build a new cache
+if "%dateFrom%"=="0" GOTO build_cache_start
+REM else we update existing cache
+goto update_cache_start
+
+:build_cache_start
+    REM --- cache doesn't exist, build it
+    REM --- build cache from yesterday till today
+    echo   Building cache from %YESTERDAY%
+    curl -s -XPOST "%POSNETSERVERHOST%/cache/build?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%YESTERDAY%T00:00:00+02:00"",""dateTo"":""%TODAY%T23:59:59+02:00"",""cacheType"" : ""%CACHE_TYPE%""}" > %OUTPUT_DIRECTORY%\\result.json
+    more %OUTPUT_DIRECTORY%\\result.json
+
+    REM for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\\result.json') do set ok=%%i
+    call :getJSONValue ok ".ok"
+    echo   /cache/build ok: %ok%
+    goto wait_for_cache_to_be_build
+
+:update_cache_start
+    echo   Converting %dateFrom% to ISO format ....
+    for /f %%i in ('%JQ% -r ".cache.dateFrom | tonumber | strflocaltime(""%%Y-%%m-%%d"")" %OUTPUT_DIRECTORY%\result.json') do set iso_dateFrom=%%i
+    echo   iso_dateFrom: %iso_dateFrom%
+
+    IF "%iso_dateFrom%"=="" (
+        echo   Error: cannot read ISO_DATE from /cache/ranges
+        GOTO :EOF
+    )
+
+    if NOT "%cachetype%"=="%CACHE_TYPE%" (
+        echo   Error: Cannot extend cache, cache types are different %CACHE_TYPE% != %cachetype%
+        more %OUTPUT_DIRECTORY%\\result.json
+        GOTO :EOF
+    )
+
+    REM --- cache exists, expand it
+    echo   Expanding cache from %iso_dateFrom%
+    curl -s -XPOST "%POSNETSERVERHOST%/cache/update?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%iso_dateFrom%T00:00:00+02:00"", ""dateTo"":""%TODAY%T23:59:59+02:00""}" > %OUTPUT_DIRECTORY%\\result.json
+    more %OUTPUT_DIRECTORY%\\result.json
+    call :getJSONValue ok ".ok"
+    echo   /cache/update ok: %ok%
+
+REM ---------------------------------------------------------------------------------
+REM wait_for_cache_to_be_build
+REM ---------------------------------------------------------------------------------
+:wait_for_cache_to_be_build
+
+
+REM --- when build/update succeeded, wait for task to be finished
+if NOT "%ok%"=="true" (
+    echo   Error: Cannot build/update existing cache
+    GOTO :EOF
+)
+
+call :getJSONValue task ".task"
+REM for /f %%i in ('%JQ% -r ".task" %OUTPUT_DIRECTORY%\result.json') do set task=%%i
+
+IF "%task%"=="" (
+    echo  Error, cannot read task ID
+    more %OUTPUT_DIRECTORY%\\result.json
+    GOTO :EOF
+)
+
+SET processing=true
+:still_processing
+    timeout /t 1 /nobreak >nul
+    echo   Checking task %task%
+    curl -s -XGET "%POSNETSERVERHOST%/tasks/get/%task%?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
+    more %OUTPUT_DIRECTORY%\\result.json
+    REM for /f %%i in ('%JQ% -r ".hits.task.inprogress" %OUTPUT_DIRECTORY%\result.json') do set processing=%%i
+    call :getJSONValue processing ".hits.task.inprogress"
+    if "%processing%"=="true" goto :still_processing
+
+
+:task_cache_is_finished
+    call :getJSONValue success ".hits.task.success"
+    echo   /cache/build or /cache/update success: %success%
+    if NOT "%success%"=="true" (
+        echo   Error: Cache cannot be build, interrupting
+        GOTO :EOF
+    )
+
+
+:request_for_report_with_cache
+    echo ""
+    echo ""
+    REM --- use existing cache to list all daily reports
+    
+    curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%T00:00:00+02:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
+    more %OUTPUT_DIRECTORY%\\result.json
+    call :getJSONValue ok ".ok"
+    echo   /raporty/events/dobowy ok: %ok%
+    if NOT "%ok%"=="true" (
+        echo   Error: Cannot request /raporty/events/dobowy
+        GOTO :EOF
+    )
+
+    call :getJSONValue task ".task"
+    REM for /f %%i in ('%JQ% -r ".task" %OUTPUT_DIRECTORY%\result.json') do set task=%%i
 
     IF "%task%"=="" (
         echo "Error, cannot read task ID"
@@ -163,22 +182,29 @@ if "%ok%"=="true" (
         GOTO :EOF
     )
 
-    SET processing=true
-    :still_processing_final
-        timeout /t 1 /nobreak >nul
-        echo "Checking task %task%"
-        curl -s -XGET "%POSNETSERVERHOST%/tasks/get/%task%?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
-        for /f %%i in ('%JQ% -r ".hits.task.inprogress" %OUTPUT_DIRECTORY%\result.json') do set processing=%%i
-        more %OUTPUT_DIRECTORY%\\result.json
-        if "%processing%"=="true" goto :still_processing_final
 
+SET processing=true
+:still_processing_final
+    timeout /t 1 /nobreak >nul
+    echo "Checking task %task%"
+    curl -s -XGET "%POSNETSERVERHOST%/tasks/get/%task%?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
+    for /f %%i in ('%JQ% -r ".hits.task.inprogress" %OUTPUT_DIRECTORY%\result.json') do set processing=%%i
+    more %OUTPUT_DIRECTORY%\\result.json
+    if "%processing%"=="true" goto :still_processing_final
+
+
+:save_final_report
+    call :getJSONValue success ".hits.task.success"
+    echo   /raporty/events/dobowy success: %success%
+    if NOT "%success%"=="true" (
+        echo   Error: Cache cannot be build, interrupting
+        GOTO :EOF
+    )
+
+    mkdir %REPORT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\
     copy %OUTPUT_DIRECTORY%\\result.json %REPORT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\%DEVICEID%.json
     echo "DONE, results: %REPORT_DIRECTORY%\\%PRETTY_HOSTNAME%\\posnet\\%DEVICEID%.json"
 
-) else (
-    echo "Error: Cannot request /raporty/events/dobowy"
-    GOTO :EOF
-)
 
 GOTO :EOF
 
@@ -198,3 +224,8 @@ GOTO :EOF
     setlocal enableextensions disabledelayedexpansion
     set "today=" & for /f %%a in ('robocopy "|" . /njh') do if not defined today set "today=%%a"
     endlocal & set "%~1=%today%" & exit /b
+
+:getJSONValue ret
+    setlocal enableextensions disabledelayedexpansion
+    set "rrrr=" & for /f %%a in ('%JQ% -r %~2 %OUTPUT_DIRECTORY%\result.json') do if not defined rrrr set "rrrr=%%a"
+    endlocal & set "%~1=%rrrr%" & exit /b

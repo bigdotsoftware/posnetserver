@@ -122,22 +122,21 @@ REM ----------------------------------------------------------------------------
 REM wait_for_cache_to_be_build
 REM ---------------------------------------------------------------------------------
 :wait_for_cache_to_be_build
+    echo   Waiting for cache to be built/updated...
+    REM --- when build/update succeeded, wait for task to be finished
+    if NOT "%ok%"=="true" (
+        echo   Error: Cannot build/update existing cache
+        GOTO :EOF
+    )
 
+    call :getJSONValue task ".task"
+    REM for /f %%i in ('%JQ% -r ".task" %OUTPUT_DIRECTORY%\result.json') do set task=%%i
 
-REM --- when build/update succeeded, wait for task to be finished
-if NOT "%ok%"=="true" (
-    echo   Error: Cannot build/update existing cache
-    GOTO :EOF
-)
-
-call :getJSONValue task ".task"
-REM for /f %%i in ('%JQ% -r ".task" %OUTPUT_DIRECTORY%\result.json') do set task=%%i
-
-IF "%task%"=="" (
-    echo  Error, cannot read task ID
-    more %OUTPUT_DIRECTORY%\\result.json
-    GOTO :EOF
-)
+    IF "%task%"=="" (
+        echo  Error, cannot read task ID
+        more %OUTPUT_DIRECTORY%\\result.json
+        GOTO :EOF
+    )
 
 SET processing=true
 :still_processing
@@ -197,7 +196,7 @@ SET processing=true
     call :getJSONValue success ".hits.task.success"
     echo   /raporty/events/dobowy success: %success%
     if NOT "%success%"=="true" (
-        echo   Error: Cache cannot be build, interrupting
+        echo   Error: Cache cannot be build, see error above, interrupting
         GOTO :EOF
     )
 

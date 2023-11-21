@@ -20,7 +20,7 @@ IF "%TODAY:~0,1%"=="-" (
     REM then format can be YYYY-MM-DD
     SET TODAY=%DATE:~0,4%-%DATE:~5,2%-%DATE:~8,2%
 )
-SET REPORT_FROM=2020-01-01
+SET REPORT_FROM=2020-01-01T00:00:00
 SET FULLDEBUG=true
 SET CACHE_TYPE=full
 SET OUTPUT_DIRECTORY=C:\tmp
@@ -58,6 +58,7 @@ REM ----------------------------------------------------------------------------
 REM --- check if cache exists
 REM ---------------------------------------------------------------------------------
 curl -s -XGET "%POSNETSERVERHOST%/cache/ranges?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
+if %ERRORLEVEL% GEQ 1 GOTO command_error
 more %OUTPUT_DIRECTORY%\\result.json
 
 call :getJSONValue ok ".ok"
@@ -182,12 +183,15 @@ SET processing=true
     echo   reportFromTs: %reportFromTs% must be gte %dateFrom%
     if %reportFromTs% GEQ %dateFrom% goto request_for_report_with_cache_dates_ok
 
-    echo   adjusting %REPORT_FROM% to %iso_dateFrom%
-    set REPORT_FROM=%iso_dateFrom%
+    for /f %%i in ('%JQ% -r ".cache.dateFrom | tonumber | strflocaltime(""%%Y-%%m-%%dT%%H:%%M:%%S"")" %OUTPUT_DIRECTORY%\result.json') do set iso_dateFromWithTime=%%i
+    echo   iso_dateFromWithTime: %iso_dateFromWithTime%
+
+    echo   adjusting %REPORT_FROM% to %iso_dateFromWithTime%
+    set REPORT_FROM=%iso_dateFromWithTime%
     echo   new REPORT_FROM: %REPORT_FROM%
 
 :request_for_report_with_cache_dates_ok
-    curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%T00:00:00+02:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
+    curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%+02:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
     more %OUTPUT_DIRECTORY%\\result.json
     call :getJSONValue ok ".ok"
     echo   /raporty/events/dobowy ok: %ok%
@@ -231,6 +235,10 @@ SET processing=true
 
 GOTO :EOF
 
+:command_error
+    echo ERROR - cannot exeute command
+    exit /b
+    
 :getYesterdayDate ret
     setlocal enableextensions disabledelayedexpansion
     call :getTodayDate today
@@ -251,7 +259,7 @@ GOTO :EOF
 :convertToTimestamp ret
     setlocal enableextensions disabledelayedexpansion
     REM set "todayy=" & for /f %%a in ('%JQ% -n ""{""message"":""%~2T00:00:00Z""}"" "|" %JQ% -r """.message | fromdate"""') do if not defined todayy set "todayy=%%a"
-    set "todayy=" & for /f %%a in ('%JQ% -n """%~2T00:00:00Z"" | fromdate"') do if not defined todayy set "todayy=%%a"
+    set "todayy=" & for /f %%a in ('%JQ% -n """%~2Z"" | fromdate"') do if not defined todayy set "todayy=%%a"
     endlocal & set "%~1=%todayy%" & exit /b
 
 :getJSONValue ret

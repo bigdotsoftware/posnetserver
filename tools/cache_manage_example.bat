@@ -191,7 +191,7 @@ SET processing=true
     echo   new REPORT_FROM: %REPORT_FROM%
 
 :request_for_report_with_cache_dates_ok
-    curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%+02:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
+    curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%+00:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
     more %OUTPUT_DIRECTORY%\\result.json
     call :getJSONValue ok ".ok"
     echo   /raporty/events/dobowy ok: %ok%
@@ -238,7 +238,7 @@ GOTO :EOF
 :command_error
     echo ERROR - cannot exeute command
     exit /b
-    
+
 :getYesterdayDate ret
     setlocal enableextensions disabledelayedexpansion
     call :getTodayDate today

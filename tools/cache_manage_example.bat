@@ -163,6 +163,30 @@ SET processing=true
     echo ""
     REM --- use existing cache to list all daily reports
     
+
+    REM --- make sure that REPORT_FROM>=cache dateFrom
+    curl -s -XGET "%POSNETSERVERHOST%/cache/ranges?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
+    more %OUTPUT_DIRECTORY%\\result.json
+    call :getJSONValue ok ".ok"
+    echo   /cache/ranges ok: %ok%
+
+    IF NOT "%ok%"=="true" (
+        echo   ERROR: Cannot read cache ranges. It is needed to validate that %REPORT_FROM% >= cache %REPORT_FROM%
+        GOTO :EOF
+    )
+
+    call :getJSONValue dateFrom ".cache.dateFrom"
+    call :convertToTimestamp reportFromTs %REPORT_FROM%
+    echo   reportFromTs: %reportFromTs%
+    echo   dateFrom: %dateFrom%
+    echo   reportFromTs: %reportFromTs% must be gte %dateFrom%
+    if %reportFromTs% GEQ %dateFrom% goto request_for_report_with_cache_dates_ok
+
+    echo   adjusting %REPORT_FROM% to %iso_dateFrom%
+    set REPORT_FROM=%iso_dateFrom%
+    echo   new REPORT_FROM: %REPORT_FROM%
+
+:request_for_report_with_cache_dates_ok
     curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%T00:00:00+02:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
     more %OUTPUT_DIRECTORY%\\result.json
     call :getJSONValue ok ".ok"
@@ -223,6 +247,12 @@ GOTO :EOF
     setlocal enableextensions disabledelayedexpansion
     set "today=" & for /f %%a in ('robocopy "|" . /njh') do if not defined today set "today=%%a"
     endlocal & set "%~1=%today%" & exit /b
+
+:convertToTimestamp ret
+    setlocal enableextensions disabledelayedexpansion
+    REM set "todayy=" & for /f %%a in ('%JQ% -n ""{""message"":""%~2T00:00:00Z""}"" "|" %JQ% -r """.message | fromdate"""') do if not defined todayy set "todayy=%%a"
+    set "todayy=" & for /f %%a in ('%JQ% -n """%~2T00:00:00Z"" | fromdate"') do if not defined todayy set "todayy=%%a"
+    endlocal & set "%~1=%todayy%" & exit /b
 
 :getJSONValue ret
     setlocal enableextensions disabledelayedexpansion

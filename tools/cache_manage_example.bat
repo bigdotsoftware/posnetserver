@@ -26,8 +26,15 @@ SET CACHE_TYPE=full
 SET OUTPUT_DIRECTORY=C:\tmp
 SET REPORT_DIRECTORY=C:\tmp
 SET PRETTY_HOSTNAME=%COMPUTERNAME%
-SET DEVICEID=aa
+SET DEVICEID=
 SET JQ=jq-windows-amd64.exe
+
+SET EMAIL_SEND=true
+SET EMAIL_PASS=aaaaaa
+SET EMAIL_FROM=sample@sample.com
+SET EMAIL_TO=sample@sample.com
+SET EMAIL_HOST=mail.sample.com
+SET EMAIL_PORT=587
 
 echo   YESTERDAY: %YESTERDAY%
 echo   TODAY: %TODAY%
@@ -65,7 +72,7 @@ call :getJSONValue ok ".ok"
 echo   /cache/ranges ok: %ok%
 
 IF NOT "%ok%"=="true" (
-    echo   ERROR: Cannot read cache ranges
+    call :exit_with_action "Cannot read cache ranges"
     GOTO :EOF
 )
 
@@ -102,13 +109,14 @@ goto update_cache_start
     echo   iso_dateFrom: %iso_dateFrom%
 
     IF "%iso_dateFrom%"=="" (
-        echo   Error: cannot read ISO_DATE from /cache/ranges
+        call :exit_with_action "Cannot read ISO_DATE from /cache/ranges"
         GOTO :EOF
     )
 
     if NOT "%cachetype%"=="%CACHE_TYPE%" (
         echo   Error: Cannot extend cache, cache types are different %CACHE_TYPE% != %cachetype%
         more %OUTPUT_DIRECTORY%\\result.json
+        call :exit_with_action "Cannot extend cache, cache types are different %CACHE_TYPE% != %cachetype%"
         GOTO :EOF
     )
 
@@ -126,7 +134,7 @@ REM ----------------------------------------------------------------------------
     echo   Waiting for cache to be built/updated...
     REM --- when build/update succeeded, wait for task to be finished
     if NOT "%ok%"=="true" (
-        echo   Error: Cannot build/update existing cache
+        call :exit_with_action "Cannot build/update existing cache"
         GOTO :EOF
     )
 
@@ -136,6 +144,7 @@ REM ----------------------------------------------------------------------------
     IF "%task%"=="" (
         echo  Error, cannot read task ID
         more %OUTPUT_DIRECTORY%\\result.json
+        call :exit_with_action "cannot read task ID"
         GOTO :EOF
     )
 
@@ -154,7 +163,7 @@ SET processing=true
     call :getJSONValue success ".hits.task.success"
     echo   /cache/build or /cache/update success: %success%
     if NOT "%success%"=="true" (
-        echo   Error: Cache cannot be build, interrupting
+        call :exit_with_action "Cache cannot be build, interrupting"
         GOTO :EOF
     )
 
@@ -172,7 +181,7 @@ SET processing=true
     echo   /cache/ranges ok: %ok%
 
     IF NOT "%ok%"=="true" (
-        echo   ERROR: Cannot read cache ranges. It is needed to validate that %REPORT_FROM% >= cache %REPORT_FROM%
+        call :exit_with_action "Cannot read cache ranges. It is needed to validate that %REPORT_FROM% >= cache %REPORT_FROM%"
         GOTO :EOF
     )
 
@@ -191,12 +200,13 @@ SET processing=true
     echo   new REPORT_FROM: %REPORT_FROM%
 
 :request_for_report_with_cache_dates_ok
+    echo   requesting /raporty/events/dobowy from %REPORT_FROM%+00:00
     curl -s -XPOST "%POSNETSERVERHOST%/raporty/events/dobowy?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"": ""%REPORT_FROM%+00:00"", ""mergeSections"": true, ""useCache"": true }" > %OUTPUT_DIRECTORY%\\result.json
     more %OUTPUT_DIRECTORY%\\result.json
     call :getJSONValue ok ".ok"
     echo   /raporty/events/dobowy ok: %ok%
     if NOT "%ok%"=="true" (
-        echo   Error: Cannot request /raporty/events/dobowy
+        call :exit_with_action "Cannot request /raporty/events/dobowy from %REPORT_FROM%+00:00"
         GOTO :EOF
     )
 
@@ -206,6 +216,7 @@ SET processing=true
     IF "%task%"=="" (
         echo "Error, cannot read task ID"
         more %OUTPUT_DIRECTORY%\\result.json
+        call :exit_with_action "cannot read task ID"
         GOTO :EOF
     )
 
@@ -224,7 +235,7 @@ SET processing=true
     call :getJSONValue success ".hits.task.success"
     echo   /raporty/events/dobowy success: %success%
     if NOT "%success%"=="true" (
-        echo   Error: Cache cannot be build, see error above, interrupting
+        call :exit_with_action "Cache cannot be build, see error above, interrupting"
         GOTO :EOF
     )
 
@@ -236,7 +247,12 @@ SET processing=true
 GOTO :EOF
 
 :command_error
-    echo ERROR - cannot exeute command
+    echo   ERROR - cannot exeute command
+    exit /b
+
+:exit_with_action ret
+    echo   ERROR: %~1
+    if "%EMAIL_SEND%"=="true" swithmail.exe /s /from "%EMAIL_FROM%" /pass "%EMAIL_PASS%" /server "%EMAIL_HOST%" /p "%EMAIL_PORT%" /to "%EMAIL_TO%" /sub "Fiscal log %computername%" /btxt "%OUTPUT_DIRECTORY%\\result.json"
     exit /b
 
 :getYesterdayDate ret

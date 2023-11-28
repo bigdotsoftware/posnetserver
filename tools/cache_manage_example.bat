@@ -13,7 +13,8 @@ REM ---------------------------------------------------------------------------
 REM --- configuration
 SET POSNETSERVERHOST=http://192.168.0.31:3050
 call :getYesterdayDate yesterday
-SET YESTERDAY=%yesterday%
+call :getPrevMonthDate prevmonthdate
+SET CACHEFROM=%prevmonthdate%
 REM assume format Fri 11/17/2023
 SET TODAY=%DATE:~10,4%-%DATE:~4,2%-%DATE:~7,2%
 IF "%TODAY:~0,1%"=="-" (
@@ -36,22 +37,29 @@ SET EMAIL_TO=sample@sample.com
 SET EMAIL_HOST=mail.sample.com
 SET EMAIL_PORT=587
 
-echo   YESTERDAY: %YESTERDAY%
+echo   CACHEFROM: %CACHEFROM%
 echo   TODAY: %TODAY%
 
 REM ###################### Block to get DEVICEID from PosnetServer ###########################
-REM --- get device ID (request compatible with version >= 4.4; when using older version, comment below request and set DEVICEID manually in this script)
-REM curl -s -XGET "%POSNETSERVERHOST%/deviceid?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%/result.json
-REM for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%/result.json') do set ok=%%i
-REM echo  ok: %ok%
+REM # get device ID (request compatible with version >= 4.4; when using older version, comment below request and set DEVICEID manually in this script)
 REM 
-REM if "%ok%"=="true" (
-REM     for /f %%i in ('%JQ% -r ".device.id" %OUTPUT_DIRECTORY%/result.json') do set DEVICEID=%%i
-REM     echo  DEVICEID: %DEVICEID%
-REM ) else (
-REM     echo "Error: Cannot read unique device ID. Your device is not connected or is not an ONLINE device"
+REM curl -s -XGET "%POSNETSERVERHOST%/deviceid?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" > %OUTPUT_DIRECTORY%\\result.json
+REM if %ERRORLEVEL% GEQ 1 GOTO command_error
+REM more %OUTPUT_DIRECTORY%\\result.json
+REM 
+REM call :getJSONValue ok ".ok"
+REM echo   /deviceid ok: %ok%
+REM 
+REM IF NOT "%ok%"=="true" (
+REM     call :exit_with_action "Cannot read unique device ID. Your device is not connected or is not an ONLINE device"
 REM     GOTO :EOF
 REM )
+REM 
+REM call :getJSONValue deviceid ".device.id"
+REM set DEVICEID=%deviceid%
+REM echo   deviceid: %deviceid%
+REM echo   DEVICEID: %DEVICEID%
+REM 
 REM ################## End of block to get DEVICEID from PosnetServer #######################
 
 IF "%DEVICEID%"=="" (
@@ -93,9 +101,9 @@ goto update_cache_start
 
 :build_cache_start
     REM --- cache doesn't exist, build it
-    REM --- build cache from yesterday till today
-    echo   Building cache from %YESTERDAY%
-    curl -s -XPOST "%POSNETSERVERHOST%/cache/build?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%YESTERDAY%T00:00:00+02:00"",""dateTo"":""%TODAY%T23:59:59+02:00"",""cacheType"" : ""%CACHE_TYPE%""}" > %OUTPUT_DIRECTORY%\\result.json
+    REM --- build cache from CACHEFROM till today
+    echo   Building cache from %CACHEFROM%
+    curl -s -XPOST "%POSNETSERVERHOST%/cache/build?fulldebug=%FULLDEBUG%" -H "Content-type: application/json" -d "{""dateFrom"":""%CACHEFROM%T00:00:00+02:00"",""dateTo"":""%TODAY%T23:59:59+02:00"",""cacheType"" : ""%CACHE_TYPE%""}" > %OUTPUT_DIRECTORY%\\result.json
     more %OUTPUT_DIRECTORY%\\result.json
 
     REM for /f %%i in ('%JQ% -r ".ok" %OUTPUT_DIRECTORY%\\result.json') do set ok=%%i
@@ -248,6 +256,7 @@ GOTO :EOF
 
 :command_error
     echo   ERROR - cannot exeute command
+    call :exit_with_action "cannot exeute command"
     exit /b
 
 :exit_with_action ret
@@ -266,6 +275,14 @@ GOTO :EOF
     )
     set "d=0%d%" & set "m=0%m%"
     endlocal & set "%~1=%y%-%m:~-2%-%d:~-2%" & exit /b
+
+:getPrevMonthDate ret
+    setlocal enableextensions disabledelayedexpansion
+    call :getTodayDate today
+    for /f "tokens=1-3 delims=/ " %%a in ("%today%") do set /a "y=%%a", "m=1%%b-100", "d=1%%c-100"
+    if %m% gtr 1 ( set /a "m-=1" ) else ( set /a "m=12" )
+    set "m=0%m%"
+    endlocal & set "%~1=%y%-%m:~-2%-01" & exit /b
 
 :getTodayDate ret
     setlocal enableextensions disabledelayedexpansion

@@ -55,9 +55,11 @@ REM     call :exit_with_action "Cannot read unique device ID. Your device is not
 REM     GOTO :EOF
 REM )
 REM 
-REM call :getJSONValue deviceid ".device.id"
+REM call :getJSONValue deviceid ".device.nu"
 REM set DEVICEID=%deviceid%
 REM echo   deviceid: %deviceid%
+REM echo   DEVICEID: %DEVICEID%
+REM set DEVICEID=%DEVICEID: =_%
 REM echo   DEVICEID: %DEVICEID%
 REM 
 REM ################## End of block to get DEVICEID from PosnetServer #######################

@@ -759,7 +759,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StatusResponseCurrencyGet"
 
-  /currencyrate:
+  /currencyrate/config:
     get:
       tags:
       - "Management"
@@ -803,6 +803,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseCurrencyRateSet"
+  
+  /currencyrate/status:
+    put:
+      tags:
+      - "Management"
+      summary: "Enable/Disable currency rate"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestCurrencyRateStatusSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseCurrencyRateStatusSet"
+    
+    get:
+      tags:
+      - "Management"
+      summary: "Return currency rate state"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseCurrencyRateStatusGet"
                 
   /maintenance:
     put:
@@ -4065,13 +4110,33 @@ components:
           type: "boolean"
           example: true
 
+    RequestCurrencyRateStatusSet:
+      type: "object"
+      properties:
+        st:
+          type: "boolean"
+          example: true
+          
     ResponseEparagonStatusSet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
 
+
+    ResponseCurrencyRateStatusSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
     ResponseEparagonStatusGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+
+    ResponseCurrencyRateStatusGet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'

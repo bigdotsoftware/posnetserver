@@ -2791,6 +2791,9 @@ components:
             id:
               type: "number"
               description: "eDocument identifier. Added in schema 4.0"
+        imageData:
+          type: "string"
+          description: "base64 string with PNG returned when simulation=true and filepath to image is not provided. Added in schema 5.0"
         took:
           type: "number"
           example: 380
@@ -2821,6 +2824,9 @@ components:
             id:
               type: "number"
               description: "eDocument identifier. Added in schema 4.0"
+        imageData:
+          type: "string"
+          description: "base64 string with PNG returned when simulation=true and filepath to image is not provided. Added in schema 5.0"
         took:
           type: "number"
           example: 902

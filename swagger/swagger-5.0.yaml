@@ -2233,6 +2233,11 @@ components:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
+        
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
             
 
     FakturaRequestNotOnline:
@@ -2322,6 +2327,11 @@ components:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
+            
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
             
     FakturaRequestOnline:
       type: "object"
@@ -2422,6 +2432,11 @@ components:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
+            
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
     
     
     FakturyRequest:
@@ -2601,6 +2616,11 @@ components:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
+        
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
             
 
     ParagonFakturaFooter:
@@ -2859,6 +2879,91 @@ components:
             allOf:
               - $ref: '#/components/schemas/FakturaResponse'
     
+    
+    Simulation:
+      type: "object"
+      properties:
+        errors: 
+          type: "object"
+          properties:
+            type: 
+              type: "string"
+              example: "paper_ending"
+              enum:
+              - paper_ended
+              - paper_ending
+              - communication_error
+              - vat_error
+        parameters:
+          type: "object"
+          properties:
+            header:
+              type: "object"
+              properties:
+                company:
+                  type: "string"
+                  example: "Moja Firma S.A."
+                address:
+                  type: "string"
+                  example: "02-280 Warszawa, ul.Długa 33"
+            footer:
+              type: "object"
+              properties:
+                cashier:
+                  type: "string"
+                  example: "Jan Kowalski"
+                cashNumber:
+                  type: "string"
+                  example: "12345678"
+                billNumber:
+                  type: "number"
+                  format: "int32"
+                  example: 20
+                uniqueNumber:
+                  type: "string"
+                  example: "ZCJ2001027630"
+            vatrates:
+              type: "object"
+              properties:
+                va:
+                  type: "string"
+                  example: "23,00"
+                vb:
+                  type: "string"
+                  example: "8,00"
+                vc:
+                  type: "string"
+                  example: "5,00"
+                vd:
+                  type: "string"
+                  example: "0,00"
+                ve:
+                  type: "string"
+                  example: "100,00"
+                vf:
+                  type: "string"
+                  example: "101,00"
+                vg:
+                  type: "string"
+                  example: "101,00"
+            tid:
+              type: "string"
+              example: "585-252-55-22"
+            number:
+              type: "number"
+              format: "int32"
+              example: 25
+            fiscal:
+              type: "boolean"
+              example: true
+        output:
+          type: "object"
+          properties:
+            filepath:
+              type: "string"
+              example: "/tmp/my_result.png"
+
+      
     CustomCommandResponse:
       type: "object"
       allOf:

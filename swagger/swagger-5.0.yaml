@@ -4141,6 +4141,9 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        st:
+          type: "boolean"
 
     RequestEparagonConfigSet:
       type: "object"

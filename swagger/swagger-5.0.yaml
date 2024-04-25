@@ -2414,6 +2414,33 @@ components:
           type: "boolean"
           example: false
   
+    CurrencyPaymentObject:
+      type: "object"
+      properties:
+        wc: 
+          type: "number"
+          format: "int32"
+          example: 2350
+        wa: 
+          type: "number"
+          format: "int32"
+          example: 2350
+        ra: 
+          type: "number"
+          format: "double"
+          example: 4.2988
+        na: 
+          description: "max length is 25"
+          type: "string"
+          example: "Cash in Euro"
+        sb: 
+          description: "max length is 3"
+          type: "string"
+          example: "EUR"
+        re: 
+          type: "boolean"
+          example: false
+    
     ParagonFakturaRequestUserData:
       type: "object"
       properties:
@@ -2486,6 +2513,13 @@ components:
             type: "object"
             allOf:
               - $ref: '#/components/schemas/PaymentObject'
+        currencies:
+          description: "Added in schema 5.0"
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/CurrencyPaymentObject'
         eparagon:
           description: "Added in schema 4.0"
           type: "object"

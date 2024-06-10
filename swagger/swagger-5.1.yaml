@@ -68,6 +68,11 @@ tags:
   externalDocs:
     description: "Find out more"
     url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Authentication"
+  description: "Manage users"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
 - name: "Plugins"
   description: "Manage enabled plugins"
   externalDocs:
@@ -1625,6 +1630,103 @@ paths:
                 allOf:
                 - $ref: '#/components/schemas/CustomCommandResponse'
 
+  /auth/users/list:
+    get:
+      tags:
+      - "Authentication"
+      summary: "List users"
+      description: ""
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthUsersListResponse'
+  /auth/user:
+    post:
+      tags:
+      - "Authentication"
+      summary: "Create a new user"
+      description: ""
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AuthUserCreateUpdateRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthUserCreateUpdateResponse'
+                
+  /auth/user/{uuid}:
+    delete:
+      tags:
+      - "Authentication"
+      summary: "Delete user"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserDeleteResponse"
+    put:
+      tags:
+      - "Authentication"
+      summary: "Update existing user"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AuthUserCreateUpdateRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserCreateUpdateResponse"
+  
+  
+  /plugins-list:
+    post:
+      tags:
+      - "Plugins"
+      summary: "List available plugins"
+      description: ""
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginsListResponse'
+                
   /plugins/azure-service-bus/consume/pause:
     post:
       tags:
@@ -1702,7 +1804,7 @@ components:
       items:
         allOf:
           - $ref: '#/components/schemas/CustomCommand'
-          
+    
     DiscountPromo:
       type: "object"
       properties:
@@ -2928,6 +3030,9 @@ components:
                 uniqueNumber:
                   type: "string"
                   example: "ZCJ2001027630"
+                sign:
+                  type: "string"
+                  example: "2E9EF5F8644A916BB678A2960F7011269E93ADC8D4C0437F0FFE7046AC3ACEAB89F0820BDFEC78563F0B9B99885E04D1D2EC630CE666B7F41F604F2A9A3439DC451A6B590CD439D7AE709B1FAA49EB08F5039ACAB251AD6D1652166A56EE19164185DFFCAC21682BB56828F2178CE332A0E300A9FDB0D66427BAF3A32E0BD6B56DF0483DC74F42EDED5FA04F8D582F25E224F3A70839F355898B43E28B67FEACBD86ED7CBDE180586BD48BB2DD47F6B4CFAB27F44993A214047F2D6DCC5F05235FD1D0464BBB30895A81CB87B2B32FEFE71B11AF3255B6DA19EED76F8045B7BA375EF308B5D4966EA26FCBF8B524EA423E261718C6C076BA60066F42894E6346"
             vatrates:
               type: "object"
               properties:
@@ -2984,6 +3089,42 @@ components:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
+    
+    
+    PluginsListResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        plugins:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              version:
+                type: "string"
+                example: "1.0.1"
+              enabled:
+                type: "boolean"
+                example: true
+              hasRestExtension:
+                type: "boolean"
+                example: true
+              name:
+                type: "string"
+                example: "My Plugin Name"
+              description:
+                type: "string"
+                example: "My Plugin Description"
+              id:
+                type: "string"
+                example: "my-plugin"
+              rest:
+                type: "string"
+                example: "/plugins/my-plugin/"
+              minCompatibleVersion:
+                type: "integer"
+                example: 5.1
     
     PluginAzureServiceBusConsumeStatusResponse:
       type: "object"
@@ -3481,6 +3622,74 @@ components:
           type: "string"
           example: "06af0279-eaeb-4916-9680-8756d76a9e98"
     
+    
+    AuthUser:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          example: "Joe Black"
+          description: "Human readable name of the user"
+        login:
+          type: "string"
+          description: "Login used for authentication"
+        password:
+          type: "string"
+          example: "Dgreretyty78^$a"
+          description: "Password used for authentication"
+        scope:
+          type: "string"
+          example: "POST:^/paragon$;GET:^/raporty/dobowy$"
+          description: "Regular expression used to match the RESTpoints that user has access to. Format is \"OPERATION:regular expression;OPERATION:regular expression\""
+          
+    AuthUserMetrics:
+      type: "object"
+      properties:
+        created:
+          type: "string"
+          example: "2023-07-11T00:00:00+02:00"
+        updated:
+          type: "string"
+          example: "2023-07-31T23:59:59+02:00"
+        uuid:
+          type: "string"
+          example: "deb0cde8-cdb6-4c22-9f34-f1c9ff7c843d"
+          
+    AuthUserCreateUpdateRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/AuthUser'
+
+
+    AuthUserCreateUpdateResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        user:
+          allOf:
+          - $ref: '#/components/schemas/AuthUser'
+          - $ref: '#/components/schemas/AuthUserMetrics'
+    
+    AuthUserDeleteResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    AuthUsersListResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        users:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - $ref: '#/components/schemas/AuthUserMetrics'
+          
+          
     StatusRtcGet:
       type: "object"
       properties:

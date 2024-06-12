@@ -106,7 +106,14 @@ paths:
       tags:
       - "License"
       summary: "Obtain new license"
-      description: "Forces to download new license when available. Note that Posnet server renew licenses automatically 10 days before expiration date. Method can be used to renew license earlier."
+      description: "Forces to download new license when available. Note that Posnet server renew licenses automatically 10 days before expiration date (setting can be changed in the config.json file).Method can be used to renew license earlier."
+      parameters:
+      - name: "connectiontest"
+        description: "Use this parameter to test connectivity if licencje can be automatically upgraded"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
       responses:
         200:
           description: "successful operation"
@@ -5435,15 +5442,20 @@ components:
       properties:
         text: 
           type: "string"
+          example: "Wersja licencjonowana dla Moja Firma S.A. ważna do Thu Jan 01 2025 01:00:00 GMT+0100 (Central European Standard Time)"
         validTo:
           type: "string"
+          example: "1735689600"
         licenseTo:
           type: "string"
+          example: "Moja Firma S.A."
         expired:
           type: "boolean"
+          example: false
         licenseId:
-          description: Added in schema 3.12
+          description: "Added in schema 3.12"
           type: "string"
+          example: "f7ghjk4b-3e12-1158-abcd-57gjs9b1711b"
             
     LicenseResponse:
       type: "object"

@@ -109,11 +109,25 @@ paths:
       description: "Forces to download new license when available. Note that Posnet server renew licenses automatically 10 days before expiration date (setting can be changed in the config.json file).Method can be used to renew license earlier."
       parameters:
       - name: "connectiontest"
-        description: "Use this parameter to test connectivity if licencje can be automatically upgraded"
+        description: "Use this parameter to test connectivity and make sure that licencje can be automatically upgraded"
         in: "query"
         schema:
           type: "boolean"
           default: false
+      - name: "tlsMinVersion"
+        description: "Force to use different TLS version. When null, default TLS version is used (specific for used node.js version)"
+        in: "query"
+        schema:
+          type: "string"
+          default: null
+          example: "TLSv1.2"
+      - name: "tlsMaxVersion"
+        description: "Force to use different TLS version. When null, default TLS version is used (specific for used node.js version)"
+        in: "query"
+        schema:
+          type: "string"
+          default: null
+          example: "TLSv1.2"
       responses:
         200:
           description: "successful operation"

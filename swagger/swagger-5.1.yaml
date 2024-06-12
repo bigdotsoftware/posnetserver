@@ -1122,6 +1122,69 @@ paths:
               schema:
                 $ref: "#/components/schemas/EdocumentOverrideModeResponseSet"    
   
+  /drawer/open:
+    post:
+      tags:
+      - "Management"
+      summary: "Open drawer"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/DrawerOpenResponse'
+          
+  /drawer/status:
+    get:
+      tags:
+      - "Management"
+      summary: "Drawer status"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/DrawerStatusResponse'
+  
+  /drawer/parameters:
+    get:
+      tags:
+      - "Management"
+      summary: "Drawer parameters"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/DrawerParametersResponse'
+                
   /raporty/dobowy:
     get:
       tags:
@@ -1630,6 +1693,8 @@ paths:
                 allOf:
                 - $ref: '#/components/schemas/CustomCommandResponse'
 
+  
+                
   /auth/users/list:
     get:
       tags:
@@ -3689,7 +3754,60 @@ components:
             - $ref: '#/components/schemas/AuthUser'
             - $ref: '#/components/schemas/AuthUserMetrics'
           
-          
+    DrawerOpenResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    DrawerStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        result:
+          type: "object"
+          properties:
+            ds:
+              type: "number"
+              description: "Drawer state. 0 - open, 1 - closed, 2 - unknown"
+              example: 0
+            ks:
+              type: "number"
+              description: "Key state. 0 - open, 1 - closed, 2 - unknown"
+              example: 0
+    
+    DrawerParametersResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        result:
+          type: "object"
+          properties:
+            im:
+              type: "number"
+              description: "Pulse length, 1..10"
+              example: 1
+            id:
+              type: "number"
+              description: "Drawer identifier, should be always 0"
+              example: 0
+            vt:
+              type: "number"
+              description: "Drawer voltage in volts, 6,12,18,24, 0 when unknown"
+              example: 12
+            fs:
+              type: "boolean"
+              description: "Drawer opening sensor is supported"
+              example: false
+            ks:
+              type: "boolean"
+              description: "Key sensor is supported"
+              example: false
+        
     StatusRtcGet:
       type: "object"
       properties:

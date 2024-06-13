@@ -1785,7 +1785,7 @@ paths:
   
   
   /plugins-list:
-    post:
+    get:
       tags:
       - "Plugins"
       summary: "List available plugins"

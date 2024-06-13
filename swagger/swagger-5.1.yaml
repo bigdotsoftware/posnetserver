@@ -114,20 +114,6 @@ paths:
         schema:
           type: "boolean"
           default: false
-      - name: "tlsMinVersion"
-        description: "Force to use different TLS version. When null, default TLS version is used (specific for used node.js version)"
-        in: "query"
-        schema:
-          type: "string"
-          default: null
-          example: "TLSv1.2"
-      - name: "tlsMaxVersion"
-        description: "Force to use different TLS version. When null, default TLS version is used (specific for used node.js version)"
-        in: "query"
-        schema:
-          type: "string"
-          default: null
-          example: "TLSv1.2"
       responses:
         200:
           description: "successful operation"

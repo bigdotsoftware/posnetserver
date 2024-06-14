@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "5.0"
+  version: "5.1"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"

@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "5.1"
+  version: "5.2"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"
@@ -1191,6 +1191,33 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/DrawerParametersResponse'
+  
+  /form/finish:
+    post:
+      tags:
+      - "Management"
+      summary: "Finish already started custom form. Method is useful when printing custom form failed - in such situation printer may stay in a state waiting for form parameters, blocking by the same any different requests"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormFinishRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/FormFinishResponse'
                 
   /raporty/dobowy:
     get:
@@ -1432,6 +1459,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReportCustomResponse"
 
+  /raporty/textlines:
+    post:
+      tags:
+      - "Reports"
+      summary: "Simple custom report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportTextLinesRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportTextLinesResponse"
+                
   /raporty/edocument/status:
     get:
       tags:
@@ -3240,6 +3292,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         
+    ReportTextLinesResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
     ReportEparagonStatusResponse:
       type: "object"
       allOf:
@@ -3814,6 +3871,11 @@ components:
               type: "boolean"
               description: "Key sensor is supported"
               example: false
+    
+    FormFinishResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
         
     StatusRtcGet:
       type: "object"
@@ -4287,9 +4349,84 @@ components:
             type: "string"
             example: "Nr rachunku: 5698759"
                         
+    FormFinishRequest:
+      type: "object"
+      properties:
+        formtype:
+          type: "string"
+          example: "bon_rabatowy"
+          description: "Type of report"
+          enum:
+            - "transakcje_odlozone"
+            - "funkcje_operatora"
+            - "raport_kasjera"
+            - "raport_srodkow_platnosci"
+            - "sprzedaz_zarejestrowana_w_kasie"
+            - "pokwitowanie"
+            - "potwierdzenie_wplaty"
+            - "bon_upominkowy"
+            - "nota_kredytowa"
+            - "nota_kredytowa_ex"
+            - "kupon_rabatowy"
+            - "platnosc_za_pobraniem"
+            - "przelew_bankowy"
+            - "potwierdzenie_sprzedazy_bonu_upominkowego"
+            - "rabat_dla_pracownika"
+            - "wymiana_srodkow_platnosci"
+            - "operacje_kasowe"
+            - "bledy_kasy"
+            - "cennik"
+            - "wydanie_bonu_upominkowego"
+            - "potwierdzenie_transakcji_karta_platnicza"
+            - "potwierdzenie_doladowania"
+            - "potwierdzenie_skupu_waluty"
+            - "bon_rabatowy"
+            - "raport_zmianowy"
+            - "rozliczenie_konta"
+            - "raport_kasy_kasjera"
+            - "wplata_wyplata"
+            - "stany_licznikow"
+            - "raport_tankowania"
+            - "potwierdzenie_zaplaty_karta"
+            - "waluta_w_sejfie"
+            - "raport_alarmu_paliwa"
+            - "bilet_do_myjni"
+            - "raport_stanu_paliw"
+            - "raport_dostaw_paliw"
+            - "raport_zmiany_bp_partnerclub"
+            - "potwierdzenie_podarunku"
+            - "potwierdzenie_wydania_podarunku"
+            - "zamowienie"
+            - "potwierdzenie_raport_bon"
+            - "pokwitowanie"
+            - "formatka_lotto"
+            - "super_formatka"
+            - "formatka_szeroka"
+            
+    ReportTextLinesRequest:
+      type: "object"
+      properties:
+        header:
+          type: "integer"
+          example: 0
+          description: "Added in 5.2. Identifier of custom header."
+        lines:
+          type: "array"
+          example:
+            - "#################################"
+            - "#          HELLO WORLD          #"
+            - "#################################"
+          items:
+            type: "string"
+            example: "Sample value"
+                  
     ReportCustomRequest:
       type: "object"
       properties:
+        header:
+          type: "integer"
+          example: 0
+          description: "Added in 5.2. Identifier of custom header."
         formtype:
           type: "string"
           example: "bon_rabatowy"

@@ -396,7 +396,19 @@ paths:
         schema:
           type: "string"
           example: "POST"
-      
+      - name: "previousHn"
+        in: "query"
+        description: "Optimistic Locking Feature: Fiscalization will begin only when the 'hn' value of the previously printed document matches the provided attribute value."
+        schema:
+          type: "number"
+          example: 78
+      - name: "previousBn"
+        in: "query"
+        description: "Optimistic Locking Feature: Fiscalization will begin only when the 'bn' value of the previously printed document matches the provided attribute value."
+        schema:
+          type: "number"
+          example: 36
+          
       requestBody:
         content:
           'application/json':

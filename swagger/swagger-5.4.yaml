@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "5.2"
+  version: "5.4"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"
@@ -2146,8 +2146,35 @@ components:
           - $ref: '#/components/schemas/DiscountLine'
           - $ref: '#/components/schemas/DiscountVat'
           - $ref: '#/components/schemas/DiscountBasic'
-          
-      
+
+    ParagonFakturaReturnables:
+      type: "object"
+      properties:
+        na:
+          type: "string"
+          description: "Number of the returnable, 12 digits max"
+          example: "1234567890"
+        il:
+          description: "minimum value is 1"
+          type: "number"
+          format: "float"
+          example: 1.0
+        pr:
+          type: "number"
+          format: "int32"
+          example: 2350
+        return:
+          type: "boolean"
+          default: false
+          description: "Set to 'false' when giving reusable packaging to the customer, set to 'true' when receiving back reusable packaging from customer"
+        storno:
+          type: "boolean"
+          default: false
+        desc:
+          description: "Additional description or name"
+          type: "string"
+          example: "Bottle XL"
+
     ParagonFakturaLine:
       type: "object"
       properties:
@@ -2209,14 +2236,27 @@ components:
           type: "number"
           format: "int32"
           example: 2350
+          description: "Total amount of all fiscal lines"
         fp:
           type: "number"
           format: "int32"
           example: 2350
+          description: "Total amount of all payment types"
         re:
           type: "number"
           format: "int32"
           example: 280
+          description: "Total amount of rest"
+        om:
+          type: "number"
+          format: "int32"
+          example: 2350
+          description: "Total amount of received returnable packages"
+        op:
+          type: "number"
+          format: "int32"
+          example: 2350
+          description: "Total amount of given returnable packages"
           
     FakturaHeader:
       type: "object"
@@ -2767,7 +2807,12 @@ components:
             type: "object"
             allOf:
               - $ref: '#/components/schemas/ParagonFakturaLine'
-              
+        returnables:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaReturnables'
         extralines:
           type: "array"
           items:

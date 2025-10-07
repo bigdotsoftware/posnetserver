@@ -75,7 +75,8 @@ for filename in $LOGS_DIR/*.log; do
                STAT_PA_DETAILS+=("$line")
             elif [[ $message == "POST /paragon"* ]]; then
                STAT_PA_DETAILS+=("$line")
-               total=`echo $line | sed 's/.*\"summary\([^ ]*\).*/\1/' | sed 's/.*\"to\\\":\([^}]*\).*/\1/'`
+               total=`echo $line | sed 's/.*\"summary\([^ ]*\).*/\1/' | sed 's/.*\"to\\\":\([^,}]*\).*/\1/'`
+               echo "|$total|"
                timestamp=`echo $line | jq -r '.timestamp'`
                STAT_PA_TOTALS+=("= $total @ $timestamp")
                ((STAT_PARAGON_TOTAL+=$total))

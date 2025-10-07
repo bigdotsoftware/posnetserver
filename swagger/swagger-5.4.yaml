@@ -1,0 +1,5659 @@
+openapi: "3.0.3"
+info:
+  description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
+  version: "5.2"
+  title: "Posnet Server"
+  contact:
+    email: "bigdotsoftware@bigdotsoftware.pl"
+    
+servers:
+  - url: http://{host}:{port}/
+    description: "HTTP"
+    variables:
+      host:
+        default: localhost
+      port:
+        enum:
+          - '3050'
+        default: '3050'
+
+  - url: https://{host}:{port}/
+    description: "HTTPS"
+    variables:
+      host:
+        default: localhost
+      port:
+        enum:
+          - '3051'
+        default: '3051'
+
+tags:
+- name: "License"
+  description: "Manage your license"
+  externalDocs:
+    description: "Find out more"
+    url: "https://blog.bigdotsoftware.pl/posnet-server-licencja/"
+- name: "General"
+  description: "General operations"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Paragony"
+  description: "Fiscal printouts"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Faktury"
+  description: "Invoices"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Management"
+  description: "Printer information"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Reports"
+  description: "Reports"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Forms"
+  description: "Forms"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Commands"
+  description: "Send custom commands"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Authentication"
+  description: "Manage users"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+- name: "Plugins"
+  description: "Manage enabled plugins"
+  externalDocs:
+    description: "Find out more"
+    url: "https://bigdotsoftware.pl/short_link/posnet"
+    
+paths:
+  /licencja:
+    get:
+      tags:
+      - "License"
+      summary: "Check the license details"
+      description: "Shows details about used license, including expiration date. We strongly suggest to execute this method periodically in local monitoring system to verify license expiration date. Method can be used as a system heartbeat as well."
+      parameters:
+      - name: "json"
+        in: "query"
+        description: "Pass ?json=true/false to change the output format"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseResponse"
+            
+  /licencja/upgrade:
+    post:
+      tags:
+      - "License"
+      summary: "Obtain new license"
+      description: "Forces to download new license when available. Note that Posnet server renew licenses automatically 10 days before expiration date (setting can be changed in the config.json file).Method can be used to renew license earlier."
+      parameters:
+      - name: "connectiontest"
+        description: "Use this parameter to test connectivity and make sure that licencje can be automatically upgraded"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseUpgradeResponse"
+  /monitoring:
+    get:
+      tags:
+      - "General"
+      summary: "Monitoring"
+      description: "Return counters (number of printed recipes and invoices) and memory usage. This is the same information as logged in log files when logger.extras.logmetrics=true"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitoringResponse"
+
+  /tasks/list:
+    get:
+      tags:
+      - "General"
+      summary: "List of long running tasks"
+      description: "Return list of long running tasks. Some operations like fetching sell history or events from device may take time. This method can be used to monitor progress of historical as well actively running tasks"
+      parameters:
+      - name: "inprogress"
+        in: "query"
+        schema:
+          type: "string"
+          default: "all"
+          enum:
+            - "all"
+            - "true"
+            - "false"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TasksListResponse"
+
+  /tasks/get/{task}:
+    get:
+      tags:
+      - "General"
+      summary: "Details of long running tasks"
+      description: "Return details of long running task. Some operations like fetching sell history or events from device may take time. This method can be used to monitor progress of historical as well actively running tasks"
+      parameters:
+      - name: "task"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
+                
+  /async_queue:
+    get:
+      tags:
+      - "General"
+      summary: "Monitoring"
+      description: "Return informaiton about invoices and recipes printed with async=true parameter. Cache keeps history up to 5 minutes"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsyncQueueResponse"
+  
+  /dlq/list:
+    get:
+      tags:
+      - "General"
+      summary: "Return requests from DLQ"
+      description: "Return list of rejected requests. DLQ must be enabled in the configuration file: dlq.enabled=true"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DlqListResponse"
+  
+  /dlq/process/{id}:
+    post:
+      tags:
+      - "General"
+      summary: "Reprocess request from DLQ"
+      description: "Reprocess request from DLQ"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DlqProcessResponse"
+    delete:
+      tags:
+      - "General"
+      summary: "Removes request from DLQ"
+      description: "Removes request from DLQ"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DlqProcessDeleteResponse"
+  
+  /cache/ranges:
+    get:
+      tags:
+      - "General"
+      summary: "Return cache ranges"
+      description: "Return cache ranges"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheRangesResponse"
+  
+  /cache/clean:
+    delete:
+      tags:
+      - "General"
+      summary: "Clears the cache"
+      description: "Clears the cache"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheClearResponse"
+                
+  /cache/build:
+    post:
+      tags:
+      - "General"
+      summary: "Build local cache of fiscal memory"
+      description: "Build local cache of fiscal memory"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CacheBuildRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheBuildResponse"
+  
+  /cache/update:
+    post:
+      tags:
+      - "General"
+      summary: "Update local cache of fiscal memory"
+      description: "Update local cache of fiscal memory"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CacheUpdateRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheUpdateResponse"
+  
+  /cache/dump:
+    post:
+      tags:
+      - "General"
+      summary: "Shows cache details"
+      description: "Shows cache details"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CacheDumpResponse"
+                
+  #/dlq/processall:
+  #  post:
+  #    tags:
+  #    - "General"
+  #    summary: "Reprocess all requests from DLQ"
+  #    description: "Reprocess all requests from DLQ"
+  #    responses:
+  #     '200':
+  #        description: "successful operation"
+  #        content:
+  #          application/json:
+  #            schema:
+  #              $ref: "#/components/schemas/DlqProcessAllResponse"
+                
+  /paragon/{uuid}:
+    get:
+      tags:
+      - "Paragony"
+      summary: "Returns status of asynchronous printout"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParagonAsyncStatusResponse"
+  
+  /paragon:
+    post:
+      tags:
+      - "Paragony"
+      summary: "Print fiscal document"
+      description: ""
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "bulkmode"
+        description: "Enable 'bulk mode' in printer while printing. Setting to 'true' can reduce printing time on some printers."
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "resultsurl"
+        description: "Used only when async=true. When provided - execute URL when document is printed. Payload is ParagonAsyncStatusResponse. Parameter 'resultsurl' can be passed in the payload body as well"
+        in: "query"
+        schema:
+          type: "string"
+      - name: "resultsurlmethod"
+        in: "query"
+        description: "HTTP method to be used (GET, POST, PUT) to execute resultsurl. Parameter can be passed in the payload body as well"
+        schema:
+          type: "string"
+          example: "POST"
+      - name: "previousHn"
+        in: "query"
+        description: "Optimistic Locking Feature: Fiscalization will begin only when the 'hn' value of the previously printed document matches the provided attribute value."
+        schema:
+          type: "number"
+          example: 78
+      - name: "previousBn"
+        in: "query"
+        description: "Optimistic Locking Feature: Fiscalization will begin only when the 'bn' value of the previously printed document matches the provided attribute value."
+        schema:
+          type: "number"
+          example: 36
+          
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ParagonRequest'
+                - $ref: '#/components/schemas/ParagonRequestCallback'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/ParagonResponse"
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+        '500':
+          description: "unrecoverable error"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+  /paragony:
+    post:
+      tags:
+      - "Paragony"
+      summary: "Print many fiscal documents at once"
+      description: ""
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ParagonyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParagonyResponse"
+
+  /faktura/{uuid}:
+    get:
+      tags:
+      - "Faktury"
+      summary: "Returns status of async printout"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakturaAsyncStatusResponse"
+  
+  /faktura:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print an invoice"
+      description: "The same restpoint can be used to print invoices on both: ONLINE and not ONLINE Posnet devices, but the payload structure is different. Check every field description for more details or copy details from our website: https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury/ and https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury-drukarki-serii-online/ . Dedicated restpoints /faktura_online and /faktura_not_online can be used alternatively."
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturaRequest'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FakturaResponse"
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+  /faktura_online:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print an invoice on ONLINE printer"
+      description: "Restpoint dedicated to print invoices on ONLINE Posnet devices only. Generic restpoint /faktura can be used alternatively."
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturaRequestOnline'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FakturaResponse"
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+  /faktura_not_online:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print an invoice on regular (NOT ONLINE) printer"
+      description: "Restpoint dedicated to print invoices on not ONLINE Posnet devices only. Generic restpoint /faktura can be used alternatively."
+      
+      parameters:
+      - name: "async"
+        description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturaRequestNotOnline'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/FakturaResponse"
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+  /faktury:
+    post:
+      tags:
+      - "Faktury"
+      summary: "Print many invoices at once"
+      description: ""
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FakturyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FakturyResponse"
+
+  /status:
+    get:
+      tags:
+      - "Management"
+      summary: "General fiscal printer status"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+  /devicestatus:
+    get:
+      tags:
+      - "Management"
+      summary: "Simple Device status only"
+      description: "Information is the same as when configuration has posnet.ping.enabled=true and posnet.ping.type=status "
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleDeviceStatusResponse"
+  
+  /deviceid:
+    get:
+      tags:
+      - "Management"
+      summary: "Get Device ID"
+      description: "Return unique device identifier."
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleDeviceIdResponse"
+                
+  /counters:
+    get:
+      tags:
+      - "Management"
+      summary: "Read counters"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountersResponse"
+
+  /datetime:
+    get:
+      tags:
+      - "Management"
+      summary: "Get date and time information"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseRtcGet"
+                
+    put:
+      tags:
+      - "Management"
+      summary: "Set date and time"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/StatusRequestRtcSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseRtcSet"
+
+  /vat:
+    get:
+      tags:
+      - "Management"
+      summary: "Get VAT rates"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseVatGet"
+                
+    put:
+      tags:
+      - "Management"
+      summary: "Set VAT rates"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/StatusRequestVatSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseVatSet"
+  
+  /currency:
+    get:
+      tags:
+      - "Management"
+      summary: "Get record currency"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseCurrencyGet"
+
+  /currencyrate/config:
+    get:
+      tags:
+      - "Management"
+      summary: "Get exchange rate for currency"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseCurrencyRateGet"
+                
+    put:
+      tags:
+      - "Management"
+      summary: "Set exchange rate for currency"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/StatusRequestCurrencyRateSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponseCurrencyRateSet"
+  
+  /currencyrate/status:
+    put:
+      tags:
+      - "Management"
+      summary: "Enable/Disable currency rate"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestCurrencyRateStatusSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseCurrencyRateStatusSet"
+    
+    get:
+      tags:
+      - "Management"
+      summary: "Return currency rate state"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseCurrencyRateStatusGet"
+                
+  /maintenance:
+    put:
+      tags:
+      - "Management"
+      summary: "Set date of the next service inspection"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestMaintenanceSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseMaintenanceSet"
+  
+  /eparagon/status:
+    put:
+      tags:
+      - "Management"
+      summary: "Enable/Disable eDocument service state"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestEparagonStatusSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonStatusSet"
+    get:
+      tags:
+      - "Management"
+      summary: "Return eDocument service state"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonStatusGet"
+  
+  /eparagon/config:
+    put:
+      tags:
+      - "Management"
+      summary: "Set eDocument configuration"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestEparagonConfigSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonConfigSet"
+    get:
+      tags:
+      - "Management"
+      summary: "Get eDocument configuration"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonConfigGet"
+  
+  /eparagon/schedule:
+    put:
+      tags:
+      - "Management"
+      summary: "Set eDocument retry schedule"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/RequestEparagonScheduleSet'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonScheduleSet"
+    get:
+      tags:
+      - "Management"
+      summary: "Get eDocument retry schedule"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseEparagonScheduleGet"
+  
+  /edocument/remove:
+    delete:
+      tags:
+      - "Management"
+      summary: "Delete eDocument (eParagon/eFaktura) record by ID from printer cache"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "id"
+        in: "query"
+        schema:
+          type: "number"
+        description: "Id returned in /paragon responsem (eparagon.id)"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentRemoveResponse"
+  
+  /edocument/removeall:
+    delete:
+      tags:
+      - "Management"
+      summary: "Delete all eDocument (eParagon/eFaktura) records from printer cache"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentRemoveAllResponse"
+  
+  /edocument/connectiontest:
+    post:
+      tags:
+      - "Management"
+      summary: "Test connection with eDocument service"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/EdocumentConnectionTestRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentConnectionTestResponse"
+  
+  /edocument/override:
+    get:
+      tags:
+      - "Management"
+      summary: "Return records override mode in printer's cache"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentOverrideModeResponseGet"     
+    put:
+      tags:
+      - "Management"
+      summary: "Set records override mode"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/EdocumentOverrideModeSetRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EdocumentOverrideModeResponseSet"    
+  
+  /drawer/open:
+    post:
+      tags:
+      - "Management"
+      summary: "Open drawer"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/DrawerOpenResponse'
+          
+  /drawer/status:
+    get:
+      tags:
+      - "Management"
+      summary: "Drawer status"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/DrawerStatusResponse'
+  
+  /drawer/parameters:
+    get:
+      tags:
+      - "Management"
+      summary: "Drawer parameters"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/DrawerParametersResponse'
+  
+  /form/finish:
+    post:
+      tags:
+      - "Management"
+      summary: "Finish already started custom form. Method is useful when printing custom form failed - in such situation printer may stay in a state waiting for form parameters, blocking by the same any different requests"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormFinishRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/FormFinishResponse'
+                
+  /raporty/dobowy:
+    get:
+      tags:
+      - "Reports"
+      summary: "Generate daily EOD report"
+      description: "While executing this request Posnet printer is asking to confirm the date - request is waiting for cashier's action"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+          
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDobowyResponse"
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate daily EOD report"
+      description: "In this request cashier's action is not required. Request is supported only by ONLINE printers"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportDobowyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDobowyResponse"
+  
+  /raporty/miesieczny:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate monthly report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportMiesiecznyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportMiesiecznyResponse"
+
+  /raporty/zmianowy:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate shift report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportShiftrepRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportShiftrepResponse"
+                
+  /raporty/kasowy:
+    get:
+      tags:
+      - "Reports"
+      summary: "Cash state report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportCashstaterepResponse"
+
+  /raporty/events/dobowy:
+    post:
+      tags:
+      - "Reports"
+      summary: "Request for EOD reports within provided time range"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportEventsDobowyRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
+                
+  /raporty/events/custom:
+    post:
+      tags:
+      - "Reports"
+      summary: "Request to list device events"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportEventsCustomRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"       
+  
+  /raporty/sellhistory:
+    post:
+      tags:
+      - "Reports"
+      summary: "Return sell history within provided time range"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportEventsSellHistoryRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
+                
+                
+  /raporty/fiscalmemory:
+    post:
+      tags:
+      - "Reports"
+      summary: "Method to scan fiscal memory structure, optionally decode and save on disk"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportFiscalMemoryRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
+                
+  /raporty/custom:
+    post:
+      tags:
+      - "Reports"
+      summary: "Custom report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportCustomRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportCustomResponse"
+
+  /raporty/textlines:
+    post:
+      tags:
+      - "Reports"
+      summary: "Simple custom report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportTextLinesRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportTextLinesResponse"
+                
+  /raporty/edocument/status:
+    get:
+      tags:
+      - "Reports"
+      summary: "eDocument (eParagon/eFaktura) status and information by ID. Error is returend when wrong or not existing ID is provided"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "id"
+        in: "query"
+        schema:
+          type: "number"
+        description: "Id returned in /paragon responsem (eparagon.id)"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEparagonStatusResponse"
+                
+  /raporty/edocument/summary:
+    get:
+      tags:
+      - "Reports"
+      summary: "eDocument (eParagon/eFaktura) summary"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEparagonSummaryResponse"
+
+  /raporty/edocument/free:
+    get:
+      tags:
+      - "Reports"
+      summary: "eDocument (eParagon/eFaktura) number of free records"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEparagonFreeRecordsResponse"
+                
+  /raporty/edocument/context:
+    get:
+      tags:
+      - "Reports"
+      summary: "eDocument (eParagon/eFaktura) number of free records"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportEparagonContextResponse"         
+                
+  /forms/orderconfirmation:
+    post:
+      tags:
+      - "Forms"
+      summary: "Recipe with order number"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsOrderRecipeRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsOrderRecipeResponse"
+                
+  /forms/barcode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 1D barcode"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsBarcodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsBarcodeResponse"  
+                
+  /forms/azteccode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D Aztec code"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsAztecCodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsAztectCodeResponse"
+  
+  /forms/dmcode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D Data Matrix code"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsDmCodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsDmCodeResponse"
+                
+  /forms/qrcode:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D QrCode"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsQrCodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsQrCodeResponse"      
+                
+  /forms/pdf417code:
+    post:
+      tags:
+      - "Forms"
+      summary: "Print 2D Pdf417 code"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsPdf417CodeRequest'
+                - $ref: '#/components/schemas/BarcodeExtraLines'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsPdf417CodeResponse"      
+                
+  /command:
+    post:
+      tags:
+      - "Commands"
+      summary: "Send a custom command to fiscal printer. More at https://blog.bigdotsoftware.pl/posnet-server-pozostale-polecenia/"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "breakOnFirstError"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: true
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CustomCommandRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomCommandResponse'
+
+  
+                
+  /auth/users/list:
+    get:
+      tags:
+      - "Authentication"
+      summary: "List users"
+      description: ""
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthUsersListResponse'
+  /auth/user:
+    post:
+      tags:
+      - "Authentication"
+      summary: "Create a new user"
+      description: ""
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AuthUserCreateUpdateRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/AuthUserCreateUpdateResponse'
+                
+  /auth/user/{uuid}:
+    delete:
+      tags:
+      - "Authentication"
+      summary: "Delete user"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserDeleteResponse"
+    put:
+      tags:
+      - "Authentication"
+      summary: "Update existing user"
+      description: ""
+      parameters:
+      - name: "uuid"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AuthUserCreateUpdateRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserCreateUpdateResponse"
+  
+  
+  /plugins-list:
+    get:
+      tags:
+      - "Plugins"
+      summary: "List available plugins"
+      description: ""
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginsListResponse'
+                
+  /plugins/azure-service-bus/consume/pause:
+    post:
+      tags:
+      - "Plugins"
+      summary: "Pause consumption"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginResponse'
+  
+  /plugins/azure-service-bus/consume/resume:
+    post:
+      tags:
+      - "Plugins"
+      summary: "Resume consumption"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginResponse'
+  /plugins/azure-service-bus/consume/status:
+    get:
+      tags:
+      - "Plugins"
+      summary: "Consumption status"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PluginAzureServiceBusConsumeStatusResponse'
+                
+components:
+  schemas:
+    CustomCommand:
+      type: "object"
+      properties:
+        cmd:
+          type: "string"
+        params:
+          type: "string"
+      
+    CustomCommandRequest:
+      type: "array"
+      items:
+        allOf:
+          - $ref: '#/components/schemas/CustomCommand'
+    
+    DiscountPromo:
+      type: "object"
+      properties:
+        na:
+          description: "promotion name"
+          example: "Summer Promo"
+          type: "string"
+        rw:
+          description: "promotion discount, i.e. 10,50"
+          type: "number"
+          format: "int32"
+          example: 1050
+        st:
+          description: "cancellation of a discount or surcharge"
+          type: "boolean"
+          example: false
+        vt: 
+          description: "value from range 0..102"
+          type: "number"
+          format: "int32"
+          example: 0
+        vtp: 
+          description: "VAT in string format, like 23,00, 8,00 ..."
+          type: "string"
+          example: "23,00"
+        vtn: 
+          description: "VAT in literar format A...Z"
+          type: "string"
+          example: "A"
+    
+    DiscountBill:
+      type: "object"
+      properties:
+        na:
+          description: "discount name"
+          example: "Summer Promo"
+          type: "string"
+        rd:
+          description: "true - discount, false - surcharge"
+          type: "boolean"
+          example: true
+        rw:
+          description: "promotion discount, i.e. 10,50"
+          type: "number"
+          format: "int32"
+          example: 1050
+        rp:
+          description: "promotion discount in percent, i.e. 15%"
+          type: "number"
+          format: "int32"
+          example: 1500
+    
+    DiscountSubTotal:
+      type: "object"
+      properties:
+        na:
+          description: "discount name"
+          example: "Summer Promo"
+          type: "string"
+        rd:
+          description: "true - discount, false - surcharge"
+          type: "boolean"
+          example: true
+        rw:
+          description: "promotion discount, i.e. 10,50"
+          type: "number"
+          format: "int32"
+          example: 1050
+        rp:
+          description: "promotion discount in percent, i.e. 15%"
+          type: "number"
+          format: "int32"
+          example: 1500
+    
+    DiscountLine:
+      type: "object"
+      properties:
+        vt: 
+          description: "value from range 0..102"
+          type: "number"
+          format: "int32"
+          example: 0
+        vtp: 
+          description: "VAT in string format, like 23,00, 8,00 ..."
+          type: "string"
+          example: "23,00"
+        vtn: 
+          description: "VAT in literar format A...Z"
+          type: "string"
+          example: "A"
+        ds:
+          description: "name of the product to which the discount/surcharge applies"
+          type: "string"
+          example: "Towar X"
+        rt:
+          description: "the amount of the sale from which the discount/surcharge is granted"
+          type: "number"
+          format: "int32"
+          example: 1250
+        st:
+          description: "cancellation of a discount or surcharge"
+          type: "boolean"
+          example: false
+        rd:
+          description: "true - discount, false - surcharge"
+          type: "boolean"
+          example: true
+        rw:
+          description: "promotion discount, i.e. 10,50"
+          type: "number"
+          format: "int32"
+          example: 1050
+        rp:
+          description: "promotion discount in percent, i.e. 15%"
+          type: "number"
+          format: "int32"
+          example: 1500
+        na:
+          description: "discount name"
+          example: "Summer Promo"
+          type: "string"
+
+    DiscountVat:
+      type: "object"
+      properties:
+        vt: 
+          description: "value from range 0..102"
+          type: "number"
+          format: "int32"
+          example: 0
+        vtp: 
+          description: "VAT in string format, like 23,00, 8,00 ..."
+          type: "string"
+          example: "23,00"
+        vtn: 
+          description: "VAT in literar format A...Z"
+          type: "string"
+          example: "A"
+        rd:
+          description: "true - discount, false - surcharge"
+          type: "boolean"
+          example: true
+        rw:
+          description: "promotion discount, i.e. 10,50"
+          type: "number"
+          format: "int32"
+          example: 1050
+        rp:
+          description: "promotion discount in percent, i.e. 15%"
+          type: "number"
+          format: "int32"
+          example: 1500
+        na:
+          description: "discount name"
+          example: "Summer Promo"
+          type: "string"
+        rt:
+          description: "the amount of the sale from which the discount/surcharge is granted"
+          type: "number"
+          format: "int32"
+          example: 1250
+        
+    DiscountBasic:
+      type: "object"
+      properties:
+        rd:
+          description: "true - discount, false - surcharge"
+          type: "boolean"
+          example: true
+        rw:
+          description: "promotion discount, i.e. 10,50"
+          type: "number"
+          format: "int32"
+          example: 1050
+        rp:
+          description: "promotion discount in percent, i.e. 15%"
+          type: "number"
+          format: "int32"
+          example: 1500
+        na:
+          description: "discount name"
+          example: "Summer Promo"
+          type: "string"
+          
+    Discount:
+      type: "object"
+      properties:
+        type:
+          type: "string"
+          example: "promo"
+          enum:
+            - bill
+            - promo
+            - subtotal
+            - line
+            - vat
+            - basic
+        discount:
+          oneOf:
+          - $ref: '#/components/schemas/DiscountPromo'
+          - $ref: '#/components/schemas/DiscountBill'
+          - $ref: '#/components/schemas/DiscountSubTotal'
+          - $ref: '#/components/schemas/DiscountLine'
+          - $ref: '#/components/schemas/DiscountVat'
+          - $ref: '#/components/schemas/DiscountBasic'
+          
+      
+    ParagonFakturaLine:
+      type: "object"
+      properties:
+        na:
+          type: "string"
+          description: "Name of of the good"
+          example: "Product 1"
+        il:
+          description: "minimum value is 1"
+          type: "number"
+          format: "float"
+          example: 1.0
+        vt: 
+          description: "value from range 0..102"
+          type: "number"
+          format: "int32"
+          example: 0
+        vtp: 
+          description: "VAT in string format, like 23,00, 8,00 ..."
+          type: "string"
+          example: "23,00"
+        vtn: 
+          description: "VAT in literar format A...Z"
+          type: "string"
+          example: "A"
+        pr:
+          type: "number"
+          format: "int32"
+          example: 2350
+        desc:
+          description: "Additional description. Added in schema 4.x"
+          type: "string"
+          example: ""
+        unit:
+          description: "Custom unit. Added in schema 4.x"
+          type: "string"
+          example: "kg"
+        code:
+          description: "Code name. Field available for invoices only. Added in schema 4.x"
+          type: "string"
+          example: ""
+        pkwiu:
+          description: "PKWiU identifier. Field available for invoices only. Added in schema 4.x"
+          type: "string"
+          example: "kg"
+        discounts:
+          type: "array"
+          description: "Added in schema 3.12"
+          items:
+            type: "object"
+            allOf:
+            - $ref: '#/components/schemas/Discount'
+  
+  
+    ParagonFakturaSummary: 
+      type: "object"
+      properties:
+        to:
+          type: "number"
+          format: "int32"
+          example: 2350
+        fp:
+          type: "number"
+          format: "int32"
+          example: 2350
+        re:
+          type: "number"
+          format: "int32"
+          example: 280
+          
+    FakturaHeader:
+      type: "object"
+      properties:
+        nb:
+          description: "Comapny name. Max length is 40"
+          example: "My Company Inc."
+          type: "string"
+        ni:
+          description: "Tax ID. Max length is 20"
+          example: "584-234-56-34"
+          type: "string"
+        na: 
+          type: "array"
+          description: "Max 6 elements"
+          items:
+            type: "string"
+            description: "max length is 56"
+          example: 
+           - "Anna Nowak"
+           - "Mazowiecka 50"
+           - "04-586 Warszawa"
+        pd:
+          description: "Payment date. Max length is 38"
+          example: "2022-02-15"
+          type: "string"
+        pt:
+          description: "Payment Form. Max length is 38"
+          example: "Credit Card"
+          type: "string"
+        sc:
+          description: "Client name. Printed when ps=true. Max length is 56"
+          example: "Anna Nowak"
+          type: "string"
+        ss:
+          description: "Cashier name. Max length is 56"
+          example: "Jak Kowalski"
+          type: "string"
+        cc:
+          description: "Number of extra copies"
+          type: "number"
+          example: 0
+          default: 0
+        ps:
+          type: "boolean"
+          example: false
+          default: false
+        fo:
+          type: "number"
+          description: "Invoice format. Set to '1' when using wide paper"
+          example: 0
+          default: 0
+        co: 
+          description: "Print ORGYGINAŁ/KOPIA"
+          type: "boolean"
+          example: false
+          default: false
+        cm:
+          description: "Print copy"
+          type: "boolean"
+          example: false
+          default: false
+          
+    FakturaHeaderOnline:
+      type: "object"
+      properties:
+        nm:
+          description: "Invoice name. max length is 23"
+          type: "string"
+          example: "Nazwa Faktury"
+        cc:
+          description: "Number of copies"
+          type: "number"
+          format: "int32"
+          example: 0
+          default: 0
+        co:
+          description: "Print ORGYGINAŁ/KOPIA"
+          type: "boolean"
+          example: false
+          default: false
+        ln:
+          description: "Not fiscal lines count"
+          type: "number"
+          format: "int32"
+          default: 0
+          example: 40
+        fn:
+          description: "Fiscal lines count"
+          type: "number"
+          format: "int32"
+          default: 0
+          example: 40
+    
+        na: 
+          type: "array"
+          description: "Buyer name. Max 6 elements."
+          items:
+            type: "string"
+            description: "max length is 256"
+            example: "Nazwa firmy"
+        ni:
+          description: "Buyer tax ID. Max length is 20."
+          example: "584-222-98-89"
+          type: "string"
+        ad:
+          type: "array"
+          description: "Buyer address. Max 6 elements."
+          items:
+            type: "string"
+            description: "max length is 256"
+            example: "ul. Miejska 56, 88-888 Miasto"
+            
+        ad_sc:
+          description: "Section 0=>(top), 1=>(middle), 2=>(bottom)"
+          type: "number"
+          format: "int32"
+        ad_at:
+          description: "Extra attributes, 1=>wide, 2=>high, 4=>underline, 8=>italic, 16=>bold, 32=>negation, 64=>center"
+          type: "number"
+          format: "int32"
+          default: 0
+    
+        nb:
+          description: "Invoice number. Max length is 40"
+          type: "string"
+          example: "56/2020"
+        nb_sc:
+          description: "Section 0=>(top), 1=>(middle), 2=>(bottom)"
+          type: "number"
+          format: "int32"
+        nb_at:
+          description: "Extra attributes, 1=>wide, 2=>high, 4=>underline, 8=>italic, 16=>bold, 32=>negation, 64=>center"
+          type: "number"
+          format: "int32"
+          default: 0
+          
+    FakturaRequest:
+      type: "object"
+      properties:
+        lines:
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          type: "array"
+          items:
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+        efaktura:
+          description: "Added in schema 4.0"
+          type: "object"
+          properties:
+            service:
+              type: "string"
+              description: "Alternative server address. If not provided, then default one is used"
+              example: "https://eparagon.cloud:4051"
+            idz:
+              type: "string"
+              description: "eDocument IDZ identifier"
+              example: "11"
+            email:
+              type: "string"
+              description: "Email address to send eFaktura"
+              example: "jan.kowalski-1@email.com"
+            phone:
+              type: "string"
+              description: "Phone number to send SMS/MMS with eFaktura"
+              example: "500500500"
+        extralines1:
+          type: "array"
+          description: "Max 2 elements. Structure for not-ONLINE devices only"
+          items:
+            type: "string"
+            description: "Max strign length is 56 characters"
+            example: "Line 1"
+        extralines2:
+          type: "array"
+          description: "Max 3 elements. Structure for not-ONLINE devices only"
+          items:
+            type: "string"
+            description: "Max strign length is 56 characters"
+            example: "Line 2"
+        extralines3:
+          type: "array"
+          description: "Many elements. Structure for both type of devices ONLINE and not-ONLINE (not models support it)"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Line 3"
+              section:
+                type: "string"
+                default: "bottom"
+                example: "bottom"
+                enum:
+                  - "top"
+                  - "middle"
+                  - "bottom"
+        payments: 
+          type: "array"
+          description: "Only ONLINE devices"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/PaymentObject'
+        header:
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE, but not all fields can be used. See fields destription for mor details."
+          allOf:
+            - $ref: '#/components/schemas/FakturaHeaderOnline'
+            - $ref: '#/components/schemas/FakturaHeader'
+          
+        headerex:
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          properties:
+            nr:
+              description: "max length is 20"
+              type: "string"
+              example: "WX 12345"
+            zs:
+              description: "max length is 56"
+              type: "string"
+              example: "45/25/2000358"
+            oz:
+              description: "max length is 56"
+              type: "string"
+              example: "Jan Kowalski"
+            zk:
+              description: "max length is 56"
+              type: "string"
+              example: "789/75CGX"
+            nk:
+              description: "max length is 41"
+              type: "string"
+              example: "DX12"
+            wd:
+              description: "max length is 56"
+              type: "string"
+              example: "Warunki dostawy"
+            sd:
+              description: "max length is 56"
+              type: "string"
+              example: "Sposób dostawy"
+  
+        summary: 
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+  
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+        
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
+            
+
+    FakturaRequestNotOnline:
+      type: "object"
+      properties:
+        lines:
+          description: "Structure for not-ONLINE devices only."
+          type: "array"
+          items:
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+        extralines1:
+          type: "array"
+          description: "Max 2 elements. Structure for not-ONLINE devices only"
+          items:
+            type: "string"
+            description: "Max string length is 56 characters"
+            example: "Line 1"
+        extralines2:
+          type: "array"
+          description: "Max 3 elements. Structure for not-ONLINE devices only"
+          items:
+            type: "string"
+            description: "Max string length is 56 characters"
+            example: "Line 2"
+        extralines3:
+          type: "array"
+          description: "Many elements. Structure for both type of devices ONLINE and not-ONLINE (not models support it)"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Line 3"
+              section:
+                type: "string"
+                default: "bottom"
+                example: "bottom"
+                enum:
+                  - "top"
+                  - "middle"
+                  - "bottom"
+        header:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/FakturaHeader'
+          
+        headerex:
+          type: "object"
+          properties:
+            nr:
+              description: "max length is 20"
+              type: "string"
+              example: "WX 12345"
+            zs:
+              description: "max length is 56"
+              type: "string"
+              example: "45/25/2000358"
+            oz:
+              description: "max length is 56"
+              type: "string"
+              example: "Jan Kowalski"
+            zk:
+              description: "max length is 56"
+              type: "string"
+              example: "789/75CGX"
+            nk:
+              description: "max length is 41"
+              type: "string"
+              example: "DX12"
+            wd:
+              description: "max length is 56"
+              type: "string"
+              example: "Warunki dostawy"
+            sd:
+              description: "max length is 56"
+              type: "string"
+              example: "Sposób dostawy"
+  
+        summary: 
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+  
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+            
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
+            
+    FakturaRequestOnline:
+      type: "object"
+      properties:
+        lines:
+          description: "Structure for ONLINE devices only. When using discounts, remember that most printers accept only 'basic' type and no more than 1 discount per line."
+          type: "array"
+          items:
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+        efaktura:
+          description: "Added in schema 4.0"
+          type: "object"
+          properties:
+            service:
+              type: "string"
+              description: "Alternative server address. If not provided, then default one is used"
+              example: "https://eparagon.cloud:4051"
+            idz:
+              type: "string"
+              description: "eDocument IDZ identifier"
+              example: "11"
+            email:
+              type: "string"
+              description: "Email address to send eFaktura"
+              example: "jan.kowalski-1@email.com"
+            phone:
+              type: "string"
+              description: "Phone number to send SMS/MMS with eFaktura"
+              example: "500500500"
+        extralines3:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Line 3"
+              section:
+                type: "string"
+                default: "bottom"
+                example: "bottom"
+                enum:
+                  - "top"
+                  - "middle"
+                  - "bottom"
+        payments: 
+          type: "array"
+          description: "Only ONLINE devices"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/PaymentObject'
+        header:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/FakturaHeaderOnline'
+          
+        headerex:
+          type: "object"
+          properties:
+            nr:
+              description: "max length is 20"
+              type: "string"
+              example: "WX 12345"
+            zs:
+              description: "max length is 56"
+              type: "string"
+              example: "45/25/2000358"
+            oz:
+              description: "max length is 56"
+              type: "string"
+              example: "Jan Kowalski"
+            zk:
+              description: "max length is 56"
+              type: "string"
+              example: "789/75CGX"
+            nk:
+              description: "max length is 41"
+              type: "string"
+              example: "DX12"
+            wd:
+              description: "max length is 56"
+              type: "string"
+              example: "Warunki dostawy"
+            sd:
+              description: "max length is 56"
+              type: "string"
+              example: "Sposób dostawy"
+  
+        summary: 
+          type: "object"
+          description: "Structure for both type of devices ONLINE and not-ONLINE"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+  
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+            
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
+    
+    
+    FakturyRequest:
+      type: "array"
+      items:
+        type: "object"
+        allOf:
+          - $ref: '#/components/schemas/FakturaRequest'
+  
+    ParagonyRequest:
+      type: "array"
+      items:
+        type: "object"
+        allOf:
+          - $ref: '#/components/schemas/ParagonRequest'
+          - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+  
+  
+    PaymentObject: 
+      type: "object"
+      properties:
+        ty: 
+          type: "number"
+          format: "int32"
+          example: 8
+        wa: 
+          type: "number"
+          format: "int32"
+          example: 2350
+        na: 
+          description: "max length is 25"
+          type: "string"
+          example: "Visa ... ... 0456"
+        re: 
+          type: "boolean"
+          example: false
+  
+    CurrencyPaymentObject:
+      type: "object"
+      properties:
+        wc: 
+          type: "number"
+          format: "int32"
+          example: 2350
+        wa: 
+          type: "number"
+          format: "int32"
+          example: 2350
+        ra: 
+          type: "number"
+          format: "double"
+          example: 4.2988
+        na: 
+          description: "max length is 25"
+          type: "string"
+          example: "Cash in Euro"
+        sb: 
+          description: "max length is 3"
+          type: "string"
+          example: "EUR"
+        re: 
+          type: "boolean"
+          example: false
+    
+    ParagonFakturaRequestUserData:
+      type: "object"
+      properties:
+        userdata:
+          type: "object"
+          
+    ParagonRequestCallback:
+      type: "object"
+      properties:
+        callback:
+          type: "object"
+          properties:
+            resultsurl:
+              type: "string"
+              example: "http://sampleurl/restapi"
+            resultsurlmethod:
+              type: "string"
+              example: "POST"
+        
+    ParagonRequest:
+      type: "object"
+      properties:
+        lines:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/ParagonFakturaLine'
+              
+        extralines:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              id:
+                type: "number"
+                format: "int32"
+                example: 39
+              na:
+                type: "string"
+                example: "FV 12345/2018"
+              sw:
+                type: "boolean"
+                example: false
+              sh:
+                type: "boolean"
+                example: false
+        taxidinfo: 
+          type: "object"
+          properties:
+            ni: 
+              description: "max length is 20"
+              type: "string"
+              example: "584-222-98-89"
+            dw:
+              type: "boolean"
+              example: true
+            ds: 
+              description: "max length is 56"
+              type: "string"
+              example: "NIP NABYWCY"
+        headerimage:
+          type: "number"
+          format: "int32"
+          example: 1
+          description: "Index of the image stored in the printer's memory. Use '0' to don't print header image at all. Default is '-1' means use printer's settings. Note that using headerimage in one request has a global effect - it overrides printer settings. One recipe printed with headerimage=1 causes that other recipes use headerimage=1 too, even if headerimage is not set for them."
+        payments: 
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/PaymentObject'
+        currencies:
+          description: "Added in schema 5.0"
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/CurrencyPaymentObject'
+        eparagon:
+          description: "Added in schema 4.0"
+          type: "object"
+          properties:
+            service:
+              type: "string"
+              description: "Alternative server address. If not provided, then default one is used"
+              example: "https://eparagon.cloud:4051"
+            idz:
+              type: "string"
+              description: "eDocument IDZ identifier"
+              example: "11"
+            email:
+              type: "string"
+              description: "Email address to send eParagon"
+              example: "jan.kowalski-1@email.com"
+            phone:
+              type: "string"
+              description: "Phone number to send SMS/MMS with eParagon"
+              example: "500500500"
+        discounts:
+          type: "array"
+          description: "Added in schema 3.12"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/Discount'
+        summary: 
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaSummary'
+        
+        footer:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/ParagonFakturaFooter'
+        
+        simulation:
+          type: "object"
+          allOf:
+            - $ref: '#/components/schemas/Simulation'
+            
+
+    ParagonFakturaFooter:
+      type: "object"
+      properties:
+        action:
+          type: "string"
+          example: "cut_move"
+          default: "cut_move"
+          enum:
+          - "cut_move"
+          - "move"
+          - "no_cut_move"
+          - "no_cut_move_no_header"
+        cashier:
+          type: "string"
+          example: "Jan Kowalski"
+        cashregisternumber:
+          type: "string"
+          example: "12345678"
+        systemnumber:
+          type: "string"
+          example: "PA 567/2021"
+        footerimage:
+          type: "number"
+          format: "int32"
+          example: 1
+          description: "Index of the image stored in the printer's memory. Use '0' to don't print footer image at all. Default is '-1' means use printer's settings. Note that using footerimage in one request has a global effect - it overrides printer settings. One recipe printed with footerimage=1 causes that other recipes use footerimage=1 too, even if footerimage is not set for them."
+        barcode:
+          type: "object"
+          properties:
+            type:
+              type: "string"
+              example: "barcode"
+              default: "none"
+              enum:
+                - "none"
+                - "barcode"
+                - "azteccode"
+                - "dmcode"
+                - "qrcode"
+                - "pdf417code"
+            barcode:
+              allOf:
+                - $ref: '#/components/schemas/FormsBarcodeRequest'
+            azteccode:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsAztecCodeRequest'
+            dmcode:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsDmCodeRequest'
+            qrcode:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsQrCodeRequest'
+            pdf417code:
+              example: null
+              allOf:
+                - $ref: '#/components/schemas/FormsPdf417CodeRequest'
+
+    ParagonyResponse:
+      type: "object"
+      properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/ParagonResponse'
+              - $ref: '#/components/schemas/ParagonCommonTimestampsResponse'
+    
+    FakturaAsyncStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              faktura:
+                type: "object"
+                allOf:
+                  - $ref: '#/components/schemas/FakturaRequest'
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+              ts:
+                type: "number"
+                format: "int64"
+                description: "printing begin timestamp"
+                example: 1627376834869
+              tsend:
+                type: "number"
+                format: "int64"
+                description: "printing end timestamp"
+                example: 1627376834969
+              inprogress:
+                type: "boolean"
+              stat:
+                type: "object"
+                description: "Invoice printout response"
+                allOf:
+                  - $ref: '#/components/schemas/FakturaCommonResponse'
+                  
+    ParagonAsyncStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              paragon:
+                type: "object"
+                description: "Fiscal printout request"
+                allOf:
+                - $ref: '#/components/schemas/ParagonRequest'
+                - $ref: '#/components/schemas/ParagonRequestCallback'
+                - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+              ts:
+                type: "number"
+                format: "int64"
+                description: "printing begin timestamp"
+                example: 1627376834869
+              tsend:
+                type: "number"
+                format: "int64"
+                description: "printing end timestamp"
+                example: 1627376834969
+              inprogress:
+                type: "boolean"
+              stat:
+                type: "object"
+                description: "Fiscal printout response"
+                allOf:
+                  - $ref: '#/components/schemas/ParagonResponse'
+                  - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
+
+    FakturaCommonResponse:
+      type: "object"
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+        #error:
+        #  type: "string"
+        #results:
+        #  type: "array"
+        #  items:
+        #    type: "object"
+        fn:
+          type: "string"
+          example: "14"
+          description: "number of last printed invoice"
+        hn:
+          type: "string"
+          example: "2637"
+        efaktura:
+          type: "object"
+          properties:
+            id:
+              type: "number"
+              description: "eDocument identifier. Added in schema 4.0"
+        imageData:
+          type: "string"
+          description: "base64 string with PNG returned when simulation=true and filepath to image is not provided. Added in schema 5.0"
+        took:
+          type: "number"
+          example: 380
+          format: "int32"
+          
+    ParagonCommonResponse:
+      type: "object"
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+          example: 0
+        #results:
+        #  type: "array"
+        #  items:
+        #    type: "object"
+        bn:
+          type: "string"
+          example: "14"
+          description: "number of last printed fiscal printout"
+        hn:
+          type: "string"
+          example: "2612"
+          description: "number of last printed header"
+        eparagon:
+          type: "object"
+          properties:
+            id:
+              type: "number"
+              description: "eDocument identifier. Added in schema 4.0"
+        imageData:
+          type: "string"
+          description: "base64 string with PNG returned when simulation=true and filepath to image is not provided. Added in schema 5.0"
+        took:
+          type: "number"
+          example: 902
+          format: "int32"
+    
+    FakturaCommonTimestampsResponse:
+      type: "object"
+      properties:
+        ts:
+          type: "number"
+          format: "int64"
+          description: "printing begin timestamp"
+          example: 1627376834869
+        tsend:
+          type: "number"
+          format: "int64"
+          description: "printing end timestamp"
+          example: 1627376834969
+          
+    ParagonCommonTimestampsResponse:
+      type: "object"
+      properties:
+        ts:
+          type: "number"
+          format: "int64"
+          description: "printing begin timestamp"
+          example: 1627376834869
+        tsend:
+          type: "number"
+          format: "int64"
+          description: "printing end timestamp"
+          example: 1627376834969
+          
+    ParagonResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ParagonCommonResponse'
+        - $ref: '#/components/schemas/ParagonCommonTimestampsResponse'
+      properties:
+        transaction:
+          type: "string"
+          example: "bb3b77bf-e33b-4fbb-ad62-ede768ed5652"
+          description: "Unique transaction identifier when async=true"
+    
+    FakturyResponse:
+      type: "object"
+      properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
+        hits:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/FakturaResponse'
+    
+    
+    Simulation:
+      type: "object"
+      properties:
+        errors: 
+          type: "object"
+          properties:
+            type: 
+              type: "string"
+              example: "paper_ending"
+              enum:
+              - paper_ended
+              - paper_ending
+              - communication_error
+              - vat_error
+        parameters:
+          type: "object"
+          properties:
+            header:
+              type: "object"
+              properties:
+                company:
+                  type: "string"
+                  example: "Moja Firma S.A."
+                address:
+                  type: "string"
+                  example: "02-280 Warszawa, ul.Długa 33"
+            footer:
+              type: "object"
+              properties:
+                cashier:
+                  type: "string"
+                  example: "Jan Kowalski"
+                cashNumber:
+                  type: "string"
+                  example: "12345678"
+                billNumber:
+                  type: "number"
+                  format: "int32"
+                  example: 20
+                uniqueNumber:
+                  type: "string"
+                  example: "ZCJ2001027630"
+                sign:
+                  type: "string"
+                  example: "2E9EF5F8644A916BB678A2960F7011269E93ADC8D4C0437F0FFE7046AC3ACEAB89F0820BDFEC78563F0B9B99885E04D1D2EC630CE666B7F41F604F2A9A3439DC451A6B590CD439D7AE709B1FAA49EB08F5039ACAB251AD6D1652166A56EE19164185DFFCAC21682BB56828F2178CE332A0E300A9FDB0D66427BAF3A32E0BD6B56DF0483DC74F42EDED5FA04F8D582F25E224F3A70839F355898B43E28B67FEACBD86ED7CBDE180586BD48BB2DD47F6B4CFAB27F44993A214047F2D6DCC5F05235FD1D0464BBB30895A81CB87B2B32FEFE71B11AF3255B6DA19EED76F8045B7BA375EF308B5D4966EA26FCBF8B524EA423E261718C6C076BA60066F42894E6346"
+            vatrates:
+              type: "object"
+              properties:
+                va:
+                  type: "string"
+                  example: "23,00"
+                vb:
+                  type: "string"
+                  example: "8,00"
+                vc:
+                  type: "string"
+                  example: "5,00"
+                vd:
+                  type: "string"
+                  example: "0,00"
+                ve:
+                  type: "string"
+                  example: "100,00"
+                vf:
+                  type: "string"
+                  example: "101,00"
+                vg:
+                  type: "string"
+                  example: "101,00"
+            tid:
+              type: "string"
+              example: "585-252-55-22"
+            number:
+              type: "number"
+              format: "int32"
+              example: 25
+            fiscal:
+              type: "boolean"
+              example: true
+        output:
+          type: "object"
+          properties:
+            filepath:
+              type: "string"
+              example: "/tmp/my_result.png"
+
+      
+    CustomCommandResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "array"
+          items:
+            type: "object"
+
+    PluginResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    
+    PluginsListResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        plugins:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              version:
+                type: "string"
+                example: "1.0.1"
+              enabled:
+                type: "boolean"
+                example: true
+              hasRestExtension:
+                type: "boolean"
+                example: true
+              name:
+                type: "string"
+                example: "My Plugin Name"
+              description:
+                type: "string"
+                example: "My Plugin Description"
+              id:
+                type: "string"
+                example: "my-plugin"
+              rest:
+                type: "string"
+                example: "/plugins/my-plugin/"
+              minCompatibleVersion:
+                type: "integer"
+                example: 5.1
+    
+    PluginAzureServiceBusConsumeStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/PluginResponse'
+      properties:
+        status:
+          type: "string"
+          example: "consuming"
+          enum:
+            - "consuming"
+            - "stopped"
+          
+    ReportDobowyResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        code:
+          type: "number"
+          format: "int32"
+        error:
+          type: "string"
+        results:
+          type: "array"
+          items:
+            type: "object"
+    
+    ReportMiesiecznyResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    ReportShiftrepResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    ReportCustomResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    ReportTextLinesResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    ReportEparagonStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        result:
+          type: "object"
+          properties:
+            ad:
+              type: "string"
+              description: "URL of server used to process this eDocument (eParagon/eFaktura)"
+              example: "https://eparagon.cloud"
+            di:
+              type: "number"
+              example: 29
+              description: "Document ID from the medium/database"
+            id:
+              type: "string"
+              description: "eDocument (eParagon) ID generated by user. For example, value passed in /paragon in the eparagon.idz field."
+              example: "11"
+            hd:
+              type: "number"
+              description: "eDocument (eParagon) ID generated by printer"
+              example: "2216731866"
+            rd:
+              type: "string"
+              description: "eDocument (eParagon) Registration date"
+              example: "2023-03-18T15:53:57+01:00"
+            uc:
+              type: "string"
+              description: "UPO error code (confirmation receipt)"
+              example: ""
+            hc:
+              type: "number"
+              description: "HTTP response code. 0 - connection failure"
+              example: 200
+            cc:
+              type: "number"
+              description: "CURL code, 0 - OK, otherwise error"
+              example: 0
+            ac:
+              type: "number"
+              description: "Application code, 0 - OK, otherwise error"
+              example: 4251
+            st:
+              type: "string"
+              description: "eDocument (eParagon) state"
+              example: "sent"
+              enum:
+                - "new"
+                - "sent"
+                - "waiting_for_retry"
+                - "error"
+                - "reserved"
+            sd:
+              type: "string"
+              description: "eDocument (eParagon) last state change date"
+              example: "2023-03-18T15:56:23+01:00"
+            pr:
+              type: "boolean"
+              description: "true if printed"
+              example: true
+            
+    ReportEparagonSummaryResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        summary:
+          type: "object"
+          properties:
+            fr:
+              type: "number"
+              description: "Number of free eDocument records"
+              example: 489
+            ne:
+              type: "number"
+              description: "Number of records with state: new"
+              example: 1
+            ok:
+              type: "number"
+              description: "Number of records with state: ok"
+              example: 12
+            fi:
+              type: "number"
+              description: "Number of records with state: failed"
+              example: 3
+            ft:
+              type: "number"
+              description: "Number of records with state: fatal"
+              example: 0
+            re:
+              type: "number"
+              description: "Number of records with state: reserved"
+              example: 0
+    
+    ReportEparagonFreeRecordsResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        fr:
+          type: "number"
+          description: "Number of free eDocument records"
+          example: 489
+    
+    ReportEparagonContextResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    FormsOrderRecipeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    FormsAztectCodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    FormsBarcodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    FormsDmCodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    FormsQrCodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    FormsPdf417CodeResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    ReportCashstaterepResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    TasksListResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "object"
+          properties:
+            tasks:
+              type: "object"
+              properties:
+                <id>:
+                  type: "object"
+                  allOf:
+                    - $ref: '#/components/schemas/TaskObject'
+                  
+    ReportEventsScheduledTaskResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "object"
+          properties:
+            task:
+              type: "object"
+              allOf:
+                - $ref: '#/components/schemas/TaskObject'
+              
+    TaskObject:
+      type: "object"
+      properties:
+        task:
+          type: "string"
+          example: "81010def-7aaf-40f7-8b0f-3163e48e1ec8"
+        ts:
+          type: "number"
+          format: "int64"
+          example: 1690491890165
+        inprogress:
+          type: "boolean"
+          example: true
+        success:
+          type: "boolean"
+        progress:
+          type: "number"
+          format: "int32"
+          example: 78
+        result:
+          type: "object"
+    
+    FakturaResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/FakturaCommonResponse'
+        - $ref: '#/components/schemas/FakturaCommonTimestampsResponse'
+      properties:
+        transaction:
+          type: "string"
+          example: "bb3b77bf-e33b-4fbb-ad62-ede768ed5652"
+          description: "Unique transaction identifier when async=true"
+      #properties:
+      #  hits:
+      #    type: "object"
+          
+    AsyncQueueResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "object"
+          properties:
+            faktury:
+              type: "object"
+              properties:
+                inprogress:
+                  type: "number"
+                  format: "int32"
+                size:
+                  type: "number"
+                  format: "int32"
+                items:
+                  type: "array"
+                  items:
+                    type: "object"
+                    properties:
+                      key:
+                        type: "string"
+                      value:
+                        type: "array"
+                        items:
+                          type: "object"
+                          allOf:
+                            - $ref: '#/components/schemas/FakturaAsyncStatusResponse'
+            paragony:
+              type: "object"
+              properties:
+                inprogress:
+                  type: "number"
+                  format: "int32"
+                size:
+                  type: "number"
+                  format: "int32"
+                items:
+                  type: "array"
+                  items:
+                    type: "object"
+                    properties:
+                      key:
+                        type: "string"
+                      value:
+                        type: "array"
+                        items:
+                          type: "object"
+                          allOf:
+                            - $ref: '#/components/schemas/ParagonAsyncStatusResponse'
+    
+    DlqItem:
+      type: "object"
+      properties:
+        type:
+          type: "string"
+          description: "paragon or faktura"
+          example: "paragon"
+        dlqtime:
+          type: "number"
+          example: 1669885839960
+          description: "timestamp [ms] when document was added to DLQ"
+        retries:
+          type: "number"
+          example: 0
+          description: "Number of retires"
+        lastretry:
+          type: "number"
+          example: 0
+          description: "timestamp [ms] of last retry attempt"
+        lastreason:
+          type: "string"
+          example: ""
+          description: "Last reason why request landed in DLQ"
+        id:
+          type: "string"
+          example: "1669885839960_7f89862e-1ab0-4d17-a45e-4b66f49e9f30"
+          description: "identifier of DLQ item. Use it together with /dlq/process/{id}"
+        payload:
+          type: "object"
+          
+    DlqListResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        list:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+              - $ref: '#/components/schemas/DlqItem'
+        directory:
+          type: "string"
+          example: "dlq"
+        
+    DlqProcessResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        dlqitem:
+          type: "object"
+          allOf:
+              - $ref: '#/components/schemas/DlqItem'
+        response:
+          type: "object"
+          description: "ParagonResponse or FakturaResponse"
+        directory:
+          type: "string"
+          example: "dlq"
+    
+    DlqProcessDeleteResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        dlqitem:
+          type: "object"
+          allOf:
+              - $ref: '#/components/schemas/DlqItem'
+        directory:
+          type: "string"
+          example: "dlq"
+          
+    DlqProcessAllResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        dlqitems:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              dlqitem:
+                type: "object"
+                allOf:
+                    - $ref: '#/components/schemas/DlqItem'
+              response:
+                type: "object"
+                description: "ParagonResponse or FakturaResponse"
+        directory:
+          type: "string"
+          example: "dlq"
+          
+    CacheClearResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    CacheRangesResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        cache:
+          type: "object"
+          properties:
+            dateFrom:
+              type: "string"
+              example: "1689119846"
+              description: "lower bound date"
+            dateTo:
+              type: "string"
+              example: "1690802789"
+              description: "upper bound date"
+            type:
+              type: "string"
+              example: "full"
+              enum:
+              - sections
+              - full
+          
+    StatusCommon:
+      type: "object"
+      properties:
+        buildversion:
+          type: "string"
+          example: "3.10"
+        schemaversion:
+          type: "string"
+          example: "3.10"
+      
+    CacheUpdateRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          example: "2023-07-11T00:00:00+02:00"
+        dateTo:
+          type: "string"
+          example: "2023-07-31T23:59:59+02:00"
+            
+    CacheBuildRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          example: "2023-07-11T00:00:00+02:00"
+        dateTo:
+          type: "string"
+          example: "2023-07-31T23:59:59+02:00"
+        prefix:
+          type: "string"
+          example: ""
+        cacheType:
+          type: "string"
+          example: "full"
+          enum:
+            - sections
+            - full
+            
+    CacheDumpResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    CacheBuildResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        task:
+          type: "string"
+          example: "06af0279-eaeb-4916-9680-8756d76a9e98"
+    
+    CacheUpdateResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        task:
+          type: "string"
+          example: "06af0279-eaeb-4916-9680-8756d76a9e98"
+    
+    
+    AuthUser:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          example: "Joe Black"
+          description: "Human readable name of the user"
+        login:
+          type: "string"
+          description: "Login used for authentication"
+        password:
+          type: "string"
+          example: "Dgreretyty78^$a"
+          description: "Password used for authentication"
+        scope:
+          type: "string"
+          example: "POST:^/paragon$;GET:^/raporty/dobowy$"
+          description: "Regular expression used to match the RESTpoints that user has access to. Format is \"OPERATION:regular expression;OPERATION:regular expression\""
+          
+    AuthUserMetrics:
+      type: "object"
+      properties:
+        created:
+          type: "string"
+          example: "2023-07-11T00:00:00+02:00"
+        updated:
+          type: "string"
+          example: "2023-07-31T23:59:59+02:00"
+        uuid:
+          type: "string"
+          example: "deb0cde8-cdb6-4c22-9f34-f1c9ff7c843d"
+          
+    AuthUserCreateUpdateRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/AuthUser'
+
+
+    AuthUserCreateUpdateResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        user:
+          allOf:
+          - $ref: '#/components/schemas/AuthUser'
+          - $ref: '#/components/schemas/AuthUserMetrics'
+    
+    AuthUserDeleteResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    
+    AuthUsersListResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        users:
+          type: "array"
+          items:
+            type: "object"
+            allOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - $ref: '#/components/schemas/AuthUserMetrics'
+          
+    DrawerOpenResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    DrawerStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        result:
+          type: "object"
+          properties:
+            ds:
+              type: "number"
+              description: "Drawer state. 0 - open, 1 - closed, 2 - unknown"
+              example: 0
+            ks:
+              type: "number"
+              description: "Key state. 0 - open, 1 - closed, 2 - unknown"
+              example: 0
+    
+    DrawerParametersResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        result:
+          type: "object"
+          properties:
+            im:
+              type: "number"
+              description: "Pulse length, 1..10"
+              example: 1
+            id:
+              type: "number"
+              description: "Drawer identifier, should be always 0"
+              example: 0
+            vt:
+              type: "number"
+              description: "Drawer voltage in volts, 6,12,18,24, 0 when unknown"
+              example: 12
+            fs:
+              type: "boolean"
+              description: "Drawer opening sensor is supported"
+              example: false
+            ks:
+              type: "boolean"
+              description: "Key sensor is supported"
+              example: false
+    
+    FormFinishResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        
+    StatusRtcGet:
+      type: "object"
+      properties:
+        rtcget:
+            type: "object"
+            properties:
+              da:
+                type: "string"
+                example: "2021-07-26;17:20"
+                
+    StatusRequestRtcSet:
+      type: "object"
+      properties:
+        date:
+          type: "string"
+          example: "2021-07-26"
+        time:
+          type: "string"
+          example: "13:02"
+        summertime:
+          type: "boolean"
+          description: "enable/disable summer time"
+          default: true
+          
+    StatusResponseRtcSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
+    StatusResponseRtcGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCommon'
+        - $ref: '#/components/schemas/StatusRtcGet'
+    
+    FormsDmCodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        width:
+          type: "number"
+          default: 10
+          example: 10
+        inputtype:
+          type: "string"
+          default: "ascii"
+          example: "ascii"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "Hello"
+    
+    BarcodeExtraLines:
+      type: "object"
+      properties:
+        extralines:
+          type: "array"
+          items:
+            type: "string"
+            example: "Nr rachunku: 5698759"
+            
+    FormsBarcodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        message:
+          type: "string"
+          example: "Hello"
+            
+    FormsAztecCodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        width:
+          type: "number"
+          default: 10
+          example: 10
+        correctionlevel:
+          type: "number"
+          description: "0-10%, 1-23%, 2-36%, 3-50%"
+          default: 2
+          example: 2
+        inputtype:
+          type: "string"
+          default: "ascii"
+          example: "ascii"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "Hello"
+    
+    FormHeader:
+      type: "string"
+      example: "DOKUMENT_NIEFISKALNY"
+      default: "DOKUMENT_NIEFISKALNY"
+      description: "Uwaga, nagłówek (PUSTY) nie jest wspierany na wszystkich urządzeniach"
+      enum:
+        - "TRANSAKCJE_ODLOZONE"
+        - "POTWIERDZENIE_DOKONANIA_TRANSAKCJI"
+        - "RAPORT_FUNKCJI_OPERATORA"
+        - "RAPORT_KASJERA_X"
+        - "RAPORT_KASJERA_Z"
+        - "RAPORT_KASY_X"
+        - "RAPORT_KASY_Z"
+        - "OFFLINE_KASJERA"
+        - "ONLINE_KASJERA"
+        - "RAPORT_SRODKOW_PLATNOSCI"
+        - "SPRZEDAZ_ZAREJESTROWANA_W_KASIE"
+        - "POKWITOWANIE"
+        - "POTWIERDZENIE_WPLATY"
+        - "BON_UPOMINKOWY"
+        - "NOTA_KREDYTOWA_1"
+        - "NOTA_KREDYTOWA_2"
+        - "KUPON_RABATOWY"
+        - "PLATNOSC_ZA_POBRANIEM"
+        - "PRZELEW_BANKOWY"
+        - "POTWIERDZENIE_SPRZEDAZY_BONU_UPOMINKOWEGO"
+        - "RABAT_DLA_PRACOWNIKA"
+        - "WYMIANA_SRODKOW_PLATNOSCI"
+        - "OPERACJE_KASOWE"
+        - "BLEDY_KASY"
+        - "CENNIK"
+        - "ZMIANY_CEN"
+        - "STATYSTYKA_SPRZEDAZY"
+        - "POTWIERDZENIE_DOKONANIA_TRANSAKCJI"
+        - "WYDANIE_BONU_UPOMINKOWEGO"
+        - "POTWIERDZENIE_ZAPLATY_KARTA"
+        - "POTWIERDZENIE_ZAPLATY_RACHUNKU"
+        - "POKWITOWANIE"
+        - "POKWITOWANIE_TRANSAKCJI_UZNANIA"
+        - "POTWIERDZENIE_UNIEWAZNIENIA"
+        - "POTWIERDZENIE_ODMOWY_AUTORYZACJI"
+        - "POTWIERDZENIE_PREAUTORYZACJI"
+        - "POTWIERDZENIE_ODMOWY"
+        - "TRANSACTION_CONFIRMATION"
+        - "CANCELLATION_CONFIRMATION"
+        - "PREAUTHORIZATION_CONFIRMATION"
+        - "DECLINATION_CONFIRMATION"
+        - "POTWIERDZENIE_DOLADOWANIA_NUMERU_GSM"
+        - "POTWIERDZENIE_POPRAWNOSCI_NUMERU"
+        - "POTWIERDZENIE_REALIZACJI_DOLADOWANIA"
+        - "KUPON_ELEKTRONICZNY"
+        - "POTWIERDZENIE_SKUPU_WALUTY"
+        - "BON_RABATOWY"
+        - "LISTA_TOWAROW"
+        - "RAPORT_ZMIANOWY"
+        - "ROZLICZENIE_KONTA"
+        - "SALDO_KARTY_UPOMINKOWEJ"
+        - "KARTA_UPOMINKOWA"
+        - "POTWIERDZENIE_PLATNOSCI_KARTA"
+        - "WYMIANA_SRODKOW_PLATNOSCI"
+        - "SALDO_KARTY_ICARD"
+        - "POTWIERDZENIE_TRANSAKCJI_ICARD"
+        - "RAPORT_KASJERA"
+        - "RAPORT_SKROCONY"
+        - "POKWITOWANIE_WPLATY"
+        - "POKWITOWANIE_WYPLATY"
+        - "STANY_LICZNIKOW"
+        - "RAPORT_TANKOWANIA"
+        - "KARTA_KREDYTOWA"
+        - "WALUTA_W_SEJFIE"
+        - "RAPORT_ALARMU_PALIWA"
+        - "BILET_DO_MYJNI"
+        - "STAN_ZBIORNIKOW_RAPORT"
+        - "RAPORT_DOSTAWY_PALIW"
+        - "BP_PARTNERCLUB"
+        - "KLUB_LIFESTYLE"
+        - "BP_PARTNERCLUB"
+        - "KLUB_LIFESTYLE"
+        - "BP_PARTNERCLUB"
+        - "KLUB_LIFESTYLE"
+        - "ZAMOWIENIE"
+        - "POTWIERDZENIE"
+        - "RAPORT"
+        - "BON"
+        - "BILET"
+        - "DOLADOWANIE_ENERGETYCZNE"
+        - "LICZENIE_KASY"
+        - "WYPLATA_KASJERA"
+        - "WPLATA_KASJERA"
+        - "ROZLICZENIE_KASJERA"
+        - "DOKUMENT_NIEFISKALNY"
+        - "(PUSTY)"
+        
+    FormsQrCodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        width:
+          type: "number"
+          default: 10
+          example: 10
+        correctionlevel:
+          type: "number"
+          description: "0-(L 7%), 1-(M 15%), 2-(Q 25%), 3-(H 30%)"
+          default: 2
+          example: 2
+        inputtype:
+          type: "string"
+          default: "hex"
+          example: "hex"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "313233343536373839"
+    
+    FormsPdf417CodeRequest:
+      type: "object"
+      properties:
+        header:
+          allOf:
+          - $ref: '#/components/schemas/FormHeader'
+        width:
+          type: "number"
+          default: 2
+          example: 2
+        proportion:
+          type: "number"
+          default: 3
+          example: 3
+        correctionlevel:
+          type: "number"
+          description: "0-(2 words), 1-(4 words), 2-(8 words), 3-(16 words), 4-(32 words), 5-(64 words), 6-(128 words), 7-(256 words), 8-(512 words)"
+          default: 3
+          example: 3
+        columns:
+          type: "number"
+          default: 1
+          example: 1
+        vertical:
+          type: "boolean"
+          default: false
+          example: false
+        inputtype:
+          type: "string"
+          default: "hex"
+          example: "hex"
+          enum:
+            - "ascii"
+            - "hex"
+        message:
+          type: "string"
+          example: "313233343536373839"
+
+    
+    FormsOrderRecipeRequest:
+      type: "object"
+      properties:
+        font:
+          type: "object"
+          properties:
+            name:
+              type: "string"
+              default: "Big"
+              example: "Big"
+              enum:
+                - "3D Diagonal"
+                - "Alpha"
+                - "Acrobatic"
+                - "Avatar"
+                - "Big Money-ne"
+                - "Big Money-nw"
+                - "Big Money-se"
+                - "Big Money-sw"
+                - "Big"
+                - "Blocks"
+                - "Bulbhead"
+                - "Cards"
+                - "Chiseled"
+                - "Crawford2"
+                - "Crazy"
+                - "Dancing Font"
+                - "Doh"
+                - "Doom"
+                - "Efti Wall"
+                - "Epic"
+                - "Fire Font-k"
+                - "Fire Font-s"
+                - "Flower Power"
+                - "Fun Face"
+                - "Fun Faces"
+                - "Ghost"
+                - "Graceful"
+                - "Graffiti"
+                - "Impossible"
+                - "Isometric1"
+                - "Isometric2"
+                - "Isometric3"
+                - "Isometric4"
+                - "JS Bracket Letters"
+                - "Lil Devil"
+                - "Merlin1"
+                - "Modular"
+                - "Ogre"
+                - "Patorjk's Cheese"
+                - "Patorjk-HeX"
+                - "Rectangles"
+                - "Slant"
+                - "Slant Relief"
+                - "Small"
+                - "Small Slant"
+                - "Small Isometric1"
+                - "Soft"
+                - "Standard"
+                - "Star Wars"
+                - "Sub-Zero"
+                - "Swamp Land"
+                - "Sweet"
+                - "Train"
+                - "Twisted"
+                - "Wet Letter"
+                - "Varsity"
+                - "3D-ASCII"
+                - "3x5"
+                - "4Max"
+                - "5 Line Oblique"
+                - "ASCII New Roman"
+                - "Alligator"
+                - "Alligator2"
+                - "Alphabet"
+                - "Arrows"
+                - "Banner"
+                - "Banner3"
+                - "Barbwire"
+                - "Basic"
+                - "Bear"
+                - "Bell"
+                - "Big Chief"
+                - "Bigfig"
+                - "Binary"
+                - "Block"
+                - "Bolger"
+                - "Braced"
+                - "Broadway KB"
+                - "Broadway"
+                - "Bubble"
+                - "Caligraphy"
+                - "Caligraphy2"
+                - "Catwalk"
+                - "Chunky"
+                - "Coinstak"
+                - "Cola"
+                - "Colossal"
+                - "Computer"
+                - "Contessa"
+                - "Contrast"
+                - "Cosmike"
+                - "Crawford"
+                - "Cricket"
+                - "Cursive"
+                - "Cyberlarge"
+                - "Cybermedium"
+                - "Cybersmall"
+                - "Cygnet"
+                - "DANC4"
+                - "Decimal"
+                - "Def Leppard"
+                - "Diet Cola"
+                - "Digital"
+                - "Dot Matrix"
+                - "Double Shorts"
+                - "Double"
+                - "Dr Pepper"
+                - "Fender"
+                - "Filter"
+                - "Flipped"
+                - "Four Tops"
+                - "Fraktur"
+                - "Fuzzy"
+                - "Georgi16"
+                - "Georgia11"
+                - "Ghoulish"
+                - "Glenyn"
+                - "Goofy"
+                - "Gothic"
+                - "Greek"
+                - "Henry 3D"
+                - "Hex"
+                - "Hieroglyphs"
+                - "Hollywood"
+                - "Horizontal Left"
+                - "Horizontal Right"
+                - "Invita"
+                - "Italic"
+                - "Ivrit"
+                - "Jacky"
+                - "Jazmine"
+                - "Jerusalem"
+                - "Katakana"
+                - "Kban"
+                - "Keyboard"
+                - "Knob"
+                - "LCD"
+                - "Larry 3D"
+                - "Lean"
+                - "Letters"
+                - "Linux"
+                - "Marquee"
+                - "Merlin2"
+                - "Mini"
+                - "Mirror"
+                - "Morse"
+                - "Moscow"
+                - "NScript"
+                - "NT Greek"
+                - "NV Script"
+                - "Nancyj-Fancy"
+                - "Nancyj-Underlined"
+                - "Nancyj"
+                - "Nipples"
+                - "O8"
+                - "Octal"
+                - "Old Banner"
+                - "Pawp"
+                - "Peaks"
+                - "Pebbles"
+                - "Pepper"
+                - "Puffy"
+                - "Puzzle"
+                - "Rammstein"
+                - "Roman"
+                - "Rounded"
+                - "Runyc"
+                - "SL Script"
+                - "Santa Clara"
+                - "Script"
+                - "Serifcap"
+                - "Shadow"
+                - "Speed"
+                - "Spliff"
+                - "Stampate"
+                - "Stellar"
+                - "Stforek"
+                - "Stick Letters"
+                - "Stop"
+                - "Straight"
+                - "Swan"
+                - "Univers"
+
+
+        align:
+          type: "string"
+          default: "center"
+          example: "center"
+          enum:
+            - "center"
+            - "left"
+        text:
+          type: "string"
+          example: "665"
+        extralines:
+          type: "array"
+          items:
+            type: "string"
+            example: "Nr rachunku: 5698759"
+                        
+    FormFinishRequest:
+      type: "object"
+      properties:
+        formtype:
+          type: "string"
+          example: "bon_rabatowy"
+          description: "Type of report"
+          enum:
+            - "transakcje_odlozone"
+            - "funkcje_operatora"
+            - "raport_kasjera"
+            - "raport_srodkow_platnosci"
+            - "sprzedaz_zarejestrowana_w_kasie"
+            - "pokwitowanie"
+            - "potwierdzenie_wplaty"
+            - "bon_upominkowy"
+            - "nota_kredytowa"
+            - "nota_kredytowa_ex"
+            - "kupon_rabatowy"
+            - "platnosc_za_pobraniem"
+            - "przelew_bankowy"
+            - "potwierdzenie_sprzedazy_bonu_upominkowego"
+            - "rabat_dla_pracownika"
+            - "wymiana_srodkow_platnosci"
+            - "operacje_kasowe"
+            - "bledy_kasy"
+            - "cennik"
+            - "wydanie_bonu_upominkowego"
+            - "potwierdzenie_transakcji_karta_platnicza"
+            - "potwierdzenie_doladowania"
+            - "potwierdzenie_skupu_waluty"
+            - "bon_rabatowy"
+            - "raport_zmianowy"
+            - "rozliczenie_konta"
+            - "raport_kasy_kasjera"
+            - "wplata_wyplata"
+            - "stany_licznikow"
+            - "raport_tankowania"
+            - "potwierdzenie_zaplaty_karta"
+            - "waluta_w_sejfie"
+            - "raport_alarmu_paliwa"
+            - "bilet_do_myjni"
+            - "raport_stanu_paliw"
+            - "raport_dostaw_paliw"
+            - "raport_zmiany_bp_partnerclub"
+            - "potwierdzenie_podarunku"
+            - "potwierdzenie_wydania_podarunku"
+            - "zamowienie"
+            - "potwierdzenie_raport_bon"
+            - "pokwitowanie"
+            - "formatka_lotto"
+            - "super_formatka"
+            - "formatka_szeroka"
+            
+    ReportTextLinesRequest:
+      type: "object"
+      properties:
+        header:
+          type: "integer"
+          example: 0
+          description: "Added in 5.2. Identifier of custom header."
+        lines:
+          type: "array"
+          example:
+            - "#################################"
+            - "#          HELLO WORLD          #"
+            - "#################################"
+          items:
+            type: "string"
+            example: "Sample value"
+                  
+    ReportCustomRequest:
+      type: "object"
+      properties:
+        header:
+          type: "integer"
+          example: 0
+          description: "Added in 5.2. Identifier of custom header."
+        formtype:
+          type: "string"
+          example: "bon_rabatowy"
+          description: "Type of report"
+          enum:
+            - "transakcje_odlozone"
+            - "funkcje_operatora"
+            - "raport_kasjera"
+            - "raport_srodkow_platnosci"
+            - "sprzedaz_zarejestrowana_w_kasie"
+            - "pokwitowanie"
+            - "potwierdzenie_wplaty"
+            - "bon_upominkowy"
+            - "nota_kredytowa"
+            - "nota_kredytowa_ex"
+            - "kupon_rabatowy"
+            - "platnosc_za_pobraniem"
+            - "przelew_bankowy"
+            - "potwierdzenie_sprzedazy_bonu_upominkowego"
+            - "rabat_dla_pracownika"
+            - "wymiana_srodkow_platnosci"
+            - "operacje_kasowe"
+            - "bledy_kasy"
+            - "cennik"
+            - "wydanie_bonu_upominkowego"
+            - "potwierdzenie_transakcji_karta_platnicza"
+            - "potwierdzenie_doladowania"
+            - "potwierdzenie_skupu_waluty"
+            - "bon_rabatowy"
+            - "raport_zmianowy"
+            - "rozliczenie_konta"
+            - "raport_kasy_kasjera"
+            - "wplata_wyplata"
+            - "stany_licznikow"
+            - "raport_tankowania"
+            - "potwierdzenie_zaplaty_karta"
+            - "waluta_w_sejfie"
+            - "raport_alarmu_paliwa"
+            - "bilet_do_myjni"
+            - "raport_stanu_paliw"
+            - "raport_dostaw_paliw"
+            - "raport_zmiany_bp_partnerclub"
+            - "potwierdzenie_podarunku"
+            - "potwierdzenie_wydania_podarunku"
+            - "zamowienie"
+            - "potwierdzenie_raport_bon"
+            - "pokwitowanie"
+            - "formatka_lotto"
+            - "super_formatka"
+            - "formatka_szeroka"
+        lines:
+          type: "array"
+          example:
+            - type: 0
+              params:
+                - "0"
+                - "123"
+                - "123"
+                - "123"
+            - type: 1
+              params:
+                - "#################################"
+            - type: 2
+            - type: 3
+              params:
+                - "TOWAR 1"
+                - "7777"
+            - type: 3
+              params:
+                - "TOWAR 2"
+                - "1111"
+            - type: 4
+              params:
+                - "8888"
+            - type: 5
+              params:
+                - "8888"
+            - type: 6
+              params:
+                - "8888"
+            - type: 7
+              params:
+                - "2020-06-01"
+          items:
+            type: "object"
+            properties:
+              type:
+                type: "number"
+              params:
+                type: "array"
+                items:
+                  type: "string"
+                  example: "Sample value"
+
+
+    EdocumentConnectionTestRequest:
+      type: "object"
+      properties:
+        ad:
+          type: "string"
+          example: "https://eparagon.cloud"
+
+    EdocumentOverrideModeSetRequest:
+      type: "object"
+      properties:
+        ov:
+          type: "boolean"
+          example: false
+          
+    ReportEventsDobowyRequest:
+      type: "object"
+      properties:
+        dateFrom:
+          type: "string"
+          format: date-time
+          example: "2023-06-20T12:00:00.000Z"
+          description: "Search for EOD reports from this date"
+        dateTo:
+          type: "string"
+          format: date-time
+          example: "2023-12-01T00:00:00.000Z"
+          description: "earch for EOD reports to this date"
+        mergeSections:
+          type: "boolean"
+          example: false
+          default: false
+          description: "EOD report is split per sections. Using this switch you can modify response format for easier integration. When mergeSections=true then all report sections are combined into single JSON document, otwherwise they are returned as an array of smaller JSON documents."
+        useCache:
+          type: "boolean"
+          example: false
+          default: false
+          description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
+    
+    ReportEventsCustomRequest:
+      type: "object"
+      properties:
+        dateFrom:
+          type: "string"
+          format: date-time
+          example: "2023-06-20T12:00:00.000Z"
+          description: "Search for events from this date"
+        dateTo:
+          type: "string"
+          format: date-time
+          example: "2023-12-01T00:00:00.000Z"
+          description: "earch for events to this date"
+        mergeSections:
+          type: "boolean"
+          example: false
+          default: false
+          description: "Event details can be split per sections. Using this switch you can modify response format for easier integration. When mergeSections=true then all event sections are combined into single JSON document, otwherwise they are returned as an array of smaller JSON documents."
+        useCache:
+          type: "boolean"
+          example: false
+          default: false
+          description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
+          
+          
+    ReportEventsSellHistoryRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          format: date-time
+          example: "2023-06-20T12:00:00.000Z"
+          description: "Search for events from this date"
+        dateTo:
+          type: "string"
+          format: date-time
+          example: "2023-12-01T00:00:00.000Z"
+          description: "earch for events to this date"
+        prefix:
+          type: "string"
+          example: ""
+        saveResults:
+          type: "string"
+          example: "/tmp/sellhistory.json"
+        useCache:
+          type: "boolean"
+          example: false
+          default: false
+          description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
+          
+    ReportFiscalMemoryRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ParagonRequestCallback'
+      properties:
+        dateFrom:
+          type: "string"
+          format: date-time
+          example: "2023-06-20T12:00:00.000Z"
+          description: "Search for events from this date"
+        dateTo:
+          type: "string"
+          format: date-time
+          example: "2023-12-01T00:00:00.000Z"
+          description: "earch for events to this date"
+        prefix:
+          type: "string"
+          example: ""
+        saveResults:
+          type: "string"
+          example: "/tmp/sellhistory.json"
+        dumpContent:
+          type: "string"
+          example: "/tmp/"
+    
+    ReportShiftrepRequest:
+      type: "object"
+      properties:
+        sh:
+          type: "string"
+          example: "shift #1"
+          description: "Name of the shift"
+        zr:
+          type: "boolean"
+          example: false
+          default: false
+          description: "true - shift reset"
+    
+    ReportDobowyRequest:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
+          
+    ReportMiesiecznyRequest:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
+        su:
+          type: "boolean"
+          example: false
+          default: false
+          description: "true - print summary only"
+    
+    RequestMaintenanceSet:
+      type: "object"
+      properties:
+        da:
+          type: "string"
+          example: "2021-07-20"
+        te:
+          type: "string"
+          example: ""
+    
+    ResponseMaintenanceSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    RequestEparagonStatusSet:
+      type: "object"
+      properties:
+        st:
+          type: "boolean"
+          example: true
+
+    RequestCurrencyRateStatusSet:
+      type: "object"
+      properties:
+        st:
+          type: "boolean"
+          example: true
+          
+    ResponseEparagonStatusSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+
+
+    ResponseCurrencyRateStatusSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
+    ResponseEparagonStatusGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+
+    ResponseCurrencyRateStatusGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        st:
+          type: "boolean"
+
+    RequestEparagonConfigSet:
+      type: "object"
+      properties:
+        ad:
+          type: "string"
+          example: "https://eparagon.cloud"
+        ct:
+          type: "string"
+          example: "posnet"
+          default: "posnet"
+          enum:
+            - "none"
+            - "posnet"
+            - "fingerprint"
+        tp:
+          type: "string"
+          example: ""
+        gi:
+          type: "boolean"
+          example: true
+        ft:
+          type: "boolean"
+          example: true
+        td:
+          type: "boolean"
+          example: true
+        hd:
+          type: "boolean"
+          example: true
+        gb:
+          type: "boolean"
+          example: true
+        ts:
+          type: "number"
+          default: 15
+          example: 15
+        tt:
+          type: "number"
+          default: 30
+          example: 30
+    
+    ResponseEparagonConfigSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    ResponseEparagonConfigGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        buildversion:
+          type: "string"
+          example: "4.0"
+        schemaversion:
+          type: "string"
+          example: "4.0"
+        message:
+          type: "string"
+          example: ""
+        code:
+          type: "number"
+          format: "int32"
+        config:
+          type: "array"
+          items:
+            type: "object"
+    
+    
+    RequestEparagonScheduleSet:
+      type: "object"
+      properties:
+        sa:
+          type: "number"
+          default: 20
+          example: 20
+          description: "1st retry in seconds. Min 5s, max 300s"
+        sb:
+          type: "number"
+          default: 25
+          example: 25
+          description: "2nd retry in seconds. Min 5s, max 300s"
+        sc:
+          type: "number"
+          default: 30
+          example: 30
+          description: "3rd retry in seconds. Min 5s, max 300s"
+        sd:
+          type: "number"
+          default: 0
+          example: 0
+          description: "4th retry in seconds. Min 5s, max 300s"
+        se:
+          type: "number"
+          default: 0
+          example: 0
+          description: "5th retry in seconds. Min 5s, max 300s"
+        op:
+          type: "number"
+          default: 3600
+          example: 3600
+          description: "Overall time of sending the eDocument until the maximum lifetime of the eDocument (parameter tl) is exceeded. Min 600s, max 86400s"
+        tl:
+          type: "number"
+          default: 604800
+          example: 604800
+          description: "Maximum lifetime of the eDocument with errored sending state. Min 5s, max 2592000s (30 days)"
+    
+    EdocumentRemoveResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    EdocumentRemoveAllResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    EdocumentConnectionTestResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        result:
+          properties:
+            ht:
+              type: "number"
+              description: "HTTP response code. 0 - connection failure. Should be 200 (200OK)"
+              example: 200
+            cu:
+              type: "number"
+              description: "CURL code, 0 - OK, otherwise error"
+              example: 0
+            ap:
+              type: "number"
+              description: "Application code, 0 - OK, otherwise error"
+              example: 4251
+    
+    EdocumentOverrideModeResponseGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        ov:
+          type: "boolean"
+          example: false
+          
+    EdocumentOverrideModeResponseSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+
+    ResponseEparagonScheduleGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        buildversion:
+          type: "string"
+          example: "4.0"
+        schemaversion:
+          type: "string"
+          example: "4.0"
+        message:
+          type: "string"
+          example: ""
+        code:
+          type: "number"
+          format: "int32"
+        schedule:
+          type: "array"
+          items:
+            type: "object"
+    
+    ResponseEparagonScheduleSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+    
+    StatusRequestCurrencyRateSet:
+      type: "object"
+      properties:
+        na:
+          type: "string"
+          example: "PLN"
+        di:
+          type: "boolean"
+          example: true
+          description: "true – convert from currency passed in the request to the main currency. false - convert from the main currency to the currency passed in the request"
+        on:
+          type: "boolean"
+          example: false
+          description: "true – currency conversion is active, false - currency conversion is disabled"
+        ra:
+          type: "number"
+          example: 3.333
+          
+    StatusRequestVatSet:
+      type: "object"
+      properties:
+        va:
+          type: "string"
+          example: "23,00"
+        vb:
+          type: "string"
+          example: "8,00"
+        vc:
+          type: "string"
+          example: "0,00"
+        vd:
+          type: "string"
+          example: ""
+        ve:
+          type: "string"
+          example: ""
+        vf:
+          type: "string"
+          example: ""
+        vg:
+          type: "string"
+          example: ""
+        vh:
+          type: "string"
+          example: ""
+        vi:
+          type: "string"
+          example: ""
+        vj:
+          type: "string"
+          example: ""
+        vk:
+          type: "string"
+          example: ""
+        vl:
+          type: "string"
+          example: ""
+        vm:
+          type: "string"
+          example: ""
+        vn:
+          type: "string"
+          example: ""
+        vo:
+          type: "string"
+          example: ""
+        vp:
+          type: "string"
+          example: ""
+        vq:
+          type: "string"
+          example: ""
+        vr:
+          type: "string"
+          example: ""
+        vs:
+          type: "string"
+          example: ""
+        vt:
+          type: "string"
+          example: ""
+        vu:
+          type: "string"
+          example: ""
+        vv:
+          type: "string"
+          example: ""
+        vw:
+          type: "string"
+          example: ""
+        vx:
+          type: "string"
+          example: ""
+        vy:
+          type: "string"
+          example: ""
+        vz:
+          type: "string"
+          example: ""
+    
+    StatusResponseVatSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
+    StatusResponseCurrencyRateSet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+        
+    StatusCurrencyGet:
+      type: "object"
+      properties:
+        na:
+          type: "string"
+          example: "PLN"
+          
+    StatusCurrencyRateGet:
+      type: "object"
+      properties:
+        na:
+          type: "string"
+          example: "PLN"
+        di:
+          type: "boolean"
+          example: true
+          description: "true – convert from currency passed in the request to the main currency. false - convert from the main currency to the currency passed in the request"
+        on:
+          type: "boolean"
+          example: false
+          description: "true – currency conversion is active, false - currency conversion is disabled"
+        ra:
+          type: "number"
+          example: 3.333
+          
+    StatusVatGet:
+      type: "object"
+      properties:
+        vatget:
+            type: "object"
+            properties:
+              va:
+                type: "string"
+                example: "23,00"
+              vb:
+                type: "string"
+                example: "8,00"
+              vc:
+                type: "string"
+                example: "0,00"
+              vd:
+                type: "string"
+                example: "3,00"
+              ve:
+                type: "string"
+                example: "101,00"
+                description: "101 means 'zwolnione z podatku VAT'"
+              vf:
+                type: "string"
+                example: ""
+              vg:
+                type: "string"
+                example: ""
+              vh:
+                type: "string"
+                example: ""
+              vi:
+                type: "string"
+                example: ""
+              vj:
+                type: "string"
+                example: ""
+              vk:
+                type: "string"
+                example: ""
+              vl:
+                type: "string"
+                example: ""
+              vm:
+                type: "string"
+                example: ""
+              vn:
+                type: "string"
+                example: ""
+              vo:
+                type: "string"
+                example: ""
+              vp:
+                type: "string"
+                example: ""
+              vq:
+                type: "string"
+                example: ""
+              vr:
+                type: "string"
+                example: ""
+              vs:
+                type: "string"
+                example: ""
+              vt:
+                type: "string"
+                example: ""
+              vu:
+                type: "string"
+                example: ""
+              vv:
+                type: "string"
+                example: ""
+              vw:
+                type: "string"
+                example: ""
+              vx:
+                type: "string"
+                example: ""
+              vy:
+                type: "string"
+                example: ""
+              vz:
+                type: "string"
+                example: ""
+                
+    StatusResponseVatGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCommon'
+        - $ref: '#/components/schemas/StatusVatGet'
+    
+    StatusResponseCurrencyGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCurrencyGet'
+    
+    StatusResponseCurrencyRateGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/StatusCurrencyRateGet'
+    
+    CountersResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        counters:
+          type: "object"
+          properties:
+            rd:
+              type: "string"
+            hn:
+              type: "string"
+            bn:
+              type: "string"
+            fn:
+              type: "string"
+            nu:
+              type: "string"
+            bc:
+              type: "string"
+            bt:
+              type: "string"
+            ft:
+              type: "string"
+    
+    SimpleDeviceStatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        device:
+          type: "object"
+          properties:
+            ok:
+              type: "boolean"
+              description: "true - received data from the printer"
+            chargerconnected:
+              type: "boolean"
+            status:
+              type: "string"
+              description: "ok - ready to use, otherwise not"
+            paperending:
+              type: "boolean"
+            queueempty:
+              type: "boolean"
+        mechanism:
+          type: "object"
+          properties:
+            ok:
+              type: "boolean"
+              description: "true - received data from the printer"
+            status:
+              type: "string"
+              description: "ok - ready to use, otherwise not"
+            callservice:
+              type: "boolean"
+              description: "Should the service be called? Otherwise it's casher action"
+              
+    SimpleDeviceIdResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        device:
+          type: "object"
+          properties:
+            id:
+              type: "string"
+              description: "Identification number"
+              example: "ABCD1234"
+            nm:
+              type: "string"
+              description: "Device type"
+              example: "POSNET THERMAL HD ONLINE"
+            vr:
+              type: "string"
+              description: "Firmware version"
+              example: "22.01"
+            nu:
+              type: "string"
+              description: "Unique number"
+              example: "ABCD1234"
+              
+    StatusResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        buildversion:
+          type: "string"
+        error:
+          type: "string"
+        code:
+          type: "number"
+          format: "int32"
+        results:
+          type: "object"
+          allOf:
+          - $ref: '#/components/schemas/StatusRtcGet'
+          - $ref: '#/components/schemas/StatusVatGet'
+          properties:
+            hdrget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  tx:
+                    type: "string"
+                    
+            ftrinfoget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  tx:
+                    type: "string"
+                    
+            pccfgget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  cp:
+                    type: "string"
+                  id:
+                    type: "string"
+                  no:
+                    type: "string"
+                  pr:
+                    type: "string"
+        
+            tcpipcfgget:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  dh:
+                    type: "string"
+                  ge:
+                    type: "string"
+                  id:
+                    type: "string"
+                  ip:
+                    type: "string"
+                  ma:
+                    type: "string"
+                  no:
+                    type: "string"
+            sdev:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  cp:
+                    type: "string"
+                  ds:
+                    type: "string"
+                  pe:
+                    type: "string"
+                  qe:
+                    type: "string"
+            sprn:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  pr:
+                    type: "string"
+            scnt:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  bn:
+                    type: "string"
+                  fn:
+                    type: "string"
+                  hn:
+                    type: "string"
+                  nu:
+                    type: "string"
+                  rd:
+                    type: "string"
+            stot:
+              type: "array"
+              items:
+                type: "object"
+                properties:
+                  cc:
+                    type: "string"
+                  cn:
+                    type: "string"
+                  ct:
+                    type: "string"
+                  fa:
+                    type: "string"
+                  fb:
+                    type: "string"
+                  fc:
+                    type: "string"
+                  fd:
+                    type: "string"
+                  fe:
+                    type: "string"
+                  ff:
+                    type: "string"
+                  fg:
+                    type: "string"
+                  fh:
+                    type: "string"
+                  fi:
+                    type: "string"
+                  fj:
+                    type: "string"
+                  fk:
+                    type: "string"
+                  fl:
+                    type: "string"
+                  fm:
+                    type: "string"
+                  fn:
+                    type: "string"
+                  fo:
+                    type: "string"
+                  fp:
+                    type: "string"
+                  fq:
+                    type: "string"
+                  fr:
+                    type: "string"
+                  fs:
+                    type: "string"
+                  ft:
+                    type: "string"
+                  fu:
+                    type: "string"
+                  fv:
+                    type: "string"
+                  fw:
+                    type: "string"
+                  fx:
+                    type: "string"
+                  fy:
+                    type: "string"
+                  fz:
+                    type: "string"
+                    
+                  no:
+                    type: "string"
+                  pa:
+                    type: "string"
+                  pb:
+                    type: "string"
+                  pc:
+                    type: "string"
+                  pd:
+                    type: "string"
+                  pe:
+                    type: "string"
+                  pf:
+                    type: "string"
+                  pg:
+                    type: "string"
+                  ph:
+                    type: "string"
+                  pi:
+                    type: "string"
+                  pj:
+                    type: "string"
+                  pk:
+                    type: "string"
+                  pl:
+                    type: "string"
+                  pm:
+                    type: "string"
+                  pn:
+                    type: "string"
+                  po:
+                    type: "string"
+                  pp:
+                    type: "string"
+                  pq:
+                    type: "string"
+                  pr:
+                    type: "string"
+                  ps:
+                    type: "string"
+                  pt:
+                    type: "string"
+                  pu:
+                    type: "string"
+                  pv:
+                    type: "string"
+                  pw:
+                    type: "string"
+                  px:
+                    type: "string"
+                  py:
+                    type: "string"
+                  pz:
+                    type: "string"
+                  va:
+                    type: "string"
+                  vb:
+                    type: "string"
+                  vc:
+                    type: "string"
+                  vd:
+                    type: "string"
+                  ve:
+                    type: "string"
+                  vf:
+                    type: "string"
+                  vg:
+                    type: "string"
+                  vh:
+                    type: "string"
+                  vi:
+                    type: "string"
+                  vj:
+                    type: "string"
+                  vk:
+                    type: "string"
+                  vl:
+                    type: "string"
+                  vm:
+                    type: "string"
+                  vn:
+                    type: "string"
+                  vo:
+                    type: "string"
+                  vp:
+                    type: "string"
+                  vq:
+                    type: "string"
+                  vr:
+                    type: "string"
+                  vs:
+                    type: "string"
+                  vt:
+                    type: "string"
+                  vu:
+                    type: "string"
+                  vv:
+                    type: "string"
+                  vw:
+                    type: "string"
+                  vx:
+                    type: "string"
+                  vy:
+                    type: "string"
+                  vz:
+                    type: "string"
+    
+      
+    MonitoringResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          type: "object"
+          properties:
+            totals:
+              type: "object"
+              properties:
+                paragon:
+                  type: "number"
+                  format: "int32"
+                paragony:
+                  type: "number"
+                  format: "int32"
+                faktura:
+                  type: "number"
+                  format: "int32"
+                faktury:
+                  type: "number"
+                  format: "int32"
+                command:
+                  type: "number"
+                  format: "int32"
+            started:
+              type: "object"
+              properties:
+                start:
+                  type: "number"
+                  format: "int64"
+                uptime:
+                  type: "number"
+                  format: "int64"
+            memory:
+              type: "object"
+              properties:
+                rssMB:
+                  type: "string"
+                rss:
+                  type: "number"
+                  format: "int64"
+                heapTotalMB:
+                  type: "string"
+                heapTotal:
+                  type: "number"
+                  format: "int64"
+                heapUsedMB:
+                  type: "string"
+                heapUsed:
+                  type: "number"
+                  format: "int64"
+                externalMB:
+                  type: "string"
+                external:
+                  type: "number"
+                  format: "int64"
+          
+    LicenseCommonResponse:
+      type: "object"
+      required:
+        - expired
+        - text
+      properties:
+        text: 
+          type: "string"
+          example: "Wersja licencjonowana dla Moja Firma S.A. ważna do Thu Jan 01 2025 01:00:00 GMT+0100 (Central European Standard Time)"
+        validTo:
+          type: "string"
+          example: "1735689600"
+        licenseTo:
+          type: "string"
+          example: "Moja Firma S.A."
+        expired:
+          type: "boolean"
+          example: false
+        licenseId:
+          description: "Added in schema 3.12"
+          type: "string"
+          example: "f7ghjk4b-3e12-1158-abcd-57gjs9b1711b"
+            
+    LicenseResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          oneOf: 
+          - type: "object"
+            description: "when ?json=true"
+            allOf:
+            - $ref: '#/components/schemas/LicenseCommonResponse'
+          - type: "string"
+            description: "when ?json=false"
+          
+    LicenseUpgradeResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        hits:
+          allOf:
+          - $ref: '#/components/schemas/LicenseCommonResponse'
+          properties:
+            requested:
+              type: "boolean"
+            requestedtext: 
+              type: "string"
+        
+    ApiResponse:
+      type: "object"
+      required:
+        - "ok"
+      properties:
+        ok:
+          type: "boolean"
+          description: "Check the 'message' field when 'ok' is 'false'"
+        message:
+          type: "string"
+          example: ""
+        code:
+          type: "number"
+          
+    ApiResponseTook:
+      type: "object"
+      properties:
+        took:
+          type: "number"
+          description: "Execution time in ms"
+          
+externalDocs:
+  description: "Find out more about our website"
+  url: "https://bigdotsoftware.pl/posnetserver-restful-service-dla-drukarek-posnet/"

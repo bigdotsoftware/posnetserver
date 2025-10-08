@@ -3096,11 +3096,19 @@ components:
         bn:
           type: "string"
           example: "14"
-          description: "number of last printed fiscal printout"
+          description: "number of last printed fiscal printout (in current session, typically reseted daily)"
         hn:
           type: "string"
           example: "2612"
-          description: "number of last printed header"
+          description: "number of last printed header (a unique number throughout the printer's life cycle)"
+        bt:
+          type: "string"
+          example: "14"
+          description: "last number (only ONLINE devices)"
+        bc:
+          type: "string"
+          example: "0"
+          description: "number of cancelled printouts (only ONLINE devices)"
         eparagon:
           type: "object"
           properties:
@@ -4111,10 +4119,6 @@ components:
         - "BILET_DO_MYJNI"
         - "STAN_ZBIORNIKOW_RAPORT"
         - "RAPORT_DOSTAWY_PALIW"
-        - "BP_PARTNERCLUB"
-        - "KLUB_LIFESTYLE"
-        - "BP_PARTNERCLUB"
-        - "KLUB_LIFESTYLE"
         - "BP_PARTNERCLUB"
         - "KLUB_LIFESTYLE"
         - "ZAMOWIENIE"

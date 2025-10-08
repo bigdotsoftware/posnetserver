@@ -5259,6 +5259,11 @@ components:
             status:
               type: "string"
               description: "ok - ready to use, otherwise not"
+              enum:
+                - "ok"
+                - "in_menu"
+                - "waiting_button"
+                - "waiting_action"
             paperending:
               type: "boolean"
             queueempty:

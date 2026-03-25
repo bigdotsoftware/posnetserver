@@ -99,4 +99,42 @@ pm2 save
 Write-Host "Instaluję usługę Windows..."
 pm2-service-install -n posnetservice
 
+# -----------------------------
+# 10. Sprawdzenie działania API
+# -----------------------------
+Write-Host "Sprawdzam czy PosnetServer działa..."
+
+$baseUrl = "http://127.0.0.1:3050"
+$statusUrl = "$baseUrl/status"
+
+$maxAttempts = 10
+$delaySeconds = 3
+$success = $false
+
+for ($i = 1; $i -le $maxAttempts; $i++) {
+    Write-Host "Próba $i/$maxAttempts..."
+
+    try {
+        $resp1 = Invoke-WebRequest $baseUrl -UseBasicParsing -TimeoutSec 5
+        $resp2 = Invoke-WebRequest $statusUrl -UseBasicParsing -TimeoutSec 5
+
+        if ($resp1.StatusCode -eq 200 -and $resp2.StatusCode -eq 200) {
+            Write-Host "✅ PosnetServer działa poprawnie!"
+            $success = $true
+            break
+        }
+    }
+    catch {
+        Write-Host "Serwer jeszcze nie odpowiada..."
+    }
+
+    Start-Sleep -Seconds $delaySeconds
+}
+
+if (-not $success) {
+    Write-Host "❌ Nie udało się potwierdzić działania PosnetServer!"
+    Write-Host "Sprawdź logi PM2: pm2 logs"
+    exit 1
+}
+
 Write-Host "=== GOTOWE ==="

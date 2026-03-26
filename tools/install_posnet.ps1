@@ -5,6 +5,14 @@ $POSNET_SERVER_VERSION="5.7.1201"
 $POSNET_DEST_DIR="C:\PosnetServer001"
 $NODE_VERSION="20"
 
+$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Ten skrypt musi byc uruchomiony jako Administrator!"
+    Write-Host "Kliknij PPM -> Uruchom jako administrator"
+    exit 1
+}
+
 Write-Host "=== START INSTALACJI POSNET SERVER ==="
 
 # -----------------------------
@@ -126,20 +134,23 @@ cmd.exe /c "npm install -g pm2"
 # 7. pm2-windows-service
 # -----------------------------
 Write-Host "Instalacja pm2-windows-service..."
-cmd.exe /c "npm install -g pm2-windows-service"
+cmd.exe /c "npm uninstall -g pm2-windows-service"
+cmd.exe /c "pm2-service-uninstall"
+# cmd.exe /c "npm install -g pm2-installer"
+cmd.exe /c "npm install -g pm2-windows-startup"
+# cmd.exe /c "npm install -g pm2-windows-service"
 
 # -----------------------------
 # 8. Uruchomienie PM2
 # -----------------------------
-Write-Host "Tworzę plik ecosystem.config.js..."
+Write-Host "Tworze plik ecosystem.config.js..."
 $ecosystemContent = @'
 module.exports = {
   apps : [
     {
       name: "PosnetServer001",
-      script: "serverstart.cmd",
-      interpreter: "cmd.exe",
-      interpreter_args: "/c",
+      script: "cmd.exe",
+      args: "/c serverstart.cmd",
       exec_mode: "fork",
       watch     : false,
       ignore_watch : ["logs", "scripts", "tests"],
@@ -189,20 +200,23 @@ if (!(Test-Path $pm2Home)) {
 }
 
 cmd.exe /c "pm2 save"
+Start-Sleep -Seconds 3
 
 # -----------------------------
 # 9. Instalacja jako Windows Service
 # -----------------------------
-Write-Host "Instalacja uslug Windows..."
-Write-Host "Odpowiadaj:"
-Write-Host "Y"
-Write-Host "Y"
-Write-Host "C:\pm2"
-Write-Host "Y"
-Write-Host "<just enter>"
-Write-Host "Y"
-Write-Host "<just enter>"
-cmd.exe /c "pm2-service-install -n PosnetServer"
+# Write-Host "Instalacja uslug Windows..."
+# Write-Host "Odpowiadaj:"
+# Write-Host "Y"
+# Write-Host "Y"
+# Write-Host "C:\pm2"
+# Write-Host "Y"
+# Write-Host "<just enter>"
+# Write-Host "Y"
+# Write-Host "<just enter>"
+# cmd.exe /c "pm2-service-install -n PosnetServer"
+# cmd.exe /c "pm2-installer install"
+cmd.exe /c "pm2-startup install"
 
 # -----------------------------
 # 10. Sprawdzenie działania API
@@ -243,7 +257,7 @@ for ($i = 1; $i -le $maxAttempts; $i++) {
         }
     }
     catch {
-        Write-Host "PosnetServer jeszcze nie odpowiada..."
+        Write-Host "PosnetServer nie ma jeszcze polaczenia z drukarka..."
     }
 
     if ($success1 -and $success2) {

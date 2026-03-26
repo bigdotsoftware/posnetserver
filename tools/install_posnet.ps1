@@ -1,6 +1,9 @@
 # WYMAGANE: uruchom jako Administrator
 
 $ErrorActionPreference = "Stop"
+$POSNET_SERVER_VERSION="5.7.1201"
+$POSNET_DEST_DIR="C:\PosnetServer001"
+$NODE_VERSION="20"
 
 Write-Host "=== START INSTALACJI POSNET SERVER ==="
 
@@ -21,10 +24,10 @@ if (!(Get-Command nvm -ErrorAction SilentlyContinue)) {
     exit
 }
 
-Write-Host "Instalacja Node.js 20..."
+Write-Host "Instalacja Node.js $NODE_VERSION..."
 
-nvm install 20
-nvm use 20
+nvm install $NODE_VERSION
+nvm use $NODE_VERSION
 
 sleep 2
 # -----------------------------
@@ -37,12 +40,13 @@ npm -v
 # -----------------------------
 # 3. Pobranie PosnetServer
 # -----------------------------
-$zipUrl = "https://bigdotsoftware.pl/download.php?fname=posnetserver.win64.5.7.1201.zip"
+$zipUrl = "https://bigdotsoftware.pl/download.php?fname=posnetserver.win64.$POSNET_SERVER_VERSION.zip"
 $zipFile = "$env:TEMP\posnetserver.zip"
-$targetDir = "C:\PosnetServer001"
+$targetDir = $POSNET_DEST_DIR
+Write-Host $zipUrl
 
 if (Test-Path $targetDir) {
-    Write-Host "PosnetServer juz istnieje w $targetDir — pomijam pobieranie i rozpakowanie."
+    Write-Host "PosnetServer juz istnieje w $targetDir , pomijam pobieranie i rozpakowanie."
 }
 else {
     Write-Host "Pobieram PosnetServer..."
@@ -82,10 +86,11 @@ else {
             Remove-Item $targetDir -Recurse -Force -ErrorAction Stop
         }
         catch {
-            Write-Host "⚠️ Katalog nadal zablokowany, próbuję alternatywnie..."
+            Write-Host "Katalog nadal zablokowany, probuje alternatywnie..."
 
             # fallback przez cmd (często skuteczniejszy)
-            cmd.exe /c "rmdir /s /q C:\PosnetServer001"
+            $cmd = "rmdir /s /q `"$POSNET_DEST_DIR`""
+            cmd.exe /c $cmd
 
             Start-Sleep -Seconds 2
         }
@@ -108,8 +113,8 @@ else {
 # 5. npm install
 # -----------------------------
 Write-Host "Instalacja zaleznosci npm..."
-Set-Location $targetDir
-cmd.exe /c "cd /d C:\PosnetServer001 && npm install"
+Start-Process cmd.exe -ArgumentList "/c npm install" -WorkingDirectory $POSNET_DEST_DIR -Wait
+
 
 # -----------------------------
 # 6. Instalacja PM2 globalnie
@@ -126,14 +131,12 @@ cmd.exe /c "npm install -g pm2-windows-service"
 # -----------------------------
 # 8. Uruchomienie PM2
 # -----------------------------
-
 Write-Host "Tworzę plik ecosystem.config.js..."
-
-$ecosystemContent = @"
+$ecosystemContent = @'
 module.exports = {
   apps : [
     {
-      name: "posnetserver",
+      name: "PosnetServer001",
       script: "serverstart.cmd",
       interpreter: "cmd.exe",
       interpreter_args: "/c",
@@ -153,15 +156,14 @@ module.exports = {
     }
   ]
 }
-"@
+'@
 
-$ecosystemPath = "C:\PosnetServer001\ecosystem.config.js"
-
+$ecosystemPath = Join-Path $POSNET_DEST_DIR "ecosystem.config.js"
 Set-Content -Path $ecosystemPath -Value $ecosystemContent -Encoding UTF8
 
 Write-Host "Uruchamiam aplikacje przez PM2 (cmd.exe)..."
-cmd.exe /c "cd /d C:\PosnetServer001 && pm2 start ecosystem.config.js"
-
+Start-Process cmd.exe -ArgumentList "/c pm2 start ecosystem.config.js" -WorkingDirectory $POSNET_DEST_DIR -WindowStyle Hidden
+Start-Sleep -Seconds 10
 
 # ustawienie katalogu PM2 globalnie (dla wszystkich użytkowników)
 $pm2Home = "C:\pm2"
@@ -173,7 +175,7 @@ try {
     Write-Host "PM2_HOME ustawione globalnie"
 }
 catch {
-    Write-Host "⚠️ Brak uprawnień do Machine scope — ustawiam dla bieżącego użytkownika"
+    Write-Host "Brak uprawnien do Machine scope , ustawiam PM2_HOME dla biezacego uzytkownika"
 
     [System.Environment]::SetEnvironmentVariable("PM2_HOME", $pm2Home, "User")
 }
@@ -200,7 +202,7 @@ Write-Host "Y"
 Write-Host "<just enter>"
 Write-Host "Y"
 Write-Host "<just enter>"
-cmd.exe /c "pm2-service-install -n posnetservice"
+cmd.exe /c "pm2-service-install -n PosnetServer"
 
 # -----------------------------
 # 10. Sprawdzenie działania API
@@ -210,31 +212,53 @@ Write-Host "Sprawdzam czy PosnetServer dziala..."
 $baseUrl = "http://127.0.0.1:3050"
 $statusUrl = "$baseUrl/status"
 
-$maxAttempts = 10
+$maxAttempts = 30
 $delaySeconds = 3
-$success = $false
+$success1 = $false
+$success2 = $false
 
 for ($i = 1; $i -le $maxAttempts; $i++) {
     Write-Host "Proba $i/$maxAttempts..."
 
     try {
         $resp1 = Invoke-WebRequest $baseUrl -UseBasicParsing -TimeoutSec 5
-        $resp2 = Invoke-WebRequest $statusUrl -UseBasicParsing -TimeoutSec 5
-
-        if ($resp1.StatusCode -eq 200 -and $resp2.StatusCode -eq 200) {
+        if ($resp1.StatusCode -eq 200) {
             Write-Host "OK ----- PosnetServer dziala poprawnie!"
-            $success = $true
-            break
+            $success1 = $true
+        }else{
+            Write-Host "PosnetServer jeszcze nie odpowiada lub zwraca blad inny 200OK..."
         }
     }
     catch {
         Write-Host "PosnetServer jeszcze nie odpowiada..."
     }
 
+    try {
+        $resp2 = Invoke-WebRequest $statusUrl -UseBasicParsing -TimeoutSec 10
+        if ($resp2.StatusCode -eq 200) {
+            Write-Host "OK ----- PosnetServer dziala polaczenie z drukarka!"
+            $success2 = $true
+        }else{
+            Write-Host "PosnetServer nie moze polaczyc sie z drukarka..."
+        }
+    }
+    catch {
+        Write-Host "PosnetServer jeszcze nie odpowiada..."
+    }
+
+    if ($success1 -and $success2) {
+        break
+    }
+
     Start-Sleep -Seconds $delaySeconds
 }
 
-if (-not $success) {
+if (-not $success1) {
+    Write-Host "ERROR ----- Nie udalo sie potwierdzic dzialania PosnetServer!"
+    Write-Host "Sprawdz logi PM2: pm2 logs"
+    exit 1
+}
+if (-not $success2) {
     Write-Host "ERROR ----- Nie udalo sie potwierdzic dzialania PosnetServer!"
     Write-Host "Sprawdz logi PM2: pm2 logs"
     exit 1

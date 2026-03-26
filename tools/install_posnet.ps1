@@ -1,4 +1,7 @@
-# WYMAGANE: uruchom jako Administrator
+param(
+    [string]$PluginsDir,
+    [string]$LicenseFile
+)
 
 $ErrorActionPreference = "Stop"
 $POSNET_SERVER_VERSION="5.7.1201"
@@ -10,6 +13,33 @@ $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "Ten skrypt musi byc uruchomiony jako Administrator!"
     Write-Host "Kliknij PPM -> Uruchom jako administrator"
+    exit 1
+}
+
+if (-not $PluginsDir) {
+    Write-Host ""
+    Write-Host "Uzycie:"
+    Write-Host "  install_posnet.ps1 <sciezka_do_dodatkowych_pluginow> <sciezka_do_licencji>"
+    Write-Host ""
+    Write-Host "W przypadku instalacji bez dodtakowych pluginow, wystarczy podac sciezke do pustego katalogu"
+    Write-Host "W przypadku instalacji bez licencji, wystarczy nie podawac parametru"
+    Write-Host ""
+    Write-Host ""
+    Write-Host "Przyklad:"
+    Write-Host "  install_posnet.ps1 C:\plugins C:\license\license.key"
+    Write-Host "  install_posnet.ps1 C:\plugins"
+    Write-Host "  install_posnet.ps1 C:\empty_directory"
+    Write-Host ""
+    exit 1
+}
+
+if (!(Test-Path $PluginsDir)) {
+    Write-Host "Katalog pluginow nie istnieje: $PluginsDir"
+    exit 1
+}
+
+if ($LicenseFile -and !(Test-Path $LicenseFile)) {
+    Write-Host "Plik licencji nie istnieje: $LicenseFile"
     exit 1
 }
 
@@ -54,7 +84,7 @@ $targetDir = $POSNET_DEST_DIR
 Write-Host $zipUrl
 
 if (Test-Path $targetDir) {
-    Write-Host "PosnetServer juz istnieje w $targetDir , pomijam pobieranie i rozpakowanie."
+    Write-Host "PosnetServer juz istnieje w $targetDir, pomijam pobieranie i rozpakowanie."
 }
 else {
     Write-Host "Pobieram PosnetServer..."
@@ -115,7 +145,51 @@ else {
     }
 }
 
+$configPath = Join-Path $POSNET_DEST_DIR "config.json"
+if ($LicenseFile) {
+    Write-Host "Ustawiam license.file w config.json..."
 
+
+    $jsonRaw = Get-Content $configPath -Raw
+
+    # usuń komentarze /* ... */
+    $jsonClean = [regex]::Replace($jsonRaw, '/\*.*?\*/', '', 'Singleline')
+
+    # usuń całe linie zaczynające się od //
+    $jsonClean = [regex]::Replace($jsonClean, '(?m)^\s*//.*$', '')
+
+    # usuń inline komentarze // ale tylko jeśli poprzedza je spacja
+    $jsonClean = [regex]::Replace($jsonClean, '(?m)(\s)//.*$', '$1')
+
+    $config = $jsonClean | ConvertFrom-Json
+
+    # wczytaj JSON
+    # $config = Get-Content $configPath -Raw | ConvertFrom-Json
+
+    # ustaw wartość
+    $config.license.file = $LicenseFile
+    $config.server.https.active = $false
+
+    # zapisz z powrotem
+    # $config | ConvertTo-Json -Depth 10 | Set-Content $configPath -Encoding UTF8
+
+    $jsonOut = $config | ConvertTo-Json -Depth 10
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($configPath, $jsonOut, $utf8NoBom)
+}
+
+
+Write-Host "Kopiuje pluginy ext-*.js..."
+$pluginsTargetDir = Join-Path $POSNET_DEST_DIR "plugins"
+
+# utwórz katalog jeśli nie istnieje
+if (!(Test-Path $pluginsTargetDir)) {
+    New-Item -ItemType Directory -Path $pluginsTargetDir | Out-Null
+}
+
+Get-ChildItem -Path $PluginsDir -Filter "ext-*.js" -File | ForEach-Object {
+    Copy-Item $_.FullName -Destination $pluginsTargetDir -Force
+}
 
 # -----------------------------
 # 5. npm install

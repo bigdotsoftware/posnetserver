@@ -149,17 +149,19 @@ module.exports = {
   apps : [
     {
       name: "PosnetServer001",
-      script: "cmd.exe",
-      args: "/c serverstart.cmd",
+      script: "node.exe",
+      args: "--napi-modules server.js",
       exec_mode: "fork",
       watch     : false,
+      windowsHide: true,
+      interpreter: "none",
       ignore_watch : ["logs", "scripts", "tests"],
       out_file  : "NUL",
       error_file: "NUL",
       log_file  : "NUL",
       env: {
-         POSNET_LIB_SHARE_DIR: ".",
-         PATH: ".;" + process.env.PATH
+         PATH: ".;" + process.env.PATH,
+         POSNET_LIB_SHARE_DIR: process.cwd() + "\\"
       },
       env_production : {
         NODE_ENV: "production"

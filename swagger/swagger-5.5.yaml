@@ -1,11 +1,11 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "5.4"
+  version: "5.5"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"
-    
+
 servers:
   - url: http://{host}:{port}/
     description: "HTTP"
@@ -78,7 +78,7 @@ tags:
   externalDocs:
     description: "Find out more"
     url: "https://bigdotsoftware.pl/short_link/posnet"
-    
+
 paths:
   /licencja:
     get:
@@ -100,7 +100,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LicenseResponse"
-            
+
   /licencja/upgrade:
     post:
       tags:
@@ -115,7 +115,7 @@ paths:
           type: "boolean"
           default: false
       responses:
-        200:
+        '200':
           description: "successful operation"
           content:
             application/json:
@@ -179,7 +179,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
-                
+
   /async_queue:
     get:
       tags:
@@ -193,7 +193,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AsyncQueueResponse"
-  
+
   /dlq/list:
     get:
       tags:
@@ -207,7 +207,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DlqListResponse"
-  
+
   /dlq/process/{id}:
     post:
       tags:
@@ -247,7 +247,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DlqProcessDeleteResponse"
-  
+
   /cache/ranges:
     get:
       tags:
@@ -261,7 +261,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheRangesResponse"
-  
+
   /cache/clean:
     delete:
       tags:
@@ -275,7 +275,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheClearResponse"
-                
+
   /cache/build:
     post:
       tags:
@@ -295,7 +295,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheBuildResponse"
-  
+
   /cache/update:
     post:
       tags:
@@ -315,7 +315,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheUpdateResponse"
-  
+
   /cache/dump:
     post:
       tags:
@@ -329,7 +329,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CacheDumpResponse"
-                
+
   #/dlq/processall:
   #  post:
   #    tags:
@@ -343,7 +343,7 @@ paths:
   #          application/json:
   #            schema:
   #              $ref: "#/components/schemas/DlqProcessAllResponse"
-                
+
   /paragon/{uuid}:
     get:
       tags:
@@ -364,14 +364,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ParagonAsyncStatusResponse"
-  
+
   /paragon:
     post:
       tags:
       - "Paragony"
       summary: "Print fiscal document"
       description: ""
-      
+
       parameters:
       - name: "async"
         description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
@@ -408,7 +408,7 @@ paths:
         schema:
           type: "number"
           example: 36
-          
+
       requestBody:
         content:
           'application/json':
@@ -473,14 +473,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FakturaAsyncStatusResponse"
-  
+
   /faktura:
     post:
       tags:
       - "Faktury"
       summary: "Print an invoice"
       description: "The same restpoint can be used to print invoices on both: ONLINE and not ONLINE Posnet devices, but the payload structure is different. Check every field description for more details or copy details from our website: https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury/ and https://blog.bigdotsoftware.pl/posnet-server-wydruk-faktury-drukarki-serii-online/ . Dedicated restpoints /faktura_online and /faktura_not_online can be used alternatively."
-      
+
       parameters:
       - name: "async"
         description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
@@ -488,7 +488,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       requestBody:
         content:
           'application/json':
@@ -512,7 +512,7 @@ paths:
       - "Faktury"
       summary: "Print an invoice on ONLINE printer"
       description: "Restpoint dedicated to print invoices on ONLINE Posnet devices only. Generic restpoint /faktura can be used alternatively."
-      
+
       parameters:
       - name: "async"
         description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
@@ -520,7 +520,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       requestBody:
         content:
           'application/json':
@@ -544,7 +544,7 @@ paths:
       - "Faktury"
       summary: "Print an invoice on regular (NOT ONLINE) printer"
       description: "Restpoint dedicated to print invoices on not ONLINE Posnet devices only. Generic restpoint /faktura can be used alternatively."
-      
+
       parameters:
       - name: "async"
         description: "When set to 'false' - method waits for printout to be printed. Otherwise, task ID is returned. Check status of async task using /paragon/{uuid}"
@@ -552,7 +552,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       requestBody:
         content:
           'application/json':
@@ -602,7 +602,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       responses:
         '200':
           description: "successful operation"
@@ -622,7 +622,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       responses:
         '200':
           description: "successful operation"
@@ -630,7 +630,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SimpleDeviceStatusResponse"
-  
+
   /deviceid:
     get:
       tags:
@@ -643,7 +643,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       responses:
         '200':
           description: "successful operation"
@@ -651,7 +651,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SimpleDeviceIdResponse"
-                
+
   /counters:
     get:
       tags:
@@ -664,7 +664,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       responses:
         '200':
           description: "successful operation"
@@ -692,7 +692,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseRtcGet"
-                
+
     put:
       tags:
       - "Management"
@@ -737,7 +737,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseVatGet"
-                
+
     put:
       tags:
       - "Management"
@@ -762,7 +762,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseVatSet"
-  
+
   /currency:
     get:
       tags:
@@ -802,7 +802,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseCurrencyRateGet"
-                
+
     put:
       tags:
       - "Management"
@@ -827,7 +827,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatusResponseCurrencyRateSet"
-  
+
   /currencyrate/status:
     put:
       tags:
@@ -853,7 +853,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseCurrencyRateStatusSet"
-    
+
     get:
       tags:
       - "Management"
@@ -872,7 +872,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseCurrencyRateStatusGet"
-                
+
   /maintenance:
     put:
       tags:
@@ -898,7 +898,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseMaintenanceSet"
-  
+
   /eparagon/status:
     put:
       tags:
@@ -942,7 +942,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseEparagonStatusGet"
-  
+
   /eparagon/config:
     put:
       tags:
@@ -986,7 +986,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseEparagonConfigGet"
-  
+
   /eparagon/schedule:
     put:
       tags:
@@ -1030,7 +1030,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseEparagonScheduleGet"
-  
+
   /edocument/remove:
     delete:
       tags:
@@ -1054,7 +1054,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EdocumentRemoveResponse"
-  
+
   /edocument/removeall:
     delete:
       tags:
@@ -1073,7 +1073,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EdocumentRemoveAllResponse"
-  
+
   /edocument/connectiontest:
     post:
       tags:
@@ -1098,7 +1098,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EdocumentConnectionTestResponse"
-  
+
   /edocument/override:
     get:
       tags:
@@ -1116,7 +1116,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EdocumentOverrideModeResponseGet"     
+                $ref: "#/components/schemas/EdocumentOverrideModeResponseGet"
     put:
       tags:
       - "Management"
@@ -1139,8 +1139,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EdocumentOverrideModeResponseSet"    
-  
+                $ref: "#/components/schemas/EdocumentOverrideModeResponseSet"
+
   /drawer/open:
     post:
       tags:
@@ -1161,7 +1161,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/DrawerOpenResponse'
-          
+
   /drawer/status:
     get:
       tags:
@@ -1182,7 +1182,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/DrawerStatusResponse'
-  
+
   /drawer/parameters:
     get:
       tags:
@@ -1203,7 +1203,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/DrawerParametersResponse'
-  
+
   /form/finish:
     post:
       tags:
@@ -1230,7 +1230,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/FormFinishResponse'
-                
+
   /raporty/dobowy:
     get:
       tags:
@@ -1243,7 +1243,7 @@ paths:
         schema:
           type: "boolean"
           default: false
-          
+
       responses:
         '200':
           description: "successful operation"
@@ -1275,7 +1275,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportDobowyResponse"
-  
+
+  /raporty/okresowy/daty:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate periodic report by dates"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportPeriodicByDatesRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportPeriodicByDatesResponse"
+
+  /raporty/okresowy/numery:
+    post:
+      tags:
+      - "Reports"
+      summary: "Generate periodic report by numbers"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportPeriodicByNumbersRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportPeriodicByNumbersResponse"
+
   /raporty/miesieczny:
     post:
       tags:
@@ -1325,7 +1375,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportShiftrepResponse"
-                
+
   /raporty/kasowy:
     get:
       tags:
@@ -1369,7 +1419,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
-                
+
   /raporty/events/custom:
     post:
       tags:
@@ -1393,8 +1443,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"       
-  
+                $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
+
   /raporty/sellhistory:
     post:
       tags:
@@ -1419,8 +1469,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
-                
-                
+
+
   /raporty/fiscalmemory:
     post:
       tags:
@@ -1445,7 +1495,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEventsScheduledTaskResponse"
-                
+
   /raporty/custom:
     post:
       tags:
@@ -1495,7 +1545,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportTextLinesResponse"
-                
+
   /raporty/returnables:
     post:
       tags:
@@ -1544,7 +1594,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEparagonStatusResponse"
-                
+
   /raporty/edocument/summary:
     get:
       tags:
@@ -1582,7 +1632,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportEparagonFreeRecordsResponse"
-                
+
   /raporty/edocument/context:
     get:
       tags:
@@ -1600,8 +1650,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReportEparagonContextResponse"         
-                
+                $ref: "#/components/schemas/ReportEparagonContextResponse"
+
   /forms/orderconfirmation:
     post:
       tags:
@@ -1626,7 +1676,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FormsOrderRecipeResponse"
-                
+
   /forms/barcode:
     post:
       tags:
@@ -1651,8 +1701,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FormsBarcodeResponse"  
-                
+                $ref: "#/components/schemas/FormsBarcodeResponse"
+
   /forms/azteccode:
     post:
       tags:
@@ -1678,7 +1728,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FormsAztectCodeResponse"
-  
+
   /forms/dmcode:
     post:
       tags:
@@ -1704,7 +1754,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FormsDmCodeResponse"
-                
+
   /forms/qrcode:
     post:
       tags:
@@ -1729,8 +1779,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FormsQrCodeResponse"      
-                
+                $ref: "#/components/schemas/FormsQrCodeResponse"
+
   /forms/pdf417code:
     post:
       tags:
@@ -1755,8 +1805,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FormsPdf417CodeResponse"      
-                
+                $ref: "#/components/schemas/FormsPdf417CodeResponse"
+
   /command:
     post:
       tags:
@@ -1789,8 +1839,8 @@ paths:
                 allOf:
                 - $ref: '#/components/schemas/CustomCommandResponse'
 
-  
-                
+
+
   /auth/users/list:
     get:
       tags:
@@ -1825,7 +1875,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/AuthUserCreateUpdateResponse'
-                
+
   /auth/user/{uuid}:
     delete:
       tags:
@@ -1871,8 +1921,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthUserCreateUpdateResponse"
-  
-  
+
+
   /plugins-list:
     get:
       tags:
@@ -1887,7 +1937,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/PluginsListResponse'
-                
+
   /plugins/azure-service-bus/consume/pause:
     post:
       tags:
@@ -1908,7 +1958,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/PluginResponse'
-  
+
   /plugins/azure-service-bus/consume/resume:
     post:
       tags:
@@ -1949,7 +1999,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/PluginAzureServiceBusConsumeStatusResponse'
-                
+
 components:
   schemas:
     CustomCommand:
@@ -1959,13 +2009,15 @@ components:
           type: "string"
         params:
           type: "string"
-      
+        cconv:
+          type: "boolean"
+
     CustomCommandRequest:
       type: "array"
       items:
         allOf:
           - $ref: '#/components/schemas/CustomCommand'
-    
+
     DiscountPromo:
       type: "object"
       properties:
@@ -1982,20 +2034,20 @@ components:
           description: "cancellation of a discount or surcharge"
           type: "boolean"
           example: false
-        vt: 
+        vt:
           description: "value from range 0..102"
           type: "number"
           format: "int32"
           example: 0
-        vtp: 
+        vtp:
           description: "VAT in string format, like 23,00, 8,00 ..."
           type: "string"
           example: "23,00"
-        vtn: 
+        vtn:
           description: "VAT in literar format A...Z"
           type: "string"
           example: "A"
-    
+
     DiscountBill:
       type: "object"
       properties:
@@ -2017,7 +2069,7 @@ components:
           type: "number"
           format: "int32"
           example: 1500
-    
+
     DiscountSubTotal:
       type: "object"
       properties:
@@ -2039,20 +2091,20 @@ components:
           type: "number"
           format: "int32"
           example: 1500
-    
+
     DiscountLine:
       type: "object"
       properties:
-        vt: 
+        vt:
           description: "value from range 0..102"
           type: "number"
           format: "int32"
           example: 0
-        vtp: 
+        vtp:
           description: "VAT in string format, like 23,00, 8,00 ..."
           type: "string"
           example: "23,00"
-        vtn: 
+        vtn:
           description: "VAT in literar format A...Z"
           type: "string"
           example: "A"
@@ -2091,16 +2143,16 @@ components:
     DiscountVat:
       type: "object"
       properties:
-        vt: 
+        vt:
           description: "value from range 0..102"
           type: "number"
           format: "int32"
           example: 0
-        vtp: 
+        vtp:
           description: "VAT in string format, like 23,00, 8,00 ..."
           type: "string"
           example: "23,00"
-        vtn: 
+        vtn:
           description: "VAT in literar format A...Z"
           type: "string"
           example: "A"
@@ -2127,7 +2179,7 @@ components:
           type: "number"
           format: "int32"
           example: 1250
-        
+
     DiscountBasic:
       type: "object"
       properties:
@@ -2149,7 +2201,7 @@ components:
           description: "discount name"
           example: "Summer Promo"
           type: "string"
-          
+
     Discount:
       type: "object"
       properties:
@@ -2212,16 +2264,16 @@ components:
           type: "number"
           format: "float"
           example: 1.0
-        vt: 
+        vt:
           description: "value from range 0..102"
           type: "number"
           format: "int32"
           example: 0
-        vtp: 
+        vtp:
           description: "VAT in string format, like 23,00, 8,00 ..."
           type: "string"
           example: "23,00"
-        vtn: 
+        vtn:
           description: "VAT in literar format A...Z"
           type: "string"
           example: "A"
@@ -2252,9 +2304,9 @@ components:
             type: "object"
             allOf:
             - $ref: '#/components/schemas/Discount'
-  
-  
-    ParagonFakturaSummary: 
+
+
+    ParagonFakturaSummary:
       type: "object"
       properties:
         to:
@@ -2282,7 +2334,7 @@ components:
           format: "int32"
           example: 2350
           description: "Total amount of given returnable packages"
-          
+
     FakturaHeader:
       type: "object"
       properties:
@@ -2294,13 +2346,13 @@ components:
           description: "Tax ID. Max length is 20"
           example: "584-234-56-34"
           type: "string"
-        na: 
+        na:
           type: "array"
           description: "Max 6 elements"
           items:
             type: "string"
             description: "max length is 56"
-          example: 
+          example:
            - "Anna Nowak"
            - "Mazowiecka 50"
            - "04-586 Warszawa"
@@ -2334,7 +2386,7 @@ components:
           description: "Invoice format. Set to '1' when using wide paper"
           example: 0
           default: 0
-        co: 
+        co:
           description: "Print ORGYGINAŁ/KOPIA"
           type: "boolean"
           example: false
@@ -2344,7 +2396,7 @@ components:
           type: "boolean"
           example: false
           default: false
-          
+
     FakturaHeaderOnline:
       type: "object"
       properties:
@@ -2375,8 +2427,8 @@ components:
           format: "int32"
           default: 0
           example: 40
-    
-        na: 
+
+        na:
           type: "array"
           description: "Buyer name. Max 6 elements."
           items:
@@ -2394,7 +2446,7 @@ components:
             type: "string"
             description: "max length is 256"
             example: "ul. Miejska 56, 88-888 Miasto"
-            
+
         ad_sc:
           description: "Section 0=>(top), 1=>(middle), 2=>(bottom)"
           type: "number"
@@ -2404,7 +2456,7 @@ components:
           type: "number"
           format: "int32"
           default: 0
-    
+
         nb:
           description: "Invoice number. Max length is 40"
           type: "string"
@@ -2418,7 +2470,7 @@ components:
           type: "number"
           format: "int32"
           default: 0
-          
+
     FakturaRequest:
       type: "object"
       properties:
@@ -2479,7 +2531,7 @@ components:
                   - "top"
                   - "middle"
                   - "bottom"
-        payments: 
+        payments:
           type: "array"
           description: "Only ONLINE devices"
           items:
@@ -2492,7 +2544,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/FakturaHeaderOnline'
             - $ref: '#/components/schemas/FakturaHeader'
-          
+
         headerex:
           type: "object"
           description: "Structure for both type of devices ONLINE and not-ONLINE"
@@ -2525,23 +2577,23 @@ components:
               description: "max length is 56"
               type: "string"
               example: "Sposób dostawy"
-  
-        summary: 
+
+        summary:
           type: "object"
           description: "Structure for both type of devices ONLINE and not-ONLINE"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaSummary'
-  
+
         footer:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
-        
+
         simulation:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/Simulation'
-            
+
 
     FakturaRequestNotOnline:
       type: "object"
@@ -2587,7 +2639,7 @@ components:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/FakturaHeader'
-          
+
         headerex:
           type: "object"
           properties:
@@ -2619,23 +2671,23 @@ components:
               description: "max length is 56"
               type: "string"
               example: "Sposób dostawy"
-  
-        summary: 
+
+        summary:
           type: "object"
           description: "Structure for both type of devices ONLINE and not-ONLINE"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaSummary'
-  
+
         footer:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
-            
+
         simulation:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/Simulation'
-            
+
     FakturaRequestOnline:
       type: "object"
       properties:
@@ -2681,7 +2733,7 @@ components:
                   - "top"
                   - "middle"
                   - "bottom"
-        payments: 
+        payments:
           type: "array"
           description: "Only ONLINE devices"
           items:
@@ -2692,7 +2744,7 @@ components:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/FakturaHeaderOnline'
-          
+
         headerex:
           type: "object"
           properties:
@@ -2724,31 +2776,31 @@ components:
               description: "max length is 56"
               type: "string"
               example: "Sposób dostawy"
-  
-        summary: 
+
+        summary:
           type: "object"
           description: "Structure for both type of devices ONLINE and not-ONLINE"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaSummary'
-  
+
         footer:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
-            
+
         simulation:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/Simulation'
-    
-    
+
+
     FakturyRequest:
       type: "array"
       items:
         type: "object"
         allOf:
           - $ref: '#/components/schemas/FakturaRequest'
-  
+
     ParagonyRequest:
       type: "array"
       items:
@@ -2756,60 +2808,60 @@ components:
         allOf:
           - $ref: '#/components/schemas/ParagonRequest'
           - $ref: '#/components/schemas/ParagonFakturaRequestUserData'
-  
-  
-    PaymentObject: 
+
+
+    PaymentObject:
       type: "object"
       properties:
-        ty: 
+        ty:
           type: "number"
           format: "int32"
           example: 8
-        wa: 
+        wa:
           type: "number"
           format: "int32"
           example: 2350
-        na: 
+        na:
           description: "max length is 25"
           type: "string"
           example: "Visa ... ... 0456"
-        re: 
+        re:
           type: "boolean"
           example: false
-  
+
     CurrencyPaymentObject:
       type: "object"
       properties:
-        wc: 
+        wc:
           type: "number"
           format: "int32"
           example: 2350
-        wa: 
+        wa:
           type: "number"
           format: "int32"
           example: 2350
-        ra: 
+        ra:
           type: "number"
           format: "double"
           example: 4.2988
-        na: 
+        na:
           description: "max length is 25"
           type: "string"
           example: "Cash in Euro"
-        sb: 
+        sb:
           description: "max length is 3"
           type: "string"
           example: "EUR"
-        re: 
+        re:
           type: "boolean"
           example: false
-    
+
     ParagonFakturaRequestUserData:
       type: "object"
       properties:
         userdata:
           type: "object"
-          
+
     ParagonRequestCallback:
       type: "object"
       properties:
@@ -2822,7 +2874,7 @@ components:
             resultsurlmethod:
               type: "string"
               example: "POST"
-        
+
     ParagonRequest:
       type: "object"
       properties:
@@ -2856,17 +2908,17 @@ components:
               sh:
                 type: "boolean"
                 example: false
-        taxidinfo: 
+        taxidinfo:
           type: "object"
           properties:
-            ni: 
+            ni:
               description: "max length is 20"
               type: "string"
               example: "584-222-98-89"
             dw:
               type: "boolean"
               example: true
-            ds: 
+            ds:
               description: "max length is 56"
               type: "string"
               example: "NIP NABYWCY"
@@ -2875,7 +2927,7 @@ components:
           format: "int32"
           example: 1
           description: "Index of the image stored in the printer's memory. Use '0' to don't print header image at all. Default is '-1' means use printer's settings. Note that using headerimage in one request has a global effect - it overrides printer settings. One recipe printed with headerimage=1 causes that other recipes use headerimage=1 too, even if headerimage is not set for them."
-        payments: 
+        payments:
           type: "array"
           items:
             type: "object"
@@ -2915,21 +2967,21 @@ components:
             type: "object"
             allOf:
               - $ref: '#/components/schemas/Discount'
-        summary: 
+        summary:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaSummary'
-        
+
         footer:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/ParagonFakturaFooter'
-        
+
         simulation:
           type: "object"
           allOf:
             - $ref: '#/components/schemas/Simulation'
-            
+
 
     ParagonFakturaFooter:
       type: "object"
@@ -3004,7 +3056,7 @@ components:
             allOf:
               - $ref: '#/components/schemas/ParagonResponse'
               - $ref: '#/components/schemas/ParagonCommonTimestampsResponse'
-    
+
     FakturaAsyncStatusResponse:
       type: "object"
       allOf:
@@ -3037,7 +3089,7 @@ components:
                 description: "Invoice printout response"
                 allOf:
                   - $ref: '#/components/schemas/FakturaCommonResponse'
-                  
+
     ParagonAsyncStatusResponse:
       type: "object"
       allOf:
@@ -3106,7 +3158,7 @@ components:
           type: "number"
           example: 380
           format: "int32"
-          
+
     ParagonCommonResponse:
       type: "object"
       properties:
@@ -3147,7 +3199,7 @@ components:
           type: "number"
           example: 902
           format: "int32"
-    
+
     FakturaCommonTimestampsResponse:
       type: "object"
       properties:
@@ -3161,7 +3213,7 @@ components:
           format: "int64"
           description: "printing end timestamp"
           example: 1627376834969
-          
+
     ParagonCommonTimestampsResponse:
       type: "object"
       properties:
@@ -3175,7 +3227,7 @@ components:
           format: "int64"
           description: "printing end timestamp"
           example: 1627376834969
-          
+
     ParagonResponse:
       type: "object"
       allOf:
@@ -3187,7 +3239,7 @@ components:
           type: "string"
           example: "bb3b77bf-e33b-4fbb-ad62-ede768ed5652"
           description: "Unique transaction identifier when async=true"
-    
+
     FakturyResponse:
       type: "object"
       properties:
@@ -3200,15 +3252,15 @@ components:
             type: "object"
             allOf:
               - $ref: '#/components/schemas/FakturaResponse'
-    
-    
+
+
     Simulation:
       type: "object"
       properties:
-        errors: 
+        errors:
           type: "object"
           properties:
-            type: 
+            type:
               type: "string"
               example: "paper_ending"
               enum:
@@ -3288,7 +3340,7 @@ components:
               type: "string"
               example: "/tmp/my_result.png"
 
-      
+
     CustomCommandResponse:
       type: "object"
       allOf:
@@ -3303,8 +3355,8 @@ components:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
-    
+
+
     PluginsListResponse:
       type: "object"
       allOf:
@@ -3339,7 +3391,7 @@ components:
               minCompatibleVersion:
                 type: "integer"
                 example: 5.1
-    
+
     PluginAzureServiceBusConsumeStatusResponse:
       type: "object"
       allOf:
@@ -3351,7 +3403,7 @@ components:
           enum:
             - "consuming"
             - "stopped"
-          
+
     ReportDobowyResponse:
       type: "object"
       allOf:
@@ -3366,27 +3418,37 @@ components:
           type: "array"
           items:
             type: "object"
-    
+
+    ReportPeriodicByDatesResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+
+    ReportPeriodicByNumbersResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+
     ReportMiesiecznyResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     ReportShiftrepResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     ReportCustomResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        
+
     ReportTextLinesResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     ReportReturnablesResponse:
       type: "object"
       allOf:
@@ -3454,7 +3516,7 @@ components:
               type: "boolean"
               description: "true if printed"
               example: true
-            
+
     ReportEparagonSummaryResponse:
       type: "object"
       allOf:
@@ -3487,7 +3549,7 @@ components:
               type: "number"
               description: "Number of records with state: reserved"
               example: 0
-    
+
     ReportEparagonFreeRecordsResponse:
       type: "object"
       allOf:
@@ -3497,47 +3559,47 @@ components:
           type: "number"
           description: "Number of free eDocument records"
           example: 489
-    
+
     ReportEparagonContextResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     FormsOrderRecipeResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     FormsAztectCodeResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     FormsBarcodeResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     FormsDmCodeResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        
+
     FormsQrCodeResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        
+
     FormsPdf417CodeResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        
+
     ReportCashstaterepResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     TasksListResponse:
       type: "object"
       allOf:
@@ -3553,7 +3615,7 @@ components:
                   type: "object"
                   allOf:
                     - $ref: '#/components/schemas/TaskObject'
-                  
+
     ReportEventsScheduledTaskResponse:
       type: "object"
       allOf:
@@ -3566,7 +3628,7 @@ components:
               type: "object"
               allOf:
                 - $ref: '#/components/schemas/TaskObject'
-              
+
     TaskObject:
       type: "object"
       properties:
@@ -3588,7 +3650,7 @@ components:
           example: 78
         result:
           type: "object"
-    
+
     FakturaResponse:
       type: "object"
       allOf:
@@ -3603,7 +3665,7 @@ components:
       #properties:
       #  hits:
       #    type: "object"
-          
+
     AsyncQueueResponse:
       type: "object"
       allOf:
@@ -3656,7 +3718,7 @@ components:
                           type: "object"
                           allOf:
                             - $ref: '#/components/schemas/ParagonAsyncStatusResponse'
-    
+
     DlqItem:
       type: "object"
       properties:
@@ -3686,7 +3748,7 @@ components:
           description: "identifier of DLQ item. Use it together with /dlq/process/{id}"
         payload:
           type: "object"
-          
+
     DlqListResponse:
       type: "object"
       allOf:
@@ -3701,7 +3763,7 @@ components:
         directory:
           type: "string"
           example: "dlq"
-        
+
     DlqProcessResponse:
       type: "object"
       allOf:
@@ -3717,7 +3779,7 @@ components:
         directory:
           type: "string"
           example: "dlq"
-    
+
     DlqProcessDeleteResponse:
       type: "object"
       allOf:
@@ -3730,7 +3792,7 @@ components:
         directory:
           type: "string"
           example: "dlq"
-          
+
     DlqProcessAllResponse:
       type: "object"
       allOf:
@@ -3751,12 +3813,12 @@ components:
         directory:
           type: "string"
           example: "dlq"
-          
+
     CacheClearResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        
+
     CacheRangesResponse:
       type: "object"
       allOf:
@@ -3779,7 +3841,7 @@ components:
               enum:
               - sections
               - full
-          
+
     StatusCommon:
       type: "object"
       properties:
@@ -3789,7 +3851,7 @@ components:
         schemaversion:
           type: "string"
           example: "3.10"
-      
+
     CacheUpdateRequest:
       type: "object"
       allOf:
@@ -3801,7 +3863,7 @@ components:
         dateTo:
           type: "string"
           example: "2023-07-31T23:59:59+02:00"
-            
+
     CacheBuildRequest:
       type: "object"
       allOf:
@@ -3822,12 +3884,12 @@ components:
           enum:
             - sections
             - full
-            
+
     CacheDumpResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        
+
     CacheBuildResponse:
       type: "object"
       allOf:
@@ -3836,7 +3898,7 @@ components:
         task:
           type: "string"
           example: "06af0279-eaeb-4916-9680-8756d76a9e98"
-    
+
     CacheUpdateResponse:
       type: "object"
       allOf:
@@ -3845,8 +3907,8 @@ components:
         task:
           type: "string"
           example: "06af0279-eaeb-4916-9680-8756d76a9e98"
-    
-    
+
+
     AuthUser:
       type: "object"
       properties:
@@ -3865,7 +3927,7 @@ components:
           type: "string"
           example: "POST:^/paragon$;GET:^/raporty/dobowy$"
           description: "Regular expression used to match the RESTpoints that user has access to. Format is \"OPERATION:regular expression;OPERATION:regular expression\""
-          
+
     AuthUserMetrics:
       type: "object"
       properties:
@@ -3878,7 +3940,7 @@ components:
         uuid:
           type: "string"
           example: "deb0cde8-cdb6-4c22-9f34-f1c9ff7c843d"
-          
+
     AuthUserCreateUpdateRequest:
       type: "object"
       allOf:
@@ -3894,12 +3956,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/AuthUser'
           - $ref: '#/components/schemas/AuthUserMetrics'
-    
+
     AuthUserDeleteResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-    
+
     AuthUsersListResponse:
       type: "object"
       allOf:
@@ -3912,13 +3974,13 @@ components:
             allOf:
             - $ref: '#/components/schemas/AuthUser'
             - $ref: '#/components/schemas/AuthUserMetrics'
-          
+
     DrawerOpenResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-    
+
     DrawerStatusResponse:
       type: "object"
       allOf:
@@ -3936,7 +3998,7 @@ components:
               type: "number"
               description: "Key state. 0 - open, 1 - closed, 2 - unknown"
               example: 0
-    
+
     DrawerParametersResponse:
       type: "object"
       allOf:
@@ -3966,12 +4028,12 @@ components:
               type: "boolean"
               description: "Key sensor is supported"
               example: false
-    
+
     FormFinishResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
-        
+
     StatusRtcGet:
       type: "object"
       properties:
@@ -3981,7 +4043,7 @@ components:
               da:
                 type: "string"
                 example: "2021-07-26;17:20"
-                
+
     StatusRequestRtcSet:
       type: "object"
       properties:
@@ -3995,20 +4057,20 @@ components:
           type: "boolean"
           description: "enable/disable summer time"
           default: true
-          
+
     StatusResponseRtcSet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-        
+
     StatusResponseRtcGet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusRtcGet'
-    
+
     FormsDmCodeRequest:
       type: "object"
       properties:
@@ -4029,7 +4091,7 @@ components:
         message:
           type: "string"
           example: "Hello"
-    
+
     BarcodeExtraLines:
       type: "object"
       properties:
@@ -4038,7 +4100,7 @@ components:
           items:
             type: "string"
             example: "Nr rachunku: 5698759"
-            
+
     FormsBarcodeRequest:
       type: "object"
       properties:
@@ -4048,7 +4110,7 @@ components:
         message:
           type: "string"
           example: "Hello"
-            
+
     FormsAztecCodeRequest:
       type: "object"
       properties:
@@ -4074,7 +4136,7 @@ components:
         message:
           type: "string"
           example: "Hello"
-    
+
     FormHeader:
       type: "string"
       example: "DOKUMENT_NIEFISKALNY"
@@ -4102,17 +4164,14 @@ components:
         - "PRZELEW_BANKOWY"
         - "POTWIERDZENIE_SPRZEDAZY_BONU_UPOMINKOWEGO"
         - "RABAT_DLA_PRACOWNIKA"
-        - "WYMIANA_SRODKOW_PLATNOSCI"
         - "OPERACJE_KASOWE"
         - "BLEDY_KASY"
         - "CENNIK"
         - "ZMIANY_CEN"
         - "STATYSTYKA_SPRZEDAZY"
-        - "POTWIERDZENIE_DOKONANIA_TRANSAKCJI"
         - "WYDANIE_BONU_UPOMINKOWEGO"
         - "POTWIERDZENIE_ZAPLATY_KARTA"
         - "POTWIERDZENIE_ZAPLATY_RACHUNKU"
-        - "POKWITOWANIE"
         - "POKWITOWANIE_TRANSAKCJI_UZNANIA"
         - "POTWIERDZENIE_UNIEWAZNIENIA"
         - "POTWIERDZENIE_ODMOWY_AUTORYZACJI"
@@ -4163,7 +4222,7 @@ components:
         - "ROZLICZENIE_KASJERA"
         - "DOKUMENT_NIEFISKALNY"
         - "(PUSTY)"
-        
+
     FormsQrCodeRequest:
       type: "object"
       properties:
@@ -4189,7 +4248,7 @@ components:
         message:
           type: "string"
           example: "313233343536373839"
-    
+
     FormsPdf417CodeRequest:
       type: "object"
       properties:
@@ -4228,7 +4287,7 @@ components:
           type: "string"
           example: "313233343536373839"
 
-    
+
     FormsOrderRecipeRequest:
       type: "object"
       properties:
@@ -4439,7 +4498,7 @@ components:
           items:
             type: "string"
             example: "Nr rachunku: 5698759"
-                        
+
     FormFinishRequest:
       type: "object"
       properties:
@@ -4489,11 +4548,10 @@ components:
             - "potwierdzenie_wydania_podarunku"
             - "zamowienie"
             - "potwierdzenie_raport_bon"
-            - "pokwitowanie"
             - "formatka_lotto"
             - "super_formatka"
             - "formatka_szeroka"
-            
+
     ReportReturnablesRequest:
       type: "object"
       properties:
@@ -4532,7 +4590,7 @@ components:
           items:
             type: "string"
             example: "Sample value"
-                  
+
     ReportCustomRequest:
       type: "object"
       properties:
@@ -4586,7 +4644,6 @@ components:
             - "potwierdzenie_wydania_podarunku"
             - "zamowienie"
             - "potwierdzenie_raport_bon"
-            - "pokwitowanie"
             - "formatka_lotto"
             - "super_formatka"
             - "formatka_szeroka"
@@ -4648,7 +4705,7 @@ components:
         ov:
           type: "boolean"
           example: false
-          
+
     ReportEventsDobowyRequest:
       type: "object"
       properties:
@@ -4672,7 +4729,7 @@ components:
           example: false
           default: false
           description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
-    
+
     ReportEventsCustomRequest:
       type: "object"
       properties:
@@ -4696,8 +4753,8 @@ components:
           example: false
           default: false
           description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
-          
-          
+
+
     ReportEventsSellHistoryRequest:
       type: "object"
       allOf:
@@ -4724,7 +4781,7 @@ components:
           example: false
           default: false
           description: "Fiscal memory scans are time consuming operation. You can use useCache=true to cache results so next requests will be executed faster. Feature is experimental."
-          
+
     ReportFiscalMemoryRequest:
       type: "object"
       allOf:
@@ -4749,7 +4806,7 @@ components:
         dumpContent:
           type: "string"
           example: "/tmp/"
-    
+
     ReportShiftrepRequest:
       type: "object"
       properties:
@@ -4762,14 +4819,42 @@ components:
           example: false
           default: false
           description: "true - shift reset"
-    
+
     ReportDobowyRequest:
       type: "object"
       properties:
         da:
           type: "string"
           example: "2021-07-20"
-          
+
+    ReportPeriodicByDatesRequest:
+      type: "object"
+      properties:
+        fd:
+          type: "string"
+          example: "2021-07-01"
+        td:
+          type: "string"
+          example: "2021-07-30"
+        summary:
+          type: "boolean"
+          description: "Set to true to print summary only"
+          example: false
+
+    ReportPeriodicByNumbersRequest:
+      type: "object"
+      properties:
+        fn:
+          type: "number"
+          example: 120
+        tn:
+          type: "number"
+          example: 130
+        summary:
+          type: "boolean"
+          description: "Set to true to print summary only"
+          example: false
+
     ReportMiesiecznyRequest:
       type: "object"
       properties:
@@ -4781,7 +4866,7 @@ components:
           example: false
           default: false
           description: "true - print summary only"
-    
+
     RequestMaintenanceSet:
       type: "object"
       properties:
@@ -4791,13 +4876,13 @@ components:
         te:
           type: "string"
           example: ""
-    
+
     ResponseMaintenanceSet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-    
+
     RequestEparagonStatusSet:
       type: "object"
       properties:
@@ -4811,7 +4896,7 @@ components:
         st:
           type: "boolean"
           example: true
-          
+
     ResponseEparagonStatusSet:
       type: "object"
       allOf:
@@ -4824,7 +4909,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-        
+
     ResponseEparagonStatusGet:
       type: "object"
       allOf:
@@ -4880,13 +4965,13 @@ components:
           type: "number"
           default: 30
           example: 30
-    
+
     ResponseEparagonConfigSet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-    
+
     ResponseEparagonConfigGet:
       type: "object"
       allOf:
@@ -4909,8 +4994,8 @@ components:
           type: "array"
           items:
             type: "object"
-    
-    
+
+
     RequestEparagonScheduleSet:
       type: "object"
       properties:
@@ -4949,19 +5034,19 @@ components:
           default: 604800
           example: 604800
           description: "Maximum lifetime of the eDocument with errored sending state. Min 5s, max 2592000s (30 days)"
-    
+
     EdocumentRemoveResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-    
+
     EdocumentRemoveAllResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-    
+
     EdocumentConnectionTestResponse:
       type: "object"
       allOf:
@@ -4982,7 +5067,7 @@ components:
               type: "number"
               description: "Application code, 0 - OK, otherwise error"
               example: 4251
-    
+
     EdocumentOverrideModeResponseGet:
       type: "object"
       allOf:
@@ -4992,7 +5077,7 @@ components:
         ov:
           type: "boolean"
           example: false
-          
+
     EdocumentOverrideModeResponseSet:
       type: "object"
       allOf:
@@ -5021,13 +5106,13 @@ components:
           type: "array"
           items:
             type: "object"
-    
+
     ResponseEparagonScheduleSet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-    
+
     StatusRequestCurrencyRateSet:
       type: "object"
       properties:
@@ -5045,7 +5130,7 @@ components:
         ra:
           type: "number"
           example: 3.333
-          
+
     StatusRequestVatSet:
       type: "object"
       properties:
@@ -5127,26 +5212,26 @@ components:
         vz:
           type: "string"
           example: ""
-    
+
     StatusResponseVatSet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-        
+
     StatusResponseCurrencyRateSet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
-        
+
     StatusCurrencyGet:
       type: "object"
       properties:
         na:
           type: "string"
           example: "PLN"
-          
+
     StatusCurrencyRateGet:
       type: "object"
       properties:
@@ -5164,7 +5249,7 @@ components:
         ra:
           type: "number"
           example: 3.333
-          
+
     StatusVatGet:
       type: "object"
       properties:
@@ -5250,26 +5335,26 @@ components:
               vz:
                 type: "string"
                 example: ""
-                
+
     StatusResponseVatGet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/StatusCommon'
         - $ref: '#/components/schemas/StatusVatGet'
-    
+
     StatusResponseCurrencyGet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/StatusCurrencyGet'
-    
+
     StatusResponseCurrencyRateGet:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/StatusCurrencyRateGet'
-    
+
     CountersResponse:
       type: "object"
       allOf:
@@ -5294,7 +5379,7 @@ components:
               type: "string"
             ft:
               type: "string"
-    
+
     SimpleDeviceStatusResponse:
       type: "object"
       allOf:
@@ -5332,7 +5417,7 @@ components:
             callservice:
               type: "boolean"
               description: "Should the service be called? Otherwise it's casher action"
-              
+
     SimpleDeviceIdResponse:
       type: "object"
       allOf:
@@ -5357,7 +5442,7 @@ components:
               type: "string"
               description: "Unique number"
               example: "ABCD1234"
-              
+
     StatusResponse:
       type: "object"
       allOf:
@@ -5383,7 +5468,7 @@ components:
                 properties:
                   tx:
                     type: "string"
-                    
+
             ftrinfoget:
               type: "array"
               items:
@@ -5391,7 +5476,7 @@ components:
                 properties:
                   tx:
                     type: "string"
-                    
+
             pccfgget:
               type: "array"
               items:
@@ -5405,7 +5490,7 @@ components:
                     type: "string"
                   pr:
                     type: "string"
-        
+
             tcpipcfgget:
               type: "array"
               items:
@@ -5521,7 +5606,7 @@ components:
                     type: "string"
                   fz:
                     type: "string"
-                    
+
                   no:
                     type: "string"
                   pa:
@@ -5628,8 +5713,8 @@ components:
                     type: "string"
                   vz:
                     type: "string"
-    
-      
+
+
     MonitoringResponse:
       type: "object"
       allOf:
@@ -5688,14 +5773,14 @@ components:
                 external:
                   type: "number"
                   format: "int64"
-          
+
     LicenseCommonResponse:
       type: "object"
       required:
         - expired
         - text
       properties:
-        text: 
+        text:
           type: "string"
           example: "Wersja licencjonowana dla Moja Firma S.A. ważna do Thu Jan 01 2025 01:00:00 GMT+0100 (Central European Standard Time)"
         validTo:
@@ -5711,21 +5796,21 @@ components:
           description: "Added in schema 3.12"
           type: "string"
           example: "f7ghjk4b-3e12-1158-abcd-57gjs9b1711b"
-            
+
     LicenseResponse:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
       properties:
         hits:
-          oneOf: 
+          oneOf:
           - type: "object"
             description: "when ?json=true"
             allOf:
             - $ref: '#/components/schemas/LicenseCommonResponse'
           - type: "string"
             description: "when ?json=false"
-          
+
     LicenseUpgradeResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
@@ -5736,9 +5821,9 @@ components:
           properties:
             requested:
               type: "boolean"
-            requestedtext: 
+            requestedtext:
               type: "string"
-        
+
     ApiResponse:
       type: "object"
       required:
@@ -5752,14 +5837,14 @@ components:
           example: ""
         code:
           type: "number"
-          
+
     ApiResponseTook:
       type: "object"
       properties:
         took:
           type: "number"
           description: "Execution time in ms"
-          
+
 externalDocs:
   description: "Find out more about our website"
   url: "https://bigdotsoftware.pl/posnetserver-restful-service-dla-drukarek-posnet/"

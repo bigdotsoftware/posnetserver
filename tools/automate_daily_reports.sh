@@ -17,6 +17,7 @@ mkdir -p $OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/ 2>/dev/null
 
 ### Get device ID (request compatible with version >= 4.4; when using older version, comment below request and set DEVICEID manually in this script)
 result=`curl -s -XGET "$POSNETSERVERHOST/deviceid?fulldebug=$FULLDEBUG" -H "Content-type: application/json"`
+echo $result
 ok=`echo $result|jq -r '.ok'`
 if [ "$ok" == "true" ]; then
     DEVICEID=`echo $result|jq -r '.device.id'`
@@ -57,7 +58,24 @@ else
     exit 1
 fi
 
-echo $result > $OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/$DEVICEID.json
-echo "DONE, results: $OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/$DEVICEID.json"
+JSON_FILE="$OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/$DEVICEID.json"
+CSV_FILE="$OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/$DEVICEID.csv"
 
-cat $OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/$DEVICEID.json | jq
+echo "$result" > "$JSON_FILE"
+echo "DONE, results: $JSON_FILE"
+
+### Convert JSON to CSV (if jq is available). Skip keys ending with _65 or _112, as values 
+### are coming from additional headers and footers, and are not relevant for the report.
+if command -v jq >/dev/null 2>&1; then
+  jq -r '
+    [ .hits.task.result.results[] | .sections[0] ] as $rows
+    | ($rows | map(keys) | add | unique | sort | map(select(test("(_65|_112)$") | not))) as $keys
+    | ($keys | @csv),
+      ($rows[] | [ .[ $keys[] ] ] | @csv)
+  ' "$JSON_FILE" > "$CSV_FILE"
+  echo "CSV generated: $CSV_FILE"
+else
+  echo "Warning: jq is required to generate CSV; install jq and rerun to create $CSV_FILE"
+fi
+
+cat "$JSON_FILE" | jq

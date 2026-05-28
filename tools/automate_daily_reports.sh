@@ -1,11 +1,25 @@
 #!/bin/bash
 
+# Note: This script is intended to be run on a daily basis, e.g. via cron, to automate the process of generating 
+#       daily reports from the POSNET server. It retrieves the device ID, generates a daily report for the current 
+#       day, and then reads fiscal memory events starting from yesterday. The results are saved in JSON format, 
+#       and if jq is available, also converted to CSV for easier analysis.
+
+# Uwaga: Wydrukowane raporty dobowe zawierają pozycje "SPRZEDAŻ OPODATKOWANA PTU A", "SPRZEDAŻ OPODATKOWANA PTU B" itd., 
+# które są sumą sprzedaży opodatkowanej odpowiednią stawką PTU, ale są to kwoty netto. Dalej na typowym wydruku
+# znajduje się pozycja: "KWOTA PTU A", "KWOTA PTU B" itd., które zawierają wartość kwoty podatku dla konkretnej stawki. 
+# Aby obliczyć kwotę brutto, należy dodać kwotę netto do kwoty podatku w odpowidniej stawce. Na przykład, 
+# jeśli "SPRZEDAŻ OPODATKOWANA PTU A" wynosi 100 PLN, a "KWOTA PTU A" wynosi 23 PLN, to kwota brutto dla tej pozycji 
+# wynosi 123 PLN. 
+# Drukarka w pamięci chroninej przechowuje jedynie kwoty brutto, więc poniższy skrypt, dla powyższego przyładu zwróci 
+# jedynie wartość 123 PLN. Aby obliczyć kwotę netto lub wartość podatku, należy to przeliczyć ręcznie, 
+# np 123 PLN/1.23 = 100 PLN (kwota netto), 123 PLN - 100 PLN = 23 PLN (kwota podatku).
+
 # --- configuration
 POSNETSERVERHOST='http://localhost:3050'
 # POSNETSERVERHOST='http://192.168.0.201/api/posnetserver'
 YESTERDAY=`date -d "yesterday" '+%Y-%m-%d'`
 TODAY=`date -d "today" '+%Y-%m-%d'`
-
 FULLDEBUG="true"    #true/false
 
 OUTPUT_DIRECTORY="/tmp"
@@ -38,6 +52,13 @@ result=`curl -s -XPOST "$POSNETSERVERHOST/raporty/events/dobowy?fulldebug=$FULLD
   \"mergeSections\": true,
   \"useCache\": false
 }"`
+# result=`curl -s -XPOST "$POSNETSERVERHOST/raporty/fiscalmemory?fulldebug=$FULLDEBUG" -H "Content-type: application/json" -d "
+# {
+#   \"dateFrom\": \"${YESTERDAY}T00:00:00+02:00\",
+#   \"dateTo\": \"${YESTERDAY}T23:59:59+02:00\",
+#   \"saveResults\": \"/tmp/sellhistory.json\",
+#   \"dumpContent\": \"/tmp/\"
+# }"`
 
 ### Wait for task to be finished
 if [ "$ok" == "true" ]; then

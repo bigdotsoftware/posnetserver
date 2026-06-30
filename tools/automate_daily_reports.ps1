@@ -21,8 +21,8 @@ function Show-Usage {
     Write-Host ""
     Write-Host "Opcje:"
     Write-Host "  -Type TYPE              Typ raportu: 'dobowy' lub 'miesieczny' (domyslnie: dobowy)"
-    Write-Host "  -StartDate YYYY-MM-DD  Data poczztkowa dla raportu miesiecznego"
-    Write-Host "  -EndDate YYYY-MM-DD    Data koncowa dla raportu miesiecznego"
+    Write-Host "  -StartDate YYYY-MM-DD   Data poczatkowa dla raportu miesiecznego"
+    Write-Host "  -EndDate YYYY-MM-DD     Data koncowa dla raportu miesiecznego"
     Write-Host "  -Detailed               Raport szczegolowy dla raportu miesiecznego"
     Write-Host "  -Print                  Drukuj raport na drukarce"
     Write-Host "  -Help                   Pokaz te wiadomosc pomocy"
@@ -226,10 +226,10 @@ catch {
 
 if ($PRINT_REPORT -eq 'True') {
     Write-Host ''
-    Write-Host "Drukowanie raportu $REPORT_TYPE..."
+    Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $yesterday ..."
 
     if ($REPORT_TYPE -eq 'dobowy') {
-        $printBody = @{ da = $START_DATE } | ConvertTo-Json -Compress
+        $printBody = @{ da = $yesterday } | ConvertTo-Json -Compress
         Invoke-RestMethod -Method Post -Uri "$POSNETSERVERHOST/raporty/dobowy?fulldebug=true" -ContentType 'application/json' -Body $printBody | Out-Null
     }
     else {
@@ -288,7 +288,7 @@ while ($processing) {
     Write-Host "[$counter] checking task $task..."
 
     $result = Invoke-RestMethod -Method Get -Uri "${POSNETSERVERHOST}/tasks/get/${task}?fulldebug=$FULLDEBUG" -ContentType 'application/json'
-    Write-Host ($result | ConvertTo-Json -Depth 100)
+    # Write-Host ($result | ConvertTo-Json -Depth 100)
     $processing = [bool]$result.hits.task.inprogress
 
     if ($result.hits.task.PSObject.Properties.Name -contains 'status') {
@@ -332,8 +332,8 @@ if ($aggregatedRows.Count -gt 0) {
     Write-Host "  CSV: $CSV_FILE_AGG"
 }
 
-Write-Host ''
-Write-Host '=========================================='
-Write-Host 'Raport JSON:'
-Write-Host '=========================================='
-$result | ConvertTo-Json -Depth 100
+# Write-Host ''
+# Write-Host '=========================================='
+# Write-Host 'Raport JSON:'
+# Write-Host '=========================================='
+# $result | ConvertTo-Json -Depth 100

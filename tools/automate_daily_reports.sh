@@ -15,20 +15,20 @@ Opcje:
   -s, --start-date YYYY-MM-DD  Data początkowa dla raportu miesięcznego (wymagane dla typu miesieczny)
   -e, --end-date YYYY-MM-DD    Data końcowa dla raportu miesięcznego (wymagane dla typu miesieczny)
   -d, --detailed               Raport szczegółowy dla raportu miesięcznego (domyślnie: podsumowanie)
-  -p, --print                  Drukuj raport na drukarce (domyślnie: tylko dane bez druku)
+  -p, --print                  Drukuj raport na drukarce (domyślnie: tylko dane bez drukowania)
   -h, --help                   Pokaż tę wiadomość pomocy
 
 Przykłady:
-  # Raport dobowy, bez druku
+  # Raport dobowy, bez drukowania
   $(basename "$0")
 
-  # Raport dobowy z drukiem
+  # Raport dobowy z wydrukiem
   $(basename "$0") -p
 
-  # Raport miesięczny szczegółowy od 2026-01-01 do 2026-01-31 z drukiem
+  # Raport miesięczny szczegółowy od 2026-01-01 do 2026-01-31 z wydrukiem
   $(basename "$0") -t miesieczny -s 2026-01-01 -e 2026-01-31 -d -p
 
-  # Raport miesięczny podsumowanie (bez szczegółów)
+  # Raport miesięczny podsumowanie (bez rozbicia na raporty dobowe)
   $(basename "$0") -t miesieczny -s 2026-01-01 -e 2026-01-31
 
 EOF
@@ -209,7 +209,7 @@ else
     #     DETAILED_FLAG="true"
     # fi
     
-    result=`curl -s -XPOST "$POSNETSERVERHOST/raporty/events/custom?fulldebug=$FULLDEBUG" -H "Content-type: application/json" -d "
+    result=`curl -s -XPOST "$POSNETSERVERHOST/raporty/events/dobowy?fulldebug=$FULLDEBUG" -H "Content-type: application/json" -d "
     {
       \"dateFrom\": \"$DATE_FROM\",
       \"dateTo\": \"$DATE_TO\",
@@ -233,7 +233,7 @@ if [ "$ok" == "true" ]; then
     while [ "$processing" == "true" ]; do
         sleep 1
         counter=$((counter + 1))
-        echo "[$counter] Sprawdzanie zadania $task..."
+        echo "[$counter] checking task $task..."
         result=`curl -s -XGET "$POSNETSERVERHOST/tasks/get/$task?fulldebug=$FULLDEBUG" -H "Content-type: application/json"`
         processing=`echo $result|jq -r '.hits.task.inprogress'`
         
@@ -255,7 +255,9 @@ else
 fi
 
 JSON_FILE="$OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/${REPORT_NAME}_$DEVICEID.json"
+JSON_FILE_AGG="$OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/${REPORT_NAME}_aggregated_$DEVICEID.json"
 CSV_FILE="$OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/${REPORT_NAME}_$DEVICEID.csv"
+CSV_FILE_AGG="$OUTPUT_DIRECTORY/$PRETTY_HOSTNAME/posnet/${REPORT_NAME}_aggregated_$DEVICEID.csv"
 
 echo "$result" > "$JSON_FILE"
 echo ""
@@ -273,6 +275,60 @@ if command -v jq >/dev/null 2>&1; then
       ($rows[] | [ .[ $keys[] ] ] | @csv)
   ' "$JSON_FILE" > "$CSV_FILE"
   echo "  CSV: $CSV_FILE"
+else
+  echo "  Uwaga: jq wymagane do wygenerowania CSV; zainstaluj jq aby uzyskać $CSV_FILE"
+fi
+
+
+
+if command -v jq >/dev/null 2>&1; then
+jq '
+.hits.task.result.results
+| map(.sections)
+| add
+| reduce .[] as $item ({}; 
+
+    (
+      $item
+      | with_entries(
+          select(
+            (.key | test("date|ts"; "i") | not)
+            and
+            (.value|type != "number")
+          )
+        )
+      | tostring
+    ) as $key
+
+    |
+
+    .[$key] =
+      if has($key) then
+        reduce ($item|to_entries[]) as $e (.[$key];
+          if ($e.key | test("date|ts"; "i")) then
+            .
+          elif ($e.value|type) == "number" then
+            .[$e.key] += $e.value
+          else
+            .
+          end
+        )
+      else
+        $item
+      end
+)
+| to_entries
+| map(.value)
+' "$JSON_FILE" > "$JSON_FILE_AGG"
+
+jq -r '
+  . as $rows
+  | ($rows | map(keys) | add | unique | sort | map(select(test("(_65|_112)$") | not))) as $keys
+  | ($keys | @csv),
+    ($rows[] | [ $keys[] as $k | .[$k] ] | @csv)
+' "$JSON_FILE_AGG" > "$CSV_FILE_AGG"
+  echo "  CSV: $CSV_FILE_AGG"
+
 else
   echo "  Uwaga: jq wymagane do wygenerowania CSV; zainstaluj jq aby uzyskać $CSV_FILE"
 fi

@@ -20,14 +20,14 @@ function Show-Usage {
     Write-Host "Użycie: .\\automate_daily_reports.ps1 [opcje]"
     Write-Host ""
     Write-Host "Opcje:"
-    Write-Host "  -Type TYPE              Typ raportu: 'dobowy' lub 'miesieczny' (domyślnie: dobowy)"
-    Write-Host "  -StartDate YYYY-MM-DD  Data początkowa dla raportu miesięcznego"
-    Write-Host "  -EndDate YYYY-MM-DD    Data końcowa dla raportu miesięcznego"
-    Write-Host "  -Detailed               Raport szczegółowy dla raportu miesięcznego"
+    Write-Host "  -Type TYPE              Typ raportu: 'dobowy' lub 'miesieczny' (domyslnie: dobowy)"
+    Write-Host "  -StartDate YYYY-MM-DD  Data poczztkowa dla raportu miesiecznego"
+    Write-Host "  -EndDate YYYY-MM-DD    Data koncowa dla raportu miesiecznego"
+    Write-Host "  -Detailed               Raport szczegolowy dla raportu miesiecznego"
     Write-Host "  -Print                  Drukuj raport na drukarce"
-    Write-Host "  -Help                   Pokaż tę wiadomość pomocy"
+    Write-Host "  -Help                   Pokaz te wiadomosc pomocy"
     Write-Host ""
-    Write-Host "Przykłady:"
+    Write-Host "Przyklady:"
     Write-Host "  .\\automate_daily_reports.ps1"
     Write-Host "  .\\automate_daily_reports.ps1 -Print"
     Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -StartDate 2026-01-01 -EndDate 2026-01-31 -Detailed -Print"
@@ -154,23 +154,23 @@ $START_DATE = if ($PSBoundParameters.ContainsKey('StartDate')) { $StartDate } el
 $END_DATE = if ($PSBoundParameters.ContainsKey('EndDate')) { $EndDate } else { '' }
 
 if ($REPORT_TYPE -ne 'dobowy' -and $REPORT_TYPE -ne 'miesieczny') {
-    Write-Error 'Błąd: typ raportu musi być ''dobowy'' lub ''miesieczny'''
+    Write-Error 'Blad: typ raportu musi być ''dobowy'' lub ''miesieczny'''
     exit 1
 }
 
 if ($REPORT_TYPE -eq 'miesieczny') {
     if ([string]::IsNullOrWhiteSpace($START_DATE) -or [string]::IsNullOrWhiteSpace($END_DATE)) {
-        Write-Error 'Błąd: dla raportu miesięcznego wymagane są opcje -StartDate i -EndDate'
+        Write-Error 'Blad: dla raportu miesiecznego wymagane sa opcje -StartDate i -EndDate'
         exit 1
     }
 
     if (-not (Test-DateString -Value $START_DATE)) {
-        Write-Error 'Błąd: nieprawidłowy format daty początkowej, wymagany format: YYYY-MM-DD'
+        Write-Error 'Blad: nieprawidlowy format daty poczatkowej, wymagany format: YYYY-MM-DD'
         exit 1
     }
 
     if (-not (Test-DateString -Value $END_DATE)) {
-        Write-Error 'Błąd: nieprawidłowy format daty końcowej, wymagany format: YYYY-MM-DD'
+        Write-Error 'Blad: nieprawidlowy format daty końcowej, wymagany format: YYYY-MM-DD'
         exit 1
     }
 }
@@ -204,7 +204,7 @@ Write-Host "POSNET Raport - Typ: $REPORT_TYPE"
 Write-Host "Data raportu: $REPORT_DATE"
 Write-Host "Drukowanie: $PRINT_REPORT"
 if ($REPORT_TYPE -eq 'miesieczny') {
-    Write-Host "Szczegółowy: $DETAILED_REPORT"
+    Write-Host "Szczegolowy: $DETAILED_REPORT"
 }
 Write-Host '=========================================='
 
@@ -249,7 +249,7 @@ if ($PRINT_REPORT -eq 'True') {
 }
 
 Write-Host ''
-Write-Host 'Pobieranie danych z pamięci fiskalnej...'
+Write-Host 'Pobieranie danych z pamieci fiskalnej...'
 
 $body = [ordered]@{
     mergeSections = $true
@@ -275,7 +275,7 @@ catch {
 
 $task = $result.task
 if ([string]::IsNullOrWhiteSpace($task) -or $task -eq 'null') {
-    Write-Error 'Błąd: nie otrzymano identyfikatora zadania'
+    Write-Error 'Blad: nie otrzymano identyfikatora zadania'
     Write-Error "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
     exit 1
 }
@@ -292,13 +292,13 @@ while ($processing) {
 
     $taskStatus = $result.hits.task.status
     if ($taskStatus -eq 'error') {
-        Write-Error 'Błąd: zadanie zakończyło się błędem'
+        Write-Error 'Blad: zadanie zakończylo sie bledem'
         Write-Error ($result | ConvertTo-Json -Depth 40 -Compress)
         exit 1
     }
 }
 
-Write-Host 'Zadanie ukończone'
+Write-Host 'Zadanie ukonczone'
 Write-Host ($result | ConvertTo-Json -Depth 60 -Compress)
 
 $JSON_FILE = Join-Path $targetDir "$REPORT_NAME`_$DEVICEID.json"
@@ -308,8 +308,8 @@ $CSV_FILE_AGG = Join-Path $targetDir "$REPORT_NAME`_aggregated_$DEVICEID.csv"
 
 $result | ConvertTo-Json -Depth 100 | Set-Content -Path $JSON_FILE -Encoding utf8
 Write-Host ''
-Write-Host '✓ DONE, results saved:'
-Write-Host "  JSON: $JSON_FILE"
+Write-Host 'DONE, results saved:'
+Write-Host "JSON: $JSON_FILE"
 
 $rows = @($result.hits.task.result.results | ForEach-Object { $_.sections[0] })
 if ($rows.Count -gt 0) {

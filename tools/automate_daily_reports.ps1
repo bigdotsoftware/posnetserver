@@ -249,7 +249,7 @@ if ($PRINT_REPORT -eq 'True') {
 }
 
 Write-Host ''
-Write-Host 'Pobieranie danych z pamieci fiskalnej...'
+Write-Host "Pobieranie danych z pamieci fiskalnej od $DATE_FROM..."
 
 $body = [ordered]@{
     mergeSections = $true

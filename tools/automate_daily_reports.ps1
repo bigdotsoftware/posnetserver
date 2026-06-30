@@ -287,14 +287,17 @@ while ($processing) {
     $counter++
     Write-Host "[$counter] checking task $task..."
 
-    $result = Invoke-RestMethod -Method Get -Uri "$POSNETSERVERHOST/tasks/get/$task?fulldebug=$FULLDEBUG" -ContentType 'application/json'
+    $result = Invoke-RestMethod -Method Get -Uri "${POSNETSERVERHOST}/tasks/get/${task}?fulldebug=$FULLDEBUG" -ContentType 'application/json'
+    Write-Host ($result | ConvertTo-Json -Depth 100)
     $processing = [bool]$result.hits.task.inprogress
 
-    $taskStatus = $result.hits.task.status
-    if ($taskStatus -eq 'error') {
-        Write-Error 'Blad: zadanie zakończylo sie bledem'
-        Write-Error ($result | ConvertTo-Json -Depth 40 -Compress)
-        exit 1
+    if ($result.hits.task.PSObject.Properties.Name -contains 'status') {
+        $taskStatus = $result.hits.task.status
+        if ($taskStatus -eq 'error') {
+            Write-Error 'Blad: zadanie zakończylo sie bledem'
+            Write-Error ($result | ConvertTo-Json -Depth 40 -Compress)
+            exit 1
+        }
     }
 }
 

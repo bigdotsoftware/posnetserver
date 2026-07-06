@@ -176,7 +176,8 @@ if ($REPORT_TYPE -eq 'miesieczny') {
 }
 
 $FULLDEBUG = 'true'
-$POSNETSERVERHOST = 'http://192.168.0.103/api/posnetserver'
+# $POSNETSERVERHOST = 'http://192.168.0.103/api/posnetserver'
+$POSNETSERVERHOST = 'http://127.0.0.1:3050'
 $OUTPUT_DIRECTORY = $env:TEMP
 $PRETTY_HOSTNAME = Get-PrettyHostname
 $DEVICEID = ''

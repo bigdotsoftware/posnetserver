@@ -176,7 +176,7 @@ if ($REPORT_TYPE -eq 'miesieczny') {
 }
 
 $FULLDEBUG = 'true'
-# $POSNETSERVERHOST = 'http://192.168.0.103/api/posnetserver'
+# $POSNETSERVERHOST = 'http://192.168.0.103:80/api/posnetserver'
 $POSNETSERVERHOST = 'http://127.0.0.1:3050'
 $OUTPUT_DIRECTORY = $env:TEMP
 $PRETTY_HOSTNAME = Get-PrettyHostname
@@ -208,9 +208,17 @@ if ($REPORT_TYPE -eq 'miesieczny') {
     Write-Host "Szczegolowy: $DETAILED_REPORT"
 }
 Write-Host '=========================================='
+$requiredVersion = [Version]"5.1"
+if ($PSVersionTable.PSVersion -ge $requiredVersion) {
+    Write-Host "PowerShell $($PSVersionTable.PSVersion) - OK"
+}
+else {
+    Write-Host "PowerShell $($PSVersionTable.PSVersion) - wymagany jest PowerShell 5.1 lub nowszy."
+    exit 1
+}
 
 try {
-    $result = Invoke-RestMethod -Method Get -Uri "$POSNETSERVERHOST/deviceid?fulldebug=$FULLDEBUG" -ContentType 'application/json'
+    $result = Invoke-RestMethod -Method Get -Uri "${POSNETSERVERHOST}/deviceid?fulldebug=${FULLDEBUG}" -ContentType 'application/json'
     Write-Host "Device ID Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
 
     if ($result.ok -ne $true) {
@@ -271,9 +279,25 @@ try {
     Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
 }
 catch {
-    Write-Error 'Error: Cannot read fiscal memory events'
-    Write-Error $_
-    Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
+    # Write-Error 'Error: Cannot read fiscal memory events'
+    # Write-Error $_
+    # Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
+    Write-Host ""
+    Write-Host "===== EXCEPTION ====="
+
+    $_ | Format-List * -Force
+
+    if ($_.Exception.Response) {
+
+        $reader = New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $body = $reader.ReadToEnd()
+
+        Write-Host ""
+        Write-Host "===== SERVER RESPONSE ====="
+        Write-Host $body
+    }
+
+    # throw
     exit 1
 }
 

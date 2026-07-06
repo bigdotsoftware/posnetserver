@@ -266,12 +266,13 @@ else {
 }
 
 try {
-    $result = Invoke-RestMethod -Method Post -Uri "$POSNETSERVERHOST/raporty/events/dobowy?fulldebug=$FULLDEBUG" -ContentType 'application/json' -Body ($body | ConvertTo-Json -Depth 10 -Compress)
+    $result = Invoke-RestMethod -Method Post -Uri "${POSNETSERVERHOST}/raporty/events/dobowy?fulldebug=${FULLDEBUG}" -ContentType 'application/json' -Body ($body | ConvertTo-Json -Depth 10 -Compress)
     Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
 }
 catch {
     Write-Error 'Error: Cannot read fiscal memory events'
     Write-Error $_
+    Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
     exit 1
 }
 
@@ -289,7 +290,7 @@ while ($processing) {
     $counter++
     Write-Host "[$counter] checking task $task..."
 
-    $result = Invoke-RestMethod -Method Get -Uri "${POSNETSERVERHOST}/tasks/get/${task}?fulldebug=$FULLDEBUG" -ContentType 'application/json'
+    $result = Invoke-RestMethod -Method Get -Uri "${POSNETSERVERHOST}/tasks/get/${task}?fulldebug=${FULLDEBUG}" -ContentType 'application/json'
     # Write-Host ($result | ConvertTo-Json -Depth 100)
     $processing = [bool]$result.hits.task.inprogress
 

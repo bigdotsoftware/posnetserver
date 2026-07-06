@@ -267,6 +267,7 @@ else {
 
 try {
     $result = Invoke-RestMethod -Method Post -Uri "$POSNETSERVERHOST/raporty/events/dobowy?fulldebug=$FULLDEBUG" -ContentType 'application/json' -Body ($body | ConvertTo-Json -Depth 10 -Compress)
+    Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
 }
 catch {
     Write-Error 'Error: Cannot read fiscal memory events'

@@ -10,6 +10,7 @@ param(
 
     [switch]$Detailed,
     [switch]$Print,
+    [switch]$PrintToday,
     [switch]$Help
 )
 
@@ -24,12 +25,14 @@ function Show-Usage {
     Write-Host "  -StartDate YYYY-MM-DD   Data poczatkowa dla raportu miesiecznego"
     Write-Host "  -EndDate YYYY-MM-DD     Data koncowa dla raportu miesiecznego"
     Write-Host "  -Detailed               Raport szczegolowy dla raportu miesiecznego"
-    Write-Host "  -Print                  Drukuj raport na drukarce"
+    Write-Host "  -Print                  Drukuj raport z wczoraj na drukarce"
+    Write-Host "  -PrintToday             Drukuj dzisiejszy raport na drukarce"
     Write-Host "  -Help                   Pokaz te wiadomosc pomocy"
     Write-Host ""
     Write-Host "Przyklady:"
     Write-Host "  .\\automate_daily_reports.ps1"
     Write-Host "  .\\automate_daily_reports.ps1 -Print"
+    Write-Host "  .\\automate_daily_reports.ps1 -PrintToday"
     Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -StartDate 2026-01-01 -EndDate 2026-01-31 -Detailed -Print"
     exit 0
 }
@@ -149,6 +152,7 @@ function ConvertTo-AggregatedObject {
 
 $REPORT_TYPE = $Type
 $PRINT_REPORT = [string]$Print.IsPresent
+$PRINT_TODAY_REPORT = [string]$PrintToday.IsPresent
 $DETAILED_REPORT = [string]$Detailed.IsPresent
 $START_DATE = if ($PSBoundParameters.ContainsKey('StartDate')) { $StartDate } else { '' }
 $END_DATE = if ($PSBoundParameters.ContainsKey('EndDate')) { $EndDate } else { '' }
@@ -203,7 +207,9 @@ else {
 Write-Host '=========================================='
 Write-Host "POSNET Raport - Typ: $REPORT_TYPE"
 Write-Host "Data raportu: $REPORT_DATE"
-Write-Host "Drukowanie: $PRINT_REPORT"
+Write-Host "Drukowanie (za wczoraj): $PRINT_REPORT"
+Write-Host "Drukowanie (za dzis): $PRINT_TODAY_REPORT"
+
 if ($REPORT_TYPE -eq 'miesieczny') {
     Write-Host "Szczegolowy: $DETAILED_REPORT"
 }
@@ -233,13 +239,18 @@ catch {
     exit 1
 }
 
-if ($PRINT_REPORT -eq 'True') {
+if ($PRINT_REPORT -eq 'True' -or $PRINT_TODAY_REPORT -eq 'True') {
     Write-Host ''
     Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $yesterday ..."
 
     if ($REPORT_TYPE -eq 'dobowy') {
-        $printBody = @{ da = $yesterday } | ConvertTo-Json -Compress
-        Invoke-RestMethod -Method Post -Uri "$POSNETSERVERHOST/raporty/dobowy?fulldebug=true" -ContentType 'application/json' -Body $printBody | Out-Null
+        if ($PRINT_REPORT -eq 'True' ) {
+            $printBody = @{ da = $yesterday } | ConvertTo-Json -Compress
+        }else{
+            $printBody = @{ da = $today } | ConvertTo-Json -Compress
+        }
+        $result = Invoke-RestMethod -Method Post -Uri "${POSNETSERVERHOST}/raporty/dobowy?fulldebug=true" -ContentType 'application/json' -Body $printBody
+        Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
     }
     else {
         $printParams = [ordered]@{ da = $START_DATE }
@@ -251,7 +262,8 @@ if ($PRINT_REPORT -eq 'True') {
         }
 
         $printBody = $printParams | ConvertTo-Json -Compress
-        Invoke-RestMethod -Method Post -Uri "$POSNETSERVERHOST/raporty/miesieczny?fulldebug=true" -ContentType 'application/json' -Body $printBody | Out-Null
+        $result = Invoke-RestMethod -Method Post -Uri "${POSNETSERVERHOST}/raporty/miesieczny?fulldebug=true" -ContentType 'application/json' -Body $printBody
+        Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
     }
 
     Write-Host ''

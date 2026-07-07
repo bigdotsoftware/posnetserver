@@ -241,18 +241,22 @@ catch {
 
 if ($PRINT_REPORT -eq 'True' -or $PRINT_TODAY_REPORT -eq 'True') {
     Write-Host ''
-    Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $yesterday ..."
+    
 
     if ($REPORT_TYPE -eq 'dobowy') {
         if ($PRINT_REPORT -eq 'True' ) {
+            Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $yesterday ..."
             $printBody = @{ da = $yesterday } | ConvertTo-Json -Compress
         }else{
+            Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $today ..."
             $printBody = @{ da = $today } | ConvertTo-Json -Compress
         }
         $result = Invoke-RestMethod -Method Post -Uri "${POSNETSERVERHOST}/raporty/dobowy?fulldebug=true" -ContentType 'application/json' -Body $printBody
         Write-Host "Response: $($result | ConvertTo-Json -Depth 20 -Compress)"
     }
-    else {
+    else 
+    {
+        Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $yesterday ..."
         $printParams = [ordered]@{ da = $START_DATE }
         if ($Detailed) {
             $printParams['su'] = $false

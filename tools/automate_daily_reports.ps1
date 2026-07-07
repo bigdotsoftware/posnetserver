@@ -13,6 +13,7 @@ param(
     [switch]$PrintCurrent,
     [switch]$ReportPastMonth,
     [switch]$ReportCurrentMonth,
+    [string]$OutputDirectory,
     [switch]$Help
 )
 
@@ -24,6 +25,7 @@ function Show-Usage {
     Write-Host ""
     Write-Host "Opcje:"
     Write-Host "  -Type TYPE              Typ raportu: 'dobowy' lub 'miesieczny' (domyslnie: dobowy)"
+    Write-Host "  -OutputDirectory DIR    Katalog wyjsciowy dla raportow (domyslnie: $env:TEMP)"
     Write-Host "  -Help                   Pokaz te wiadomosc pomocy"
     Write-Host "Opcje raportu dobowego:"
     Write-Host "  -PrintPast              Drukuj raport z poprzedniego dnia (lub z poprzedniego miesiaca) na drukarce"
@@ -212,7 +214,7 @@ if ($REPORT_TYPE -eq 'miesieczny') {
 $FULLDEBUG = 'true'
 # $POSNETSERVERHOST = 'http://192.168.0.103:80/api/posnetserver'
 $POSNETSERVERHOST = 'http://127.0.0.1:3050'
-$OUTPUT_DIRECTORY = $env:TEMP
+$OUTPUT_DIRECTORY = if ($PSBoundParameters.ContainsKey('OutputDirectory') -and -not [string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory } else { $env:TEMP }
 $PRETTY_HOSTNAME = Get-PrettyHostname
 $DEVICEID = ''
 

@@ -9,8 +9,10 @@ param(
     [string]$EndDate,
 
     [switch]$Detailed,
-    [switch]$Print,
-    [switch]$PrintToday,
+    [switch]$PrintPast,
+    [switch]$PrintCurrent,
+    [switch]$ReportPastMonth,
+    [switch]$ReportCurrentMonth,
     [switch]$Help
 )
 
@@ -22,18 +24,28 @@ function Show-Usage {
     Write-Host ""
     Write-Host "Opcje:"
     Write-Host "  -Type TYPE              Typ raportu: 'dobowy' lub 'miesieczny' (domyslnie: dobowy)"
+    Write-Host "  -Help                   Pokaz te wiadomosc pomocy"
+    Write-Host "Opcje raportu dobowego:"
+    Write-Host "  -PrintPast              Drukuj raport z poprzedniego dnia (lub z poprzedniego miesiaca) na drukarce"
+    Write-Host "  -PrintCurrent           Drukuj raport z dzisiejszego dnia (lub aktualnego miesiaca) na drukarce"
+    Write-Host "  -Detailed               Raport szczegolowy dla raportu miesiecznego"
+    Write-Host "Opcje raportu miesiecznego:"
     Write-Host "  -StartDate YYYY-MM-DD   Data poczatkowa dla raportu miesiecznego"
     Write-Host "  -EndDate YYYY-MM-DD     Data koncowa dla raportu miesiecznego"
     Write-Host "  -Detailed               Raport szczegolowy dla raportu miesiecznego"
-    Write-Host "  -Print                  Drukuj raport z wczoraj na drukarce"
-    Write-Host "  -PrintToday             Drukuj dzisiejszy raport na drukarce"
-    Write-Host "  -Help                   Pokaz te wiadomosc pomocy"
+    Write-Host "  -PrintPast              Drukuj raport z poprzedniego dnia (lub z poprzedniego miesiaca) na drukarce"
+    Write-Host "  -PrintCurrent           Drukuj raport z dzisiejszego dnia (lub aktualnego miesiaca) na drukarce"
+    Write-Host "  -ReportPastMonth        Automatycznie ustaw daty poczatkowa i koncowa dla raportu miesiecznego na poprzedni miesiac. Przekazane parametry -StartDate i -EndDate zostana zignorowane."
+    Write-Host "  -ReportCurrentMonth     Automatycznie ustaw daty poczatkowa i koncowa dla raportu miesiecznego na aktualny miesiac. Przekazane parametry -StartDate i -EndDate zostana zignorowane."
     Write-Host ""
     Write-Host "Przyklady:"
     Write-Host "  .\\automate_daily_reports.ps1"
-    Write-Host "  .\\automate_daily_reports.ps1 -Print"
-    Write-Host "  .\\automate_daily_reports.ps1 -PrintToday"
-    Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -StartDate 2026-01-01 -EndDate 2026-01-31 -Detailed -Print"
+    Write-Host "  .\\automate_daily_reports.ps1 -PrintPast"
+    Write-Host "  .\\automate_daily_reports.ps1 -PrintCurrent"
+    Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -StartDate 2026-01-01 -EndDate 2026-01-31 -Detailed -PrintPast"
+    Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -StartDate 2026-01-01 -EndDate 2026-01-31 -Detailed -PrintCurrent"
+    Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -PrintPast -ReportPastMonth"
+    Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -PrintCurrent -ReportCurrentMonth"
     exit 0
 }
 
@@ -151,8 +163,10 @@ function ConvertTo-AggregatedObject {
 }
 
 $REPORT_TYPE = $Type
-$PRINT_REPORT = [string]$Print.IsPresent
-$PRINT_TODAY_REPORT = [string]$PrintToday.IsPresent
+$PRINT_PAST_REPORT = [string]$PrintPast.IsPresent
+$PRINT_CURRENT_REPORT = [string]$PrintCurrent.IsPresent
+$REPORT_PAST_MONTH = [string]$ReportPastMonth.IsPresent
+$REPORT_CURRENT_MONTH = [string]$ReportCurrentMonth.IsPresent
 $DETAILED_REPORT = [string]$Detailed.IsPresent
 $START_DATE = if ($PSBoundParameters.ContainsKey('StartDate')) { $StartDate } else { '' }
 $END_DATE = if ($PSBoundParameters.ContainsKey('EndDate')) { $EndDate } else { '' }
@@ -161,6 +175,22 @@ if ($REPORT_TYPE -ne 'dobowy' -and $REPORT_TYPE -ne 'miesieczny') {
     Write-Error 'Blad: typ raportu musi być ''dobowy'' lub ''miesieczny'''
     exit 1
 }
+
+if ($REPORT_PAST_MONTH -eq 'True') {
+    $previousMonth = (Get-Date).AddMonths(-1)
+    $year = $previousMonth.Year
+    $month = $previousMonth.Month
+    $START_DATE = '{0}-{1:00}-01' -f $year, $month
+    $END_DATE = '{0}-{1:00}-{2:00}' -f $year, $month, [DateTime]::DaysInMonth($year, $month)
+}
+if ($REPORT_CURRENT_MONTH -eq 'True') {
+    $currentMonth = Get-Date
+    $year = $currentMonth.Year
+    $month = $currentMonth.Month
+    $START_DATE = '{0}-{1:00}-01' -f $year, $month
+    $END_DATE = '{0}-{1:00}-{2:00}' -f $year, $month, [DateTime]::DaysInMonth($year, $month)
+}
+
 
 if ($REPORT_TYPE -eq 'miesieczny') {
     if ([string]::IsNullOrWhiteSpace($START_DATE) -or [string]::IsNullOrWhiteSpace($END_DATE)) {
@@ -207,11 +237,14 @@ else {
 Write-Host '=========================================='
 Write-Host "POSNET Raport - Typ: $REPORT_TYPE"
 Write-Host "Data raportu: $REPORT_DATE"
-Write-Host "Drukowanie (za wczoraj): $PRINT_REPORT"
-Write-Host "Drukowanie (za dzis): $PRINT_TODAY_REPORT"
+Write-Host "Drukowanie (za wczorajszy dzien/poprzedni miesiac): $PRINT_PAST_REPORT"
+Write-Host "Drukowanie (za dzis/aktualny miesiac): $PRINT_CURRENT_REPORT"
 
 if ($REPORT_TYPE -eq 'miesieczny') {
     Write-Host "Szczegolowy: $DETAILED_REPORT"
+    Write-Host "Od: $START_DATE"
+    Write-Host "Do: $END_DATE"
+    
 }
 Write-Host '=========================================='
 $requiredVersion = [Version]"5.1"
@@ -239,12 +272,12 @@ catch {
     exit 1
 }
 
-if ($PRINT_REPORT -eq 'True' -or $PRINT_TODAY_REPORT -eq 'True') {
+if ($PRINT_PAST_REPORT -eq 'True' -or $PRINT_CURRENT_REPORT -eq 'True') {
     Write-Host ''
     
 
     if ($REPORT_TYPE -eq 'dobowy') {
-        if ($PRINT_REPORT -eq 'True' ) {
+        if ($PRINT_PAST_REPORT -eq 'True' ) {
             Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $yesterday ..."
             $printBody = @{ da = $yesterday } | ConvertTo-Json -Compress
         }else{
@@ -256,7 +289,7 @@ if ($PRINT_REPORT -eq 'True' -or $PRINT_TODAY_REPORT -eq 'True') {
     }
     else 
     {
-        Write-Host "Drukowanie raportu $REPORT_TYPE z dnia $yesterday ..."
+        Write-Host "Drukowanie raportu $REPORT_TYPE za miesiac $START_DATE ..."
         $printParams = [ordered]@{ da = $START_DATE }
         if ($Detailed) {
             $printParams['su'] = $false
@@ -335,7 +368,16 @@ while ($processing) {
     # Write-Host ($result | ConvertTo-Json -Depth 100)
     $processing = [bool]$result.hits.task.inprogress
 
-    if ($result.hits.task.PSObject.Properties.Name -contains 'status') {
+    $taskObject = $result.hits.task
+    if ($taskObject.PSObject.Properties.Name -contains 'progress' -and $null -ne $taskObject.progress) {
+        $progress = [int]$taskObject.progress
+        Write-Host "Processing: $progress %"
+    }
+    else {
+        Write-Host 'Processing: brak danych'
+    }
+
+    if ($taskObject.PSObject.Properties.Name -contains 'status') {
         $taskStatus = $result.hits.task.status
         if ($taskStatus -eq 'error') {
             Write-Error 'Blad: zadanie zakończylo sie bledem'

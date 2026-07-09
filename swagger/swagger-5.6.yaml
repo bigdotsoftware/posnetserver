@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "5.5"
+  version: "5.6"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"
@@ -898,6 +898,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseMaintenanceSet"
+    get:
+      tags:
+      - "Management"
+      summary: "Get date of the next service inspection"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseMaintenanceGet"
 
   /eparagon/status:
     put:
@@ -4882,6 +4900,24 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
+
+    ResponseMaintenanceGet:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+          year:
+            type: "string"
+            example: "2029"
+          month:
+            type: "string"
+            example: "1"
+          day:
+            type: "string"
+            example: "1"
+          text:
+            type: "string"
 
     RequestEparagonStatusSet:
       type: "object"

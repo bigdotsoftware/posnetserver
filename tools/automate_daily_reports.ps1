@@ -14,7 +14,16 @@ param(
     [switch]$ReportPastMonth,
     [switch]$ReportCurrentMonth,
     [string]$OutputDirectory,
-    [switch]$Help
+    [switch]$Help,
+
+    [string]$SmtpServer = '',
+    [int]$SmtpPort = 587,
+    [string]$SmtpUser = '',
+    [string]$SmtpPassword = '',
+    [string]$MailFrom = '',
+    [string]$MailTo = '',
+    [switch]$SmtpSsl,
+    [switch]$SendEmail
 )
 
 Set-StrictMode -Version Latest
@@ -48,11 +57,113 @@ function Show-Usage {
     Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -StartDate 2026-01-01 -EndDate 2026-01-31 -Detailed -PrintCurrent"
     Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -PrintPast -ReportPastMonth"
     Write-Host "  .\\automate_daily_reports.ps1 -Type miesieczny -PrintCurrent -ReportCurrentMonth"
+    Write-Host ""
+    Write-Host "Dodatkowe parametry pozwalajace na wysylke na maila:"
+    Write-Host '  .\\automate_daily_reports.ps1 -Type dobowy -SendEmail -SmtpServer "smtp.twojadomena.pl" -SmtpPort 587 -SmtpSsl -SmtpUser "raporty@twojadomena.pl" -SmtpPassword "HASLO" -MailFrom "raporty@twojadomena.pl" -MailTo "ksiegowosc@twojadomena.pl"'
     exit 0
 }
 
 if ($Help) {
     Show-Usage
+}
+
+function Send-ReportEmail {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Attachments,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Subject,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Body
+    )
+
+    if (-not $SendEmail.IsPresent) {
+        Write-Host 'Wysylka e-mail wylaczona.'
+        return
+    }
+
+    if ([string]::IsNullOrWhiteSpace($SmtpServer)) {
+        throw 'Brak parametru -SmtpServer'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($MailFrom)) {
+        throw 'Brak parametru -MailFrom'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($MailTo)) {
+        throw 'Brak parametru -MailTo'
+    }
+
+    $existingAttachments = @(
+        $Attachments |
+        Where-Object {
+            -not [string]::IsNullOrWhiteSpace($_) -and
+            (Test-Path $_)
+        }
+    )
+
+    if ($existingAttachments.Count -eq 0) {
+        throw 'Brak plikow raportu do wyslania.'
+    }
+
+    Write-Host ''
+    Write-Host '=========================================='
+    Write-Host 'Wysylanie raportu e-mail...'
+    Write-Host "SMTP: $SmtpServer`:$SmtpPort"
+    Write-Host "Od: $MailFrom"
+    Write-Host "Do: $MailTo"
+
+    foreach ($attachment in $existingAttachments) {
+        Write-Host "Zalacznik: $attachment"
+    }
+
+    $mailParams = @{
+        SmtpServer  = $SmtpServer
+        Port        = $SmtpPort
+        From        = $MailFrom
+        To          = $MailTo
+        Subject     = $Subject
+        Body        = $Body
+        Attachments = $existingAttachments
+        Encoding    = [System.Text.Encoding]::UTF8
+    }
+
+    if ($SmtpSsl.IsPresent) {
+        $mailParams['UseSsl'] = $true
+    }
+
+    if (
+        -not [string]::IsNullOrWhiteSpace($SmtpUser) -and
+        -not [string]::IsNullOrWhiteSpace($SmtpPassword)
+    ) {
+        $securePassword = ConvertTo-SecureString `
+            $SmtpPassword `
+            -AsPlainText `
+            -Force
+
+        $credential = New-Object `
+            System.Management.Automation.PSCredential(
+                $SmtpUser,
+                $securePassword
+            )
+
+        $mailParams['Credential'] = $credential
+    }
+
+    try {
+        Send-MailMessage @mailParams
+
+        Write-Host ''
+        Write-Host 'E-mail wyslany poprawnie.'
+        Write-Host '=========================================='
+    }
+    catch {
+        Write-Host ''
+        Write-Error "Blad wysylania e-mail: $($_.Exception.Message)"
+        throw
+    }
 }
 
 function Test-DateString {
@@ -425,3 +536,47 @@ if ($aggregatedRows.Count -gt 0) {
 # Write-Host 'Raport JSON:'
 # Write-Host '=========================================='
 # $result | ConvertTo-Json -Depth 100
+
+
+$EMAIL_ATTACHMENTS = @(
+    $JSON_FILE,
+    $JSON_FILE_AGG,
+    $CSV_FILE,
+    $CSV_FILE_AGG
+)
+
+if ($REPORT_TYPE -eq 'dobowy') {
+    $EMAIL_SUBJECT = "Raport dobowy POSNET - $REPORT_DATE - $PRETTY_HOSTNAME"
+
+    $EMAIL_BODY = @"
+Automatycznie wygenerowany raport dobowy POSNET.
+
+Urzadzenie: $PRETTY_HOSTNAME
+Device ID: $DEVICEID
+Data raportu: $REPORT_DATE
+
+W zalacznikach znajduja sie raporty w formatach CSV i JSON.
+
+Wiadomosc wygenerowana automatycznie.
+"@
+}
+else {
+    $EMAIL_SUBJECT = "Raport miesieczny POSNET - $START_DATE - $END_DATE - $PRETTY_HOSTNAME"
+
+    $EMAIL_BODY = @"
+Automatycznie wygenerowany raport miesieczny POSNET.
+
+Urzadzenie: $PRETTY_HOSTNAME
+Device ID: $DEVICEID
+Okres: $START_DATE - $END_DATE
+
+W zalacznikach znajduja sie raporty w formatach CSV i JSON.
+
+Wiadomosc wygenerowana automatycznie.
+"@
+}
+
+Send-ReportEmail `
+    -Attachments $EMAIL_ATTACHMENTS `
+    -Subject $EMAIL_SUBJECT `
+    -Body $EMAIL_BODY

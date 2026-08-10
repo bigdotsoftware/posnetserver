@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "5.6"
+  version: "5.7"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"
@@ -1694,6 +1694,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FormsOrderRecipeResponse"
+
+  /forms/orderconfirmation_advanced:
+    post:
+      tags:
+      - "Forms"
+      summary: "Recipe with order number"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/FormsOrderRecipeAdvRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FormsOrderRecipeAdvResponse"
 
   /forms/barcode:
     post:
@@ -3588,6 +3613,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
 
+    FormsOrderRecipeAdvResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+
     FormsAztectCodeResponse:
       type: "object"
       allOf:
@@ -4306,7 +4336,7 @@ components:
           example: "313233343536373839"
 
 
-    FormsOrderRecipeRequest:
+    FormsOrderRecipeFontRequest:
       type: "object"
       properties:
         font:
@@ -4511,6 +4541,29 @@ components:
         text:
           type: "string"
           example: "665"
+
+    FormsOrderRecipeAdvRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/FormsOrderRecipeFontRequest'
+      properties:
+        extralines:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Nr rachunku: 5698759"
+              bold:
+                type: "boolean"
+                example: false
+
+    FormsOrderRecipeRequest:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/FormsOrderRecipeFontRequest'
+      properties:
         extralines:
           type: "array"
           items:

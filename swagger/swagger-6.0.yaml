@@ -4594,6 +4594,10 @@ components:
                 type: "boolean"
                 default: false
                 example: false
+              customformat:
+                type: "boolean"
+                default: false
+                example: false
 
     FormsOrderRecipeRequest:
       type: "object"

@@ -5044,6 +5044,15 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
         - $ref: '#/components/schemas/ApiResponseTook'
+      properties:
+        status:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              st:
+                type: "string"
+                example: "N"
 
     ResponseCurrencyRateStatusGet:
       type: "object"

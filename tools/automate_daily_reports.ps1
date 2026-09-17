@@ -119,6 +119,9 @@ function Send-ReportEmail {
         Write-Host "Zalacznik: $attachment"
     }
 
+    # Przygotowanie parametrów SMTP.
+    # Hasło aplikacji Google może np zawierać spacje i przekazujemy je
+    # dokładnie w takiej postaci, w jakiej zostało podane.
     $mailParams = @{
         SmtpServer  = $SmtpServer
         Port        = $SmtpPort
@@ -138,13 +141,12 @@ function Send-ReportEmail {
         -not [string]::IsNullOrWhiteSpace($SmtpUser) -and
         -not [string]::IsNullOrWhiteSpace($SmtpPassword)
     ) {
-        $securePassword = ConvertTo-SecureString `
-            $SmtpPassword `
-            -AsPlainText `
-            -Force
+        Write-Host "SMTP User: $SmtpUser"
+        Write-Host "SMTP Password length: $($SmtpPassword.Length)"
 
-        $credential = New-Object `
-            System.Management.Automation.PSCredential(
+        $securePassword = ConvertTo-SecureString "$SmtpPassword" -AsPlainText -Force
+
+        $credential = New-Object System.Management.Automation.PSCredential(
                 $SmtpUser,
                 $securePassword
             )

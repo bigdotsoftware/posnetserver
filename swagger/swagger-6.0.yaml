@@ -873,6 +873,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseCurrencyRateStatusGet"
 
+  /abort:
+    put:
+      tags:
+      - "Management"
+      summary: "Abort already started or failed document"
+      description: ""
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseAbort"
+
   /maintenance:
     put:
       tags:
@@ -4987,6 +5007,12 @@ components:
         te:
           type: "string"
           example: ""
+
+    ResponseAbort:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - $ref: '#/components/schemas/ApiResponseTook'
 
     ResponseMaintenanceSet:
       type: "object"

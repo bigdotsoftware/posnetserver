@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "6.0"
+  version: "6.1"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"
@@ -1583,6 +1583,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportTextLinesResponse"
+
+  /raporty/textlines_advanced:
+    post:
+      tags:
+      - "Reports"
+      summary: "Advanced custom report"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ReportTextLinesAdvRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportTextLinesAdvResponse"
 
   /raporty/returnables:
     post:
@@ -3507,6 +3532,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
 
+    ReportTextLinesAdvResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+
     ReportTextLinesResponse:
       type: "object"
       allOf:
@@ -4561,6 +4591,65 @@ components:
         text:
           type: "string"
           example: "665"
+
+    ReportTextLinesAdvRequest:
+      type: "object"
+      properties:
+        header:
+          type: "integer"
+          example: 0
+          description: "Added in 5.2. Identifier of custom header."
+        lines:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              text:
+                type: "string"
+                example: "Nr rachunku: 5698759"
+              location:
+                type: "string"
+                default: "bottom"
+                example: "bottom"
+                enum:
+                  - "top"
+                  - "bottom"
+              center:
+                type: "boolean"
+                default: false
+                example: false
+              sw:
+                type: "boolean"
+                default: false
+                example: false
+              sh:
+                type: "boolean"
+                default: false
+                example: false
+              underline:
+                type: "boolean"
+                default: false
+                example: false
+              italic:
+                type: "boolean"
+                default: false
+                example: false
+              bold:
+                type: "boolean"
+                default: false
+                example: false
+              negative:
+                type: "boolean"
+                default: false
+                example: false
+              heading:
+                type: "boolean"
+                default: false
+                example: false
+              customformat:
+                type: "boolean"
+                default: false
+                example: false
 
     FormsOrderRecipeAdvRequest:
       type: "object"

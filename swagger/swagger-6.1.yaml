@@ -4597,7 +4597,7 @@ components:
       properties:
         header:
           type: "integer"
-          example: 0
+          example: 74
           description: "Added in 5.2. Identifier of custom header."
         lines:
           type: "array"

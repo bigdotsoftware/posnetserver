@@ -134,6 +134,227 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MonitoringResponse"
+  /detect/printers:
+    get:
+      tags:
+        - "General"
+      summary: Wykryj drukarki fiskalne
+      description: |
+        Automatycznie wyszukuje drukarki fiskalne Posnet i Novitus.
+
+        W zależności od parametru `source` wykonywane jest:
+        - skanowanie portów szeregowych USB/RS232,
+        - skanowanie drukarek w lokalnej sieci,
+        - lub oba rodzaje skanowania.
+
+        Domyślnie wykrywane są zarówno drukarki Posnet, jak i Novitus.
+
+      operationId: detectPrinters
+
+      parameters:
+
+        - name: source
+          in: query
+          description: Źródło wykrywania drukarek.
+          required: false
+          schema:
+            type: string
+            enum:
+              - usb
+              - network
+              - all
+            default: all
+          example: all
+
+        - name: brand
+          in: query
+          description: |
+            Marka drukarki, która ma być wykrywana.
+            Brak parametru lub wartość `all` oznacza wykrywanie
+            wszystkich obsługiwanych marek.
+          required: false
+          schema:
+            type: string
+            enum:
+              - posnet
+              - novitus
+              - all
+            default: all
+          example: posnet
+
+        - name: timeout
+          in: query
+          description: |
+            Timeout pojedynczej próby komunikacji z drukarką w milisekundach.
+            Wartość jest ograniczana do zakresu 100–2000 ms.
+          required: false
+          schema:
+            type: integer
+            minimum: 100
+            maximum: 2000
+            default: 300
+          example: 300
+
+        - name: connecttimeout
+          in: query
+          description: |
+            Timeout połączenia TCP z hostem w milisekundach.
+            Dotyczy wykrywania sieciowego.
+            Wartość jest ograniczana do zakresu 50–2000 ms.
+          required: false
+          schema:
+            type: integer
+            minimum: 50
+            maximum: 2000
+            default: 250
+          example: 250
+
+        - name: maxhosts
+          in: query
+          description: |
+            Maksymalna liczba hostów skanowanych w każdej wykrytej
+            lokalnej podsieci.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 4094
+            default: 254
+          example: 254
+
+        - name: legacy
+          in: query
+          description: |
+            Jeśli parametr zostanie podany, skanowane będą również
+            starsze porty szeregowe, np. `/dev/ttyS*` i `/dev/ttyAMA*`.
+
+            Parametr jest typu flagowego — sama obecność parametru
+            aktywuje opcję.
+          required: false
+          schema:
+            type: string
+            example: "1"
+
+        - name: force
+          in: query
+          description: |
+            Jeśli parametr zostanie podany, skanowany będzie również
+            port szeregowy aktualnie używany przez konfigurację
+            `config.posnet.connection.rs232`.
+
+            Parametr jest typu flagowego — sama obecność parametru
+            aktywuje opcję.
+          required: false
+          schema:
+            type: string
+            example: "1"
+
+        - name: baudrates
+          in: query
+          description: |
+            Lista prędkości transmisji szeregowej oddzielona przecinkami.
+
+            Jeśli parametr nie zostanie podany, używane są:
+            `9600,115200`.
+          required: false
+          schema:
+            type: string
+            pattern: '^[0-9]+(,[0-9]+)*$'
+            default: "9600,115200"
+          example: "9600,115200"
+
+        - name: ports
+          in: query
+          description: |
+            Lista portów TCP oddzielona przecinkami używanych podczas
+            skanowania sieci.
+
+            Jeśli parametr nie zostanie podany, używane są:
+            `6666,6001,9100,4001`.
+          required: false
+          schema:
+            type: string
+            pattern: '^[0-9]+(,[0-9]+)*$'
+            default: "6666,6001,9100,4001"
+          example: "6666,6001,9100"
+
+      responses:
+
+        '200':
+          description: |
+            Skanowanie zakończone pomyślnie.
+            Odpowiedź zawiera znalezione drukarki USB oraz sieciowe.
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrinterDetectionResponse'
+
+              examples:
+
+                noPrinters:
+                  summary: Nie znaleziono drukarek
+                  value:
+                    ok: true
+                    source: all
+                    brand: all
+                    usb: []
+                    network: []
+                    scanned:
+                      serialPorts: 2
+                      serialPortsTotal: 2
+                      networkHosts: 254
+                      networkOpenPorts: 0
+                    warnings: []
+                    took: 1842
+
+                usbPrinter:
+                  summary: Znaleziono drukarkę Posnet USB
+                  value:
+                    ok: true
+                    source: usb
+                    brand: posnet
+                    usb:
+                      - path: "/dev/ttyACM0"
+                        baudRate: 9600
+                        brand: posnet
+                        response: "020100037103"
+                        responseText: "..q."
+                        manufacturer: "POSNET"
+                        serialNumber: "12345678"
+                        pnpId: "usb-POSNET..."
+                    network: []
+                    scanned:
+                      serialPorts: 1
+                      serialPortsTotal: 2
+                    warnings: []
+                    took: 743
+
+                networkPrinter:
+                  summary: Znaleziono drukarkę Novitus w sieci
+                  value:
+                    ok: true
+                    source: network
+                    brand: novitus
+                    usb: []
+                    network:
+                      - ip: "192.168.0.120"
+                        port: 6666
+                        brand: novitus
+                        response: "1a..."
+                        responseText: "..."
+                    scanned:
+                      networkHosts: 254
+                      networkOpenPorts: 1
+                    warnings: []
+                    took: 2180
+
+        '500':
+          description: Błąd podczas wykrywania drukarek.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /tasks/list:
     get:
@@ -6026,6 +6247,209 @@ components:
                 external:
                   type: "number"
                   format: "int64"
+
+    PrinterDetectionResponse:
+      type: object
+      required:
+        - ok
+        - source
+        - brand
+        - usb
+        - network
+        - scanned
+        - warnings
+        - took
+      properties:
+
+        ok:
+          type: boolean
+          description: Czy operacja zakończyła się pomyślnie.
+          example: true
+
+        source:
+          type: string
+          enum:
+            - usb
+            - network
+            - all
+          description: Źródło przeprowadzonego skanowania.
+          example: all
+
+        brand:
+          type: string
+          enum:
+            - posnet
+            - novitus
+            - all
+          description: Wykrywana marka drukarki.
+          example: all
+
+        usb:
+          type: array
+          description: Drukarki wykryte przez porty szeregowe USB/RS232.
+          items:
+            $ref: '#/components/schemas/UsbPrinter'
+
+        network:
+          type: array
+          description: Drukarki wykryte w lokalnej sieci.
+          items:
+            $ref: '#/components/schemas/NetworkPrinter'
+
+        scanned:
+          $ref: '#/components/schemas/ScanStatistics'
+
+        warnings:
+          type: array
+          description: Ostrzeżenia wygenerowane podczas skanowania.
+          items:
+            type: string
+          example: []
+
+        took:
+          type: integer
+          format: int64
+          description: Czas wykonania całego skanowania w milisekundach.
+          example: 1842
+
+    UsbPrinter:
+      type: object
+      required:
+        - path
+        - baudRate
+        - brand
+        - response
+        - responseText
+        - manufacturer
+        - serialNumber
+        - pnpId
+      properties:
+
+        path:
+          type: string
+          description: Ścieżka urządzenia szeregowego.
+          example: "/dev/ttyACM0"
+
+        baudRate:
+          type: integer
+          description: Prędkość transmisji, przy której wykryto drukarkę.
+          example: 9600
+
+        brand:
+          type: string
+          enum:
+            - posnet
+            - novitus
+          description: Wykryta marka drukarki.
+          example: posnet
+
+        response:
+          type: string
+          description: Odpowiedź drukarki zakodowana jako HEX.
+          example: "020100037103"
+
+        responseText:
+          type: string
+          description: Odpowiedź drukarki po konwersji do tekstu Latin-1.
+          example: "..q."
+
+        manufacturer:
+          type: string
+          description: Producent urządzenia USB.
+          example: "POSNET"
+
+        serialNumber:
+          type: string
+          description: Numer seryjny urządzenia.
+          example: "12345678"
+
+        pnpId:
+          type: string
+          description: Identyfikator Plug and Play urządzenia.
+          example: "usb-POSNET..."
+
+    NetworkPrinter:
+      type: object
+      required:
+        - ip
+        - port
+        - brand
+        - response
+        - responseText
+      properties:
+
+        ip:
+          type: string
+          format: ipv4
+          description: Adres IP wykrytej drukarki.
+          example: "192.168.0.120"
+
+        port:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 65535
+          description: Port TCP wykrytej drukarki.
+          example: 6666
+
+        brand:
+          type: string
+          enum:
+            - posnet
+            - novitus
+          description: Wykryta marka drukarki.
+          example: novitus
+
+        response:
+          type: string
+          description: Odpowiedź drukarki zakodowana jako HEX.
+          example: "1a..."
+
+        responseText:
+          type: string
+          description: Odpowiedź drukarki po konwersji do tekstu Latin-1.
+          example: "..."
+
+    ScanStatistics:
+      type: object
+      description: Statystyki przeprowadzonego skanowania.
+      properties:
+
+        serialPorts:
+          type: integer
+          minimum: 0
+          description: Liczba portów szeregowych faktycznie przeskanowanych.
+          example: 2
+
+        serialPortsTotal:
+          type: integer
+          minimum: 0
+          description: Łączna liczba wykrytych portów szeregowych.
+          example: 2
+
+        networkHosts:
+          type: integer
+          minimum: 0
+          description: Liczba hostów przeskanowanych w sieci.
+          example: 254
+
+        networkOpenPorts:
+          type: integer
+          minimum: 0
+          description: Liczba znalezionych otwartych portów TCP.
+          example: 1
+
+    ErrorResponse:
+      type: object
+      description: Odpowiedź zwracana w przypadku błędu.
+      properties:
+        ok:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error description.
+          example: "Some error description"
 
     LicenseCommonResponse:
       type: "object"

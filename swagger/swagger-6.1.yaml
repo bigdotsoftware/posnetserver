@@ -160,8 +160,8 @@ paths:
           schema:
             type: string
             enum:
-              - usb
-              - network
+              - rs232
+              - eth
               - all
             default: all
           example: all
@@ -312,7 +312,7 @@ paths:
                   summary: Znaleziono drukarkę Posnet USB
                   value:
                     ok: true
-                    source: usb
+                    source: rs232
                     brand: posnet
                     usb:
                       - path: "/dev/ttyACM0"
@@ -334,7 +334,7 @@ paths:
                   summary: Znaleziono drukarkę Novitus w sieci
                   value:
                     ok: true
-                    source: network
+                    source: eth
                     brand: novitus
                     usb: []
                     network:

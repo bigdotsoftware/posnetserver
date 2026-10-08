@@ -356,6 +356,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /config/override/printer:
+    post:
+      tags:
+      - "General"
+      summary: "Temporarily override settings"
+      description: "Temporarily override the printer communication settings. Overridden settings are temporary and will be reset after the service restarts."
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ConfigPrinterOverrideRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
   /tasks/list:
     get:
       tags:
@@ -6450,6 +6469,106 @@ components:
           type: string
           description: Error description.
           example: "Some error description"
+
+    ConfigPrinterOverrideRequest:
+      type: object
+      properties:
+        driver:
+          type: string
+
+        commandresponsetimeout:
+          type: integer
+
+        commanddelay:
+          type: integer
+
+        waitdelay:
+          type: integer
+
+        responsewaitdelay:
+          type: integer
+
+        paper:
+          type: object
+          required:
+            - width
+          properties:
+            width:
+              type: integer
+
+        ping:
+          type: object
+          required:
+            - enabled
+            - interval
+            - type
+          properties:
+            enabled:
+              type: boolean
+            interval:
+              type: integer
+            type:
+              type: string
+              enum:
+                - status
+                - date
+
+        edocument:
+          type: object
+          properties:
+            service:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                sha1_footprint_update:
+                  type: object
+                  required:
+                    - enabled
+                    - interval
+                    - onstart
+                  properties:
+                    enabled:
+                      type: boolean
+                    interval:
+                      type: integer
+                    onstart:
+                      type: boolean
+          required:
+            - service
+
+        connection:
+          type: object
+          properties:
+            type:
+              type: string
+
+            rs232:
+              type: object
+              properties:
+                disable_ioctl:
+                  type: boolean
+                params:
+                  type: string
+
+            eth:
+              type: object
+              properties:
+                ip:
+                  type: string
+                port:
+                  type: string
+
+            tunnel:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+
+
 
     LicenseCommonResponse:
       type: "object"

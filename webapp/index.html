@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>POS Kasa — Posnet Server</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">P</span>
+      <div><strong>POS KASA</strong><small>Posnet Server 6.1+</small></div>
+    </div>
+    <div class="top-actions">
+      <span id="clock"></span>
+      <span id="printerStatus" class="status offline">● Sprawdzanie drukarki…</span>
+      <button class="icon-btn" id="shortcutsBtn" data-keyhint="F1" title="Legenda skrótów klawiszowych (F1)">⌨</button>
+      <button class="icon-btn" id="settingsBtn" data-keyhint="F10" title="Ustawienia POS (F10)">⚙</button>
+    </div>
+  </header>
+  <main class="pos">
+    <section class="catalog-panel">
+      <div class="toolbar">
+        <div class="search-wrap"><span>⌕</span><input id="search" autocomplete="off"
+            placeholder="Szukaj produktu lub zeskanuj kod… (F2)"></div><select id="mainSort" class="sort-select"
+          aria-label="Sortowanie produktów">
+          <option value="name-asc">Nazwa A–Z</option>
+          <option value="name-desc">Nazwa Z–A</option>
+          <option value="price-asc">Cena rosnąco</option>
+          <option value="price-desc">Cena malejąco</option>
+          <option value="code-asc">Kod rosnąco</option>
+          <option value="code-desc">Kod malejąco</option>
+        </select>
+        <div class="categories" id="categories"></div>
+      </div>
+      <div class="products" id="products"></div>
+    </section>
+    <aside class="cart-panel">
+      <div class="cart-head">
+        <div>
+          <h2>Bieżąca sprzedaż</h2><small id="cartCount">0 pozycji</small>
+        </div><button class="link-btn" id="clearCart">Wyczyść <kbd class="kbd">Del</kbd></button><button class="link-btn cart-close" id="closeCartPanel" title="Zamknij koszyk">×</button>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-bottom">
+        <div class="totals">
+          <div><span>Netto</span><b id="netTotal">0,00 zł</b></div>
+          <div><span>VAT</span><b id="vatTotal">0,00 zł</b></div>
+          <div class="grand"><span>Do zapłaty</span><strong id="grandTotal">0,00 zł</strong></div>
+        </div><button id="checkoutBtn" class="checkout" disabled>PRZEJDŹ DO PŁATNOŚCI <kbd class="kbd">F9</kbd> <span>→</span></button>
+      </div>
+    </aside>
+  </main>
+  <button class="cart-toggle" id="cartToggle" title="Pokaż / ukryj koszyk"><span id="cartToggleIcon">🛒</span><span class="cart-toggle-badge" id="cartToggleCount">0</span></button>
+  <div id="modalRoot"></div>
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+
+</html>

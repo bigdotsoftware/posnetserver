@@ -121,6 +121,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LicenseUpgradeResponse"
+  /licencja/use:
+    post:
+      tags:
+      - "License"
+      summary: "Use new license"
+      description: "Temporarily use a different license file. The selected license is not persisted, so the change is temporary and will be reverted when the service restarts. To use a different license file permanently, update the `config.json` file."
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/LicenseUseRequest'
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LicenseUseResponse"
   /monitoring:
     get:
       tags:
@@ -6470,6 +6489,13 @@ components:
           description: Error description.
           example: "Some error description"
 
+    LicenseUseRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: license file content converted to base64
+
     ConfigPrinterOverrideRequest:
       type: object
       properties:
@@ -6619,7 +6645,14 @@ components:
               type: "boolean"
             requestedtext:
               type: "string"
-
+    LicenseUseResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        file:
+          type: string
+        size:
+          type: number
     ApiResponse:
       type: "object"
       required:

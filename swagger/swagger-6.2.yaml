@@ -1701,7 +1701,26 @@ paths:
                 allOf:
                 - $ref: '#/components/schemas/ImageInfoResponse'
 
-
+  /image_slots:
+    get:
+      tags:
+      - "Management"
+      summary: "List slots in use"
+      description: "List slots with images. Note that method is very slow on Posnet devices"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ImageSlotsResponse'
   /form/finish:
     post:
       tags:
@@ -3808,6 +3827,18 @@ components:
           type: "number"
           format: "int64"
           example: 640
+
+    ImageSlotsResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        slots:
+          type: "array"
+          items:
+            type: "number"
+            format: "int64"
+          example: [0,1,2]
 
     ParagonResponse:
       type: "object"

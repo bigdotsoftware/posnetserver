@@ -1668,6 +1668,39 @@ paths:
                 type: string
                 format: binary
 
+  /image_info/{slot}:
+    get:
+      tags:
+      - "Management"
+      summary: "Read image information"
+      description: "Read image information"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "slot"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "number"
+      responses:
+        '500':
+          description: "unsuccessful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '200':
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ImageInfoResponse'
+
 
   /form/finish:
     post:
@@ -3761,6 +3794,20 @@ components:
       type: "object"
       allOf:
         - $ref: '#/components/schemas/ApiResponse'
+
+    ImageInfoResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        wx:
+          type: "number"
+          format: "int64"
+          example: 360
+        hx:
+          type: "number"
+          format: "int64"
+          example: 640
 
     ParagonResponse:
       type: "object"

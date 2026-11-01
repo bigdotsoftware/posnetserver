@@ -1706,7 +1706,7 @@ paths:
       tags:
       - "Management"
       summary: "List slots in use"
-      description: "List slots with images. Note that method is very slow on Posnet devices"
+      description: "List slots with images. Note that method is very slow on Posnet devices. Posnet counts slots from 1 to 500. Novitus counts slots from 0 to 1024"
       parameters:
       - name: "fulldebug"
         in: "query"

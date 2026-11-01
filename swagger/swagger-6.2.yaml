@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   description: "This is a Posnet Server interface. How to start [https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/](https://blog.bigdotsoftware.pl/posnet-server-pierwsze-uzycie/)"
-  version: "6.1"
+  version: "6.2"
   title: "Posnet Server"
   contact:
     email: "bigdotsoftware@bigdotsoftware.pl"
@@ -1500,6 +1500,174 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/DrawerParametersResponse'
+
+  /image/{slot}:
+    put:
+      tags:
+      - "Management"
+      summary: "Upload image to the printer"
+      description: "Upload image to the printer"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "slot"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "number"
+      requestBody:
+        required: true
+        content:
+
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Source image file (PNG, JPG, etc.).
+
+                options:
+                  type: string
+                  description: |
+                    Image conversion options encoded as a JSON string.
+                  example: '{"width":384,"height":640,"threshold":128,"method":"dither"}'
+
+          application/json:
+            schema:
+              type: object
+              required:
+                - imagePath
+              properties:
+                imagePath:
+                  type: string
+                  description: Absolute path to the source image on the server.
+                  example: /home/user/images/reklama.png
+
+                options:
+                  type: object
+                  description: Image conversion options.
+                  properties:
+                    width:
+                      type: integer
+                      description: Output image width in pixels.
+                      example: 384
+                    height:
+                      type: integer
+                      description: Output image height in pixels.
+                      example: 640
+                    threshold:
+                      type: integer
+                      minimum: 0
+                      maximum: 255
+                      description: Binarization threshold (0-255).
+                      example: 170
+                    method:
+                      type: string
+                      enum:
+                        - threshold
+                        - dither
+                      description: Image conversion method.
+                      example: threshold
+      responses:
+        '500':
+          description: "unsuccessful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '200':
+          description: "Image successfully uploaded to the printer"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageUploadResponse"
+
+    delete:
+      tags:
+      - "Management"
+      summary: "Delete image from the printer"
+      description: "Delete image from the printer"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "slot"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "number"
+      responses:
+        '500':
+          description: "unsuccessful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '200':
+          description: "Image successfully deleted from the printer"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageDeleteResponse"
+    get:
+      tags:
+      - "Management"
+      summary: "Read image content"
+      description: "Read image content"
+      parameters:
+      - name: "fulldebug"
+        in: "query"
+        schema:
+          type: "boolean"
+          default: false
+      - name: "slot"
+        in: "path"
+        description: ""
+        required: true
+        schema:
+          type: "number"
+      responses:
+        '500':
+          description: "unsuccessful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '200':
+          description: "Image successfully fetched from the printer"
+          headers:
+            Content-Disposition:
+              description: Filename.
+              schema:
+                type: string
+                example: attachment; filename="bitmap.bmp"
+            X-Image-Width:
+              description: Image width in pixels.
+              schema:
+                type: integer
+                example: 360
+            X-Image-Height:
+              description:  Image height in pixels.
+              schema:
+                type: integer
+                example: 640
+          content:
+            image/bmp:
+              schema:
+                type: string
+                format: binary
+
 
   /form/finish:
     post:
@@ -3574,6 +3742,25 @@ components:
           format: "int64"
           description: "printing end timestamp"
           example: 1627376834969
+
+    ImageUploadResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        took:
+          type: "number"
+          format: "int64"
+          example: 10258
+        converttook:
+          type: "number"
+          format: "int64"
+          example: 215
+
+    ImageDeleteResponse:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
 
     ParagonResponse:
       type: "object"

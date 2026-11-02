@@ -3576,6 +3576,13 @@ components:
           format: "int32"
           example: 1
           description: "Index of the image stored in the printer's memory. Use '0' to don't print footer image at all. Default is '-1' means use printer's settings. Note that using footerimage in one request has a global effect - it overrides printer settings. One recipe printed with footerimage=1 causes that other recipes use footerimage=1 too, even if footerimage is not set for them."
+        footerimages:
+          type: "array"
+          items:
+            type: "number"
+            format: "int32"
+            example: 1
+            description: "Some printers support printing multiple footer images. Specify the desired image slots in the order in which they should be printed."
         barcode:
           type: "object"
           properties:

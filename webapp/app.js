@@ -789,6 +789,8 @@ async function printReceipt(received, t) {
             cashier: SETTINGS.cashier 
         } 
     }; 
+    const footerSlots = getFooterSlots();
+    if (footerSlots.length) body.footer['footerimages'] = footerSlots;
     if ($("#eparagon").checked) { 
         const email = $("#eparagon_email").value.trim(), 
               phone = $("#eparagon_phone").value.trim(); 
@@ -948,9 +950,12 @@ function settings(activeTab = "catalog") {
                     <button class="settings-tab ${activeTab === "catalog" || activeTab === ""  || activeTab == null || activeTab == undefined? "active" : ""}" onclick="settings('catalog')">Katalog produktów i kategorie</button>
                     <button class="settings-tab ${activeTab === "reports" ? "active" : ""}" onclick="settings('reports')">Raport dobowy / okresowy</button>
                     <button class="settings-tab ${activeTab === "connection" ? "active" : ""}" onclick="settings('connection')">Drukarka fiskalna</button>
+                    <button class="settings-tab ${activeTab === "images" ? "active" : ""}" onclick="settings('images')">Grafiki</button>
                     <button class="settings-tab ${activeTab === "about" ? "active" : ""}" onclick="settings('about')">O Aplikacji</button>
                 </div>
-                ${activeTab === "reports" ? `<div class="settings-section">
+                ${(activeTab === "reports" || activeTab === "images") && g_DrukarkaOffline ? `<div class="settings-section">
+                    <div class="detect-status error">⚠ Brak połączenia z drukarką fiskalną. Ta zakładka jest niedostępna — sprawdź połączenie i ustawienia w zakładce "Drukarka fiskalna".</div>
+                </div>` : activeTab === "reports" ? `<div class="settings-section">
                     <div class="section-head">
                         <div>
                             <h4>Raport dobowy</h4>
@@ -1106,6 +1111,38 @@ function settings(activeTab = "catalog") {
                     <div class="actions">
                         <button onclick="closeModal()">Anuluj</button>
                         <button class="primary" onclick="saveSettings()">ZAPISZ USTAWIENIA</button>
+                    </div>` : activeTab === "images" ? `<div class="settings-section">
+                        <div class="section-head">
+                            <div>
+                                <h4>Grafiki</h4>
+                                <p>Wgrywanie grafik do pamięci drukarki fiskalnej.</p>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Plik graficzny</label>
+                            <div class="file-drop" id="imgFileDrop" tabindex="0">
+                                <input type="file" id="imgFile" accept="image/*" hidden>
+                                <div class="file-drop-content">
+                                    <span class="file-drop-icon">🖼</span>
+                                    <span class="file-drop-text" id="imgFileText">Kliknij aby wybrać lub upuść plik graficzny</span>
+                                    <span class="file-drop-hint">PNG, JPG, BMP…</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid2">
+                            <div class="field">
+                                <label>Slot</label>
+                                <select id="imgSlot">${Array.from({ length: 256 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("")}</select>
+                            </div>
+                            <div class="field">
+                                <label>Algorytm</label>
+                                <select id="imgAlgo">${IMAGE_ALGOS.map((a, i) => `<option value="${i}">${esc(a.label)} (${a.method}, ${a.threshold})</option>`).join("")}</select>
+                            </div>
+                        </div>
+                        <button class="primary compact" id="imgUploadBtn">⬆ Wgraj na urządzenie</button>
+                        <button class="img-show-btn" id="imgListBtn">Pobierz grafiki z urządzenia</button>
+                        <div class="report-status" id="imgStatus"></div>
+                        <div class="product-manager" id="imgList"></div>
                     </div>` : activeTab === "about" ? `<div class="settings-section">
                         <div class="section-head">
                             <div>
@@ -1114,12 +1151,12 @@ function settings(activeTab = "catalog") {
                             </div>
                         </div>
                         <div class="invoice-box">
-                            <h4>POS KASA</h4>
+                            <h4>EasyPOS</h4>
                             <p>Producentem aplikacji jest <strong>Big Dot Software</strong> — <a href="https://bigdotsoftware.pl/" target="_blank" rel="noopener">bigdotsoftware.pl</a>.</p>
                         </div>
                         <div class="invoice-box">
                             <h4>Open source</h4>
-                            <p>Aplikacja POS KASA jest oprogramowaniem open source. Jej kod źródłowy znajduje się w serwisie GitHub: <a href="https://github.com/bigdotsoftware/posnetserver" target="_blank" rel="noopener">github.com/bigdotsoftware/posnetserver</a>.</p>
+                            <p>Aplikacja EasyPOS jest oprogramowaniem open source. Jej kod źródłowy znajduje się w serwisie GitHub: <a href="https://github.com/bigdotsoftware/posnetserver" target="_blank" rel="noopener">github.com/bigdotsoftware/posnetserver</a>.</p>
                         </div>
                         <div class="actions">
                             <button class="primary" onclick="closeModal()">ZAMKNIJ</button>
@@ -1187,6 +1224,7 @@ function settings(activeTab = "catalog") {
     if (rpb) rpb.onclick = () => runPeriodReport();
     initLicenseUpload();
     loadLicenseStatus();
+    if (activeTab === "images" && !g_DrukarkaOffline) initImagesTab();
     $$(`[data-delete-category]`).forEach(b => b.onclick = () => deleteCategory(b.dataset.deleteCategory));
     const ss = $("#settingsProductSearch"), so = $("#settingsProductSort");
     if (ss) ss.oninput = e => { 
@@ -1198,6 +1236,183 @@ function settings(activeTab = "catalog") {
         settingsSort = e.target.value; 
         settings(activeTab) 
     };
+}
+const IMAGE_ALGOS = [
+    { label: "Zdjęcia produktów", method: "dither", threshold: 128 },
+    { label: "Zdjęcia ludzi", method: "dither", threshold: 135 },
+    { label: "Logo firmowe", method: "threshold", threshold: 170 },
+    { label: "Grafiki reklamowe", method: "threshold", threshold: 170 },
+    { label: "Czarne napisy", method: "threshold", threshold: 150 },
+    { label: "Ikony i piktogramy", method: "threshold", threshold: 160 }
+];
+const FOOTER_SLOTS_KEY = "pos.footerImageSlots";
+function getFooterSlots() {
+    try { const a = JSON.parse(localStorage.getItem(FOOTER_SLOTS_KEY) || "[]"); return Array.isArray(a) ? a : [] } catch { return [] }
+}
+function getCheckedFooterSlots() {
+    return $$("[data-img-footer]:checked").map(c => Number(c.dataset.imgFooter)).sort((a, b) => a - b);
+}
+function setFooterSlot(slot, on) {
+    const s = new Set(getCheckedFooterSlots());
+    // if (on) 
+    //     s.add(slot); 
+    // else 
+    //     s.delete(slot);
+    localStorage.setItem(FOOTER_SLOTS_KEY, JSON.stringify([...s].sort((a, b) => a - b)));
+}
+function initImagesTab() {
+    const drop = $("#imgFileDrop"), input = $("#imgFile"), text = $("#imgFileText");
+    const setFile = file => {
+        if (!file) return;
+        if (!file.type.startsWith("image/")) { toast("Wybierz plik graficzny.", true); return }
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        text.textContent = file.name;
+        text.classList.add("has-file");
+    };
+    input.onchange = e => setFile(e.target.files?.[0]);
+    drop.onclick = () => input.click();
+    drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click() } };
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add("dragover") };
+    drop.ondragleave = () => drop.classList.remove("dragover");
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove("dragover"); setFile(e.dataTransfer.files?.[0]) };
+    $("#imgUploadBtn").onclick = uploadDeviceImage;
+    $("#imgListBtn").onclick = loadDeviceImages;
+    const cached = getImgCacheSlots();
+    if (cached) renderImageList(cached);
+}
+const IMG_CACHE_SLOTS_KEY = "pos.imageCache.slots", IMG_CACHE_PREFIX = "pos.imageCache.img.";
+function getImgCacheSlots() {
+    try { const a = JSON.parse(localStorage.getItem(IMG_CACHE_SLOTS_KEY)); return Array.isArray(a) ? a : null } catch { return null }
+}
+function setImgCacheSlots(slots) {
+    try { localStorage.setItem(IMG_CACHE_SLOTS_KEY, JSON.stringify(slots)) } catch { }
+}
+function getImgCacheThumb(slot) { return localStorage.getItem(IMG_CACHE_PREFIX + slot) }
+function setImgCacheThumb(slot, dataUrl) {
+    try { localStorage.setItem(IMG_CACHE_PREFIX + slot, dataUrl) } catch { }
+}
+function removeImgCacheSlot(slot) {
+    localStorage.removeItem(IMG_CACHE_PREFIX + slot);
+    const s = getImgCacheSlots();
+    if (s) setImgCacheSlots(s.filter(x => x !== slot));
+}
+function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+    });
+}
+function renderImageList(slots) {
+    const list = $("#imgList");
+    if (!slots.length) { list.innerHTML = '<div class="settings-empty">Brak grafik w urz\u0105dzeniu.</div>'; return }
+    const footer = new Set(getFooterSlots());
+    list.innerHTML = slots.map(s => `<div class="manage-row product-manage-row" data-img-row="${s}">
+        <div class="product-manage-info">
+            <img data-img-thumb="${s}" alt="Slot ${s}" src="${esc(getImgCacheThumb(s) || "")}" style="max-width:80px;max-height:80px;background:#eee">
+            <div><strong>Slot ${s}</strong>
+            <label><input type="checkbox" data-img-footer="${s}" ${footer.has(s) ? "checked" : ""}> Drukuj w stopce</label></div>
+        </div>
+        <div class="manage-actions"><button class="danger" data-img-delete="${s}">Usu\u0144</button></div>
+    </div>`).join("");
+    $$("[data-img-footer]").forEach(c => c.onchange = () => setFooterSlot(Number(c.dataset.imgFooter), c.checked));
+    $$("[data-img-delete]").forEach(b => b.onclick = async () => {
+        const s = Number(b.dataset.imgDelete);
+        try {
+            await api(`/image/${s}`, { method: "DELETE" });
+            setFooterSlot(s, false);
+            removeImgCacheSlot(s);
+            $(`[data-img-row="${s}"]`)?.remove();
+            toast(`Usuni\u0119to grafik\u0119 ze slotu ${s}.`);
+        } catch (e) { toast(`B\u0142\u0105d usuwania: ${e.message}`, true) }
+    });
+}
+async function uploadDeviceImage() {
+    const file = $("#imgFile").files[0], status = $("#imgStatus");
+    if (!file) { toast("Wybierz plik graficzny.", true); return }
+    const slot = $("#imgSlot").value, algo = IMAGE_ALGOS[$("#imgAlgo").value];
+    const fd = new FormData();
+    fd.append("image", file);
+    fd.append("options", JSON.stringify({ width: 384, height: 640, threshold: algo.threshold, method: algo.method }));
+    status.textContent = "⏳ Wysyłanie…";
+    imgLoadAborted = false;
+    showImgProgress(`Wysyłanie grafiki do slotu ${slot}…`, 0, 0, { title: "Wysyłanie grafiki", cancellable: false });
+    try {
+        const r = await fetch(`${SETTINGS.apiBase.replace(/\/$/, "")}/image/${slot}`, { method: "PUT", body: fd });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || d.ok === false) throw new Error(d.error || d.message || `HTTP ${r.status}`);
+        status.textContent = "";
+        const cachedSlots = getImgCacheSlots();
+        if (cachedSlots) {
+            localStorage.removeItem(IMG_CACHE_PREFIX + slot);
+            if (!cachedSlots.includes(Number(slot))) setImgCacheSlots([...cachedSlots, Number(slot)].sort((a, b) => a - b));
+        }
+        toast(`Grafika wgrana do slotu ${slot}.`);
+    } catch (e) {
+        status.textContent = "";
+        toast(`Błąd wgrywania: ${e.message}`, true);
+    } finally {
+        hideImgProgress();
+    }
+}
+let imgLoadAborted = false;
+function showImgProgress(text, done = 0, total = 0, { title = "Odczyt grafik z urządzenia", cancellable = true } = {}) {
+    let ov = $("#imgProgressOverlay");
+    if (!ov) {
+        ov = document.createElement("div");
+        ov.id = "imgProgressOverlay";
+        ov.className = "progress-overlay";
+        ov.innerHTML = `<div class="progress-box"><h3>${esc(title)}</h3><p id="imgProgressText"></p><div class="progress-bar"><div id="imgProgressFill"></div></div><small id="imgProgressCount"></small>${cancellable ? '<button type="button" class="progress-cancel" id="imgProgressCancel">Przerwij</button>' : ""}</div>`;
+        document.body.appendChild(ov);
+        if (cancellable) $("#imgProgressCancel").onclick = e => {
+            imgLoadAborted = true;
+            e.target.disabled = true;
+            $("#imgProgressText").textContent = "Przerywanie, proszę czekać…";
+        };
+    }
+    if (imgLoadAborted) return;
+    const fill = $("#imgProgressFill");
+    $("#imgProgressText").textContent = text;
+    $("#imgProgressCount").textContent = total ? `${done} / ${total}` : "";
+    fill.classList.toggle("indeterminate", !total);
+    fill.style.width = total ? `${Math.round(done / total * 100)}%` : "";
+}
+function hideImgProgress() { $("#imgProgressOverlay")?.remove() }
+async function loadDeviceImages() {
+    const list = $("#imgList");
+    list.innerHTML = "";
+    imgLoadAborted = false;
+    const base = SETTINGS.apiBase.replace(/\/$/, "");
+    showImgProgress("Odczyt listy slotów…");
+    try {
+        const d = await api("/image_slots");
+        const slots = d.slots || [];
+        (getImgCacheSlots() || []).filter(s => !slots.includes(s)).forEach(s => localStorage.removeItem(IMG_CACHE_PREFIX + s));
+        setImgCacheSlots(slots);
+        renderImageList(slots);
+        let done = 0;
+        for (const s of slots) {
+            if (imgLoadAborted) break;
+            showImgProgress(`Pobieranie grafiki ze slotu ${s}…`, done, slots.length);
+            try {
+                const r = await fetch(`${base}/image/${s}`, { cache: "no-store" });
+                if (r.ok) {
+                    const dataUrl = await blobToDataUrl(await r.blob());
+                    setImgCacheThumb(s, dataUrl);
+                    const img = $(`[data-img-thumb="${s}"]`);
+                    if (img) img.src = dataUrl;
+                }
+            } catch { }
+            showImgProgress(`Pobieranie grafiki ze slotu ${s}…`, ++done, slots.length);
+        }
+    } catch (e) {
+        list.innerHTML = `<div class="settings-empty">Błąd: ${esc(e.message)}</div>`;
+    } finally {
+        hideImgProgress();
+    }
 }
 function arrayBufferToBase64(buffer) {
     const bytes = new Uint8Array(buffer);
